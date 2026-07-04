@@ -16,7 +16,12 @@ import {
   Check,
   X,
 } from 'lucide-react'
-import { signOut, clearDraft, getUser } from '../lib/store'
+import { useAuth } from '../context/AuthContext'
+import { clearDraft } from '../lib/store'
+import {
+  getDisplayName,
+  getInitials,
+} from '../utils/userDisplay'
 
 /* ── Brand mark (white, for dark sidebar) ───────────────────────── */
 function LogoMark() {
@@ -333,17 +338,9 @@ export default function Layout({ children, breadcrumb }) {
   const [notifOpen, setNotifOpen] = useState(false)
   const notifRef = useRef(null)
 
-  const user = getUser()
-  const displayName = user?.name || user?.email?.split('@')[0] || 'User'
-  const firstName = displayName.split(/[\s._-]/)[0]
-  const initials =
-    displayName
-      .split(/[\s._-]/)
-      .filter(Boolean)
-      .map((w) => w[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase() || 'U'
+  const { user, logout } = useAuth()
+  const displayName = getDisplayName(user)
+  const initials = getInitials(user)
   const unreadCount = INIT_NOTIFS.filter((n) => !n.read).length
 
   const handleCreate = () => {
@@ -425,8 +422,8 @@ export default function Layout({ children, breadcrumb }) {
           label="Sign Out"
           danger
           onClick={() => {
-            signOut()
-            navigate('/login')
+            clearDraft()
+            logout()
           }}
         />
       </aside>
