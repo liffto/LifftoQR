@@ -1,3 +1,6 @@
 node_modules/
 .DS_Store
 pnpm-lock.yaml
+/.env
+api/.env
+__init
