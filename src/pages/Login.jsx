@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Loader2, Check, ShieldCheck } from 'lucide-react'
-import { FcGoogle } from 'react-icons/fc'
-import { signIn } from '../lib/store'
+import { Check, ShieldCheck, AlertCircle } from 'lucide-react'
+import { useGoogleLogin } from '../hooks/useGoogleLogin'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 import Logo from '../components/Logo'
 
 const FEATURES = [
@@ -13,19 +12,21 @@ const FEATURES = [
 ]
 
 export default function Login() {
-  const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
+  const googleLogin = useGoogleLogin()
+  const [error, setError] = useState('')
 
-  const handleGoogle = () => {
-    setLoading(true)
-    setTimeout(() => {
-      signIn({
-        name: 'Kavuthamraj GS',
-        email: 'ksenthilkumar@affinityx.com',
-        avatar: null,
-      })
-      navigate('/dashboard')
-    }, 700)
+  const handleGoogleSuccess = (idToken) => {
+    setError('')
+    googleLogin.mutate(idToken)
+  }
+
+  const handleGoogleError = (err) => {
+    const message = err?.message || 'Google sign-in was cancelled.'
+    if (/cancel/i.test(message) || /popup closed/i.test(message)) {
+      setError('Google sign-in was cancelled.')
+      return
+    }
+    setError(message)
   }
 
   return (
@@ -100,22 +101,19 @@ export default function Login() {
             button creates your account.
           </p>
 
-          <button
-            type="button"
-            onClick={handleGoogle}
-            disabled={loading}
-            className="w-full h-[52px] rounded-[10px] border border-line bg-white hover:bg-canvas/80 hover:border-primary/30 flex items-center justify-center gap-3 font-semibold text-ink transition-colors shadow-sm disabled:opacity-70"
-          >
-            {loading ? (
-              <>
-                <Loader2 size={19} className="animate-spin" /> Signing in…
-              </>
-            ) : (
-              <>
-                <FcGoogle size={23} /> Continue with Google
-              </>
-            )}
-          </button>
+          {error && (
+            <div className="mb-5 flex items-start gap-2.5 rounded-[10px] border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <GoogleSignInButton
+            disabled={googleLogin.isPending}
+            loading={googleLogin.isPending}
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+          />
 
           <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-ink-faint">
             <ShieldCheck size={13} className="shrink-0" />
