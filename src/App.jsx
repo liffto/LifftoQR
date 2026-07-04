@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { isAuthed } from './lib/store'
 import ErrorBoundary from './components/ErrorBoundary'
+import ProtectedRoute from './middleware/ProtectedRoute'
+import PublicRoute from './middleware/PublicRoute'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import CreateUrl from './pages/CreateUrl'
@@ -12,89 +13,88 @@ import FAQ from './pages/FAQ'
 import UserAccount from './pages/UserAccount'
 import Notifications from './pages/Notifications'
 
-function RequireAuth({ children }) {
-  return isAuthed() ? children : <Navigate to="/login" replace />
-}
-
-function Protected({ children }) {
-  return <RequireAuth>{children}</RequireAuth>
-}
-
 export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
         <Route
           path="/dashboard"
           element={
-            <Protected>
+            <ProtectedRoute>
               <Dashboard />
-            </Protected>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/create"
           element={
-            <Protected>
+            <ProtectedRoute>
               <CreateUrl />
-            </Protected>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/create/details"
           element={
-            <Protected>
+            <ProtectedRoute>
               <CreateDetails />
-            </Protected>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/create/design"
           element={
-            <Protected>
+            <ProtectedRoute>
               <DesignQR />
-            </Protected>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/payment"
           element={
-            <Protected>
+            <ProtectedRoute>
               <Payment />
-            </Protected>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/integration"
           element={
-            <Protected>
+            <ProtectedRoute>
               <Integration />
-            </Protected>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/faq"
           element={
-            <Protected>
+            <ProtectedRoute>
               <FAQ />
-            </Protected>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/account"
           element={
-            <Protected>
+            <ProtectedRoute>
               <UserAccount />
-            </Protected>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/notifications"
           element={
-            <Protected>
+            <ProtectedRoute>
               <Notifications />
-            </Protected>
+            </ProtectedRoute>
           }
         />
         <Route path="*" element={<Navigate to="/login" replace />} />

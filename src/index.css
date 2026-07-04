@@ -117,3 +117,15 @@ input[type='range'].range-primary::-moz-range-thumb {
   border-radius: 6px;
   animation: shimmer 1.25s ease-in-out infinite;
 }
+
+/* Keep Google's rendered button off-screen so it never overlaps the custom UI */
+.google-signin-hidden-host {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 400px;
+  height: 44px;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}

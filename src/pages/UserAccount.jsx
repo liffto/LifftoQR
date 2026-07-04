@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   Camera,
   User,
@@ -16,7 +15,14 @@ import {
   X,
 } from 'lucide-react'
 import Layout from '../components/Layout'
-import { getQRs, signOut } from '../lib/store'
+import { useAuth } from '../context/AuthContext'
+import { getQRs } from '../lib/store'
+import {
+  getDisplayName,
+  getFirstName,
+  getInitials,
+  getLastName,
+} from '../utils/userDisplay'
 
 const DELETE_CONFIRM_PHRASE = 'Delete Account'
 
@@ -189,7 +195,12 @@ function SaveButton({ label = 'Save Changes', onClick }) {
 }
 
 export default function UserAccount() {
-  const navigate = useNavigate()
+  const { user, logout } = useAuth()
+  const displayName = getDisplayName(user)
+  const initials = getInitials(user)
+  const firstName = getFirstName(user)
+  const lastName = getLastName(user)
+  const email = user?.email ?? ''
   const [notifs, setNotifs] = useState({
     scans: true,
     weekly: true,
@@ -200,8 +211,7 @@ export default function UserAccount() {
   const signOutOthers = () => setDevices((ds) => ds.filter((d) => d.current))
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const handleConfirmDelete = () => {
-    signOut()
-    navigate('/login')
+    logout()
   }
   const qrs = getQRs()
   const totalScans = qrs.reduce((s, r) => s + (r.scans || 0), 0)
@@ -224,9 +234,17 @@ export default function UserAccount() {
             </div>
             <div className="px-5 pb-5 flex flex-col items-center text-center -mt-9">
               <div className="relative mb-3">
-                <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-primary to-[#7c3aed] text-white flex items-center justify-center text-2xl font-bold select-none ring-4 ring-white shadow-lg">
-                  KK
-                </div>
+                {user?.picture ? (
+                  <img
+                    src={user.picture}
+                    alt={displayName}
+                    className="w-[72px] h-[72px] rounded-full object-cover ring-4 ring-white shadow-lg"
+                  />
+                ) : (
+                  <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-primary to-[#7c3aed] text-white flex items-center justify-center text-2xl font-bold select-none ring-4 ring-white shadow-lg">
+                    {initials}
+                  </div>
+                )}
                 <button
                   type="button"
                   className="absolute bottom-0.5 right-0.5 w-6 h-6 rounded-full bg-white border border-line text-ink-soft flex items-center justify-center shadow-sm hover:border-primary hover:text-primary transition-colors"
@@ -235,10 +253,8 @@ export default function UserAccount() {
                   <Camera size={11} />
                 </button>
               </div>
-              <p className="font-bold text-ink text-base">Ksenthil Kumar</p>
-              <p className="text-xs text-ink-muted mt-0.5">
-                ksenthilkumar@affinityx.com
-              </p>
+              <p className="font-bold text-ink text-base">{displayName}</p>
+              <p className="text-xs text-ink-muted mt-0.5">{email}</p>
               <span className="mt-2.5 text-[11px] bg-amber-50 border border-amber-200 text-amber-600 rounded-full px-3 py-1 font-semibold">
                 Free Plan
               </span>
@@ -280,13 +296,9 @@ export default function UserAccount() {
           {/* Profile info */}
           <SectionCard title="Profile Information" icon={User}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-              <Field label="First Name" defaultValue="Ksenthil" />
-              <Field label="Last Name" defaultValue="Kumar" />
-              <Field
-                label="Email Address"
-                type="email"
-                defaultValue="ksenthilkumar@affinityx.com"
-              />
+              <Field label="First Name" defaultValue={firstName} />
+              <Field label="Last Name" defaultValue={lastName} />
+              <Field label="Email Address" type="email" defaultValue={email} />
               <Field label="Phone" type="tel" placeholder="+1 (000) 000-0000" />
             </div>
             <SaveButton label="Save Changes" />

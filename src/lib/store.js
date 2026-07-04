@@ -146,12 +146,19 @@ export const getDraft = () => read(KEYS.draft, null)
 export const setDraft = (draft) => write(KEYS.draft, draft)
 export const clearDraft = () => localStorage.removeItem(KEYS.draft)
 
-// ---- auth ----------------------------------------------------------------
+// ---- auth (delegates to session service) --------------------------------
 
-export const getUser = () => read(KEYS.auth, null)
-export const signIn = (user) => write(KEYS.auth, user)
-export const signOut = () => localStorage.removeItem(KEYS.auth)
-export const isAuthed = () => !!read(KEYS.auth, null)
+import {
+  getUser as getSessionUser,
+  clearUser,
+  getAccessToken,
+  getRefreshToken,
+} from '../services/session'
+
+export const getUser = getSessionUser
+export const signOut = clearUser
+export { getAccessToken, getRefreshToken }
+export const isAuthed = () => Boolean(getAccessToken() && getSessionUser())
 
 // ---- helpers -------------------------------------------------------------
 
