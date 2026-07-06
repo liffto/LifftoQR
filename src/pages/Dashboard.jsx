@@ -19,7 +19,6 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import {
-  getQRs,
   deleteQR,
   duplicateQR,
   setDraft,
@@ -28,6 +27,8 @@ import {
   formatDate,
   copyToClipboard,
 } from '../lib/store'
+import { deleteWebsite } from '../api/qrcode/website'
+import { useWebsites } from '../hooks/useWebsite'
 import { DOWNLOAD_FORMATS } from '../lib/qr'
 import QRView from '../components/QRView'
 import Layout from '../components/Layout'
@@ -99,7 +100,8 @@ function QrModal({ row, onClose, onDelete, onEdit }) {
   }, [fmtOpen])
 
   const handleDownload = () => {
-    qrRef.current?.download(format, row.name || 'qr-code')
+    
+    qrRef.current?.download(format, row.name || 'qr-code')    
     setFmtOpen(false)
   }
 
@@ -370,6 +372,10 @@ function QrRow({ row, onRefresh, onOpenModal }) {
   }
 
   const handleEdit = () => {
+    if (typeof row.id === 'number') {
+      navigate(`/create/design/${row.id}`)
+      return
+    }
     setDraft(row)
     navigate('/create/design')
   }
@@ -378,8 +384,12 @@ function QrRow({ row, onRefresh, onOpenModal }) {
     setMenuOpen(false)
     onRefresh()
   }
-  const handleDelete = () => {
-    deleteQR(row.id)
+  const handleDelete = async () => {
+    if (typeof row.id === 'number') {
+      await deleteWebsite(row.id)
+    } else {
+      deleteQR(row.id)
+    }
     setMenuOpen(false)
     onRefresh()
   }
@@ -598,7 +608,7 @@ function QrCard({ row, onOpenModal }) {
 /* ─── Dashboard page ─────────────────────────────────────────────────── */
 export default function Dashboard() {
   const navigate = useNavigate()
-  const [list, setList] = useState(() => getQRs())
+  const { data: list = [], isLoading, refetch } = useWebsites()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('All')
   const [visibleCount, setVisibleCount] = useState(BATCH)
@@ -606,7 +616,9 @@ export default function Dashboard() {
   const [selectedRow, setSelectedRow] = useState(null)
   const sentinelRef = useRef(null)
 
-  const refresh = () => setList([...getQRs()])
+  const refresh = () => {
+    refetch()
+  }
 
   useEffect(() => {
     setVisibleCount(BATCH)
@@ -625,6 +637,7 @@ export default function Dashboard() {
 
   const total = derived.length
   const visible = derived.slice(0, visibleCount)
+  
   const hasMore = visibleCount < total
 
   useEffect(() => {
@@ -655,13 +668,22 @@ export default function Dashboard() {
 
   const handleEditModal = () => {
     if (!selectedRow) return
+    if (typeof selectedRow.id === 'number') {
+      setSelectedRow(null)
+      navigate(`/create/design/${selectedRow.id}`)
+      return
+    }
     setDraft(selectedRow)
     setSelectedRow(null)
     navigate('/create/design')
   }
 
-  const handleDeleteModal = (id) => {
-    deleteQR(id)
+  const handleDeleteModal = async (id) => {
+    if (typeof id === 'number') {
+      await deleteWebsite(id)
+    } else {
+      deleteQR(id)
+    }
     refresh()
   }
 
@@ -790,7 +812,17 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {total === 0 ? (
+        {isLoading ? (
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full">
+              <tbody>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <SkeletonRow key={`loading-${i}`} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : total === 0 ? (
           /* Empty state (shared) */
           <div className="py-16 px-4 text-center">
             <div className="flex flex-col items-center gap-3">

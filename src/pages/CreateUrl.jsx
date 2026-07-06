@@ -25,7 +25,6 @@ export default function CreateUrl() {
   const [dynamic, setDynamic] = useState(true)
   const UrlIcon = findType('url').Icon
 
-  // Build a fresh record for a type and navigate to the given step.
   const buildAndGo = (typeKey, content, dyn, target) => {
     const t = findType(typeKey)
     const eff = t.dynamicCapable && (t.requiresDynamic || dyn)
@@ -49,7 +48,6 @@ export default function CreateUrl() {
     navigate(target)
   }
 
-  // Website URL is entered right here, so skip the details step → straight to design.
   const startUrl = () =>
     buildAndGo('url', { url: url.trim() }, dynamic, '/create/design')
 
@@ -89,7 +87,7 @@ export default function CreateUrl() {
             <div className="min-w-0">
               <div className="font-semibold text-ink">Website URL</div>
               <div className="text-xs text-ink-muted">
-                Open a link — the quickest way to start
+                Open a lin— the quickest way to start
               </div>
             </div>
           </div>
