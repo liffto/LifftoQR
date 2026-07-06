@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import {
   ChevronLeft,
   ChevronDown,
@@ -46,6 +47,12 @@ import {
   DOWNLOAD_FORMATS,
 } from '../lib/qr'
 import { findType, encodeContent, deriveContentName } from '../lib/qrTypes'
+import {
+  recordToWebsiteCreatePayload,
+  recordToWebsiteUpdatePayload,
+} from '../api/qrcode/website.mappers'
+import { useCreateWebsite, useUpdateWebsite, useWebsite } from '../hooks/useWebsite'
+import { getApiErrorMessage } from '../utils/errors'
 import TypeFields from '../components/TypeFields'
 import QRView from '../components/QRView'
 import { Toggle, ColorField, Checkbox } from '../components/ui'
@@ -458,33 +465,58 @@ const BUILTIN_TEMPLATES = [
 
 export default function DesignQR() {
   const navigate = useNavigate()
+  const { websiteId: websiteIdParam } = useParams()
+  const websiteId = websiteIdParam ? Number(websiteIdParam) : null
+  const isApiMode = websiteId != null && Number.isFinite(websiteId) && websiteId > 0
+  const { data: websiteRecord, isLoading, isError } = useWebsite(isApiMode ? websiteId : null)
+  const createWebsiteMutation = useCreateWebsite()
+  const updateWebsiteMutation = useUpdateWebsite()
+  const isSaving = createWebsiteMutation.isPending || updateWebsiteMutation.isPending
+
   const qrRef = useRef(null)
   const fileRef = useRef(null)
 
-  const [record, setRecord] = useState(() => getDraft() || fallbackRecord())
+  const [record, setRecord] = useState(() =>
+    isApiMode ? fallbackRecord() : getDraft() || fallbackRecord(),
+  )
   const [userTemplates, setUserTemplates] = useState(() => getTemplates())
 
   useEffect(() => {
-    if (!getDraft()) navigate('/create')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (!isApiMode) {
+      if (!getDraft()) navigate('/create')
+      return
+    }
+    if (websiteRecord) {
+      setRecord(websiteRecord)
+      setSlugDraft(websiteRecord.slug)
+    }
+  }, [isApiMode, websiteRecord, navigate])
+
+  useEffect(() => {
+    if (isApiMode && isError) navigate('/dashboard')
+  }, [isApiMode, isError, navigate])
+
+  const persistRecord = (next) => {
+    if (!isApiMode) setDraft(next)
+    return next
+  }
 
   const update = (patch) =>
     setRecord((r) => {
       const n = { ...r, ...patch }
-      setDraft(n)
+      persistRecord(n)
       return n
     })
   const updateDesign = (patch) =>
     setRecord((r) => {
       const n = { ...r, design: { ...r.design, ...patch } }
-      setDraft(n)
+      persistRecord(n)
       return n
     })
   const resetDesign = () =>
     setRecord((r) => {
       const n = { ...r, design: defaultDesign() }
-      setDraft(n)
+      persistRecord(n)
       return n
     })
 
@@ -502,7 +534,7 @@ export default function DesignQR() {
         patch.name = deriveContentName(r.typeKey, content)
       }
       const n = { ...r, ...patch }
-      setDraft(n)
+      persistRecord(n)
       return n
     })
 
@@ -534,14 +566,47 @@ export default function DesignQR() {
     setTemplateOpen(false)
   }
 
-  const handleDownload = () => {
-    saveQR(record)
-    qrRef.current?.download(format, record.name || 'qr-code')
-    if (saveTemplate) {
-      setShowSaveTplModal(true)
-    } else {
-      clearDraft()
-      setTimeout(() => navigate('/dashboard'), 400)
+  const saveWebsiteToApi = async (currentRecord) => {
+    if (currentRecord.typeKey !== 'url') {
+      saveQR(currentRecord)
+      return
+    }
+
+    const payload = recordToWebsiteCreatePayload(currentRecord)
+
+    if (isApiMode) {
+      await updateWebsiteMutation.mutateAsync({
+        websiteId,
+        payload: recordToWebsiteUpdatePayload(currentRecord),
+      })
+      return
+    }
+
+    await createWebsiteMutation.mutateAsync(payload)
+  }
+
+  const finishAndGoToList = () => {
+    clearDraft()
+    navigate('/dashboard')
+  }
+
+  const handleDownload = async () => {
+    if (isSaving) return
+
+    try {
+      await saveWebsiteToApi(record)
+      qrRef.current?.download(format, record.name || 'qr-code')
+
+      if (saveTemplate) {
+        setShowSaveTplModal(true)
+        return
+      }
+
+      finishAndGoToList()
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(error, 'Could not save your QR code. Please try again.'),
+      )
     }
   }
 
@@ -550,14 +615,12 @@ export default function DesignQR() {
     const updated = saveUserTemplate(tpl)
     setUserTemplates(updated)
     setShowSaveTplModal(false)
-    clearDraft()
-    setTimeout(() => navigate('/dashboard'), 300)
+    finishAndGoToList()
   }
 
   const handleSkipTemplate = () => {
     setShowSaveTplModal(false)
-    clearDraft()
-    setTimeout(() => navigate('/dashboard'), 300)
+    finishAndGoToList()
   }
 
   const handleCopyUrl = () => {
@@ -569,6 +632,14 @@ export default function DesignQR() {
   const tileBase =
     'shrink-0 rounded-[10px] border-2 flex items-center justify-center bg-white transition-colors'
 
+  if (isApiMode && (isLoading || !websiteRecord)) {
+    return (
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
+        <p className="text-sm text-ink-muted">Loading your QR design...</p>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-canvas">
       {/* HEADER */}
@@ -577,7 +648,7 @@ export default function DesignQR() {
         <div className="h-7 w-px bg-line" />
         <button
           type="button"
-          onClick={() => navigate('/create/details')}
+          onClick={() => navigate(isApiMode ? '/dashboard' : '/create/details')}
           className="flex items-center gap-1.5 font-semibold text-primary"
         >
           <ChevronLeft size={20} />
@@ -1155,10 +1226,15 @@ export default function DesignQR() {
               <button
                 type="button"
                 onClick={handleDownload}
-                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[10px] bg-primary font-semibold text-white hover:bg-primary-600"
+                disabled={isSaving}
+                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[10px] bg-primary font-semibold text-white hover:bg-primary-600 disabled:opacity-70"
               >
                 <Download size={18} />
-                {saveTemplate ? 'Download & Save QR' : 'Download QR'}
+                {isSaving
+                  ? 'Saving...'
+                  : saveTemplate
+                    ? 'Download & Save QR'
+                    : 'Download QR'}
               </button>
             </div>
           </div>
@@ -1208,10 +1284,15 @@ export default function DesignQR() {
         <button
           type="button"
           onClick={handleDownload}
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[10px] bg-primary font-semibold text-white hover:bg-primary-600"
+          disabled={isSaving}
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[10px] bg-primary font-semibold text-white hover:bg-primary-600 disabled:opacity-70"
         >
           <Download size={18} />
-          {saveTemplate ? 'Download & Save QR' : 'Download QR'}
+          {isSaving
+            ? 'Saving...'
+            : saveTemplate
+              ? 'Download & Save QR'
+              : 'Download QR'}
         </button>
       </div>
 

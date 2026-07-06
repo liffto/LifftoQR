@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Optional, List
 from functools import wraps
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
@@ -30,6 +30,7 @@ class AuthContext:
 
 
 def get_current_user(
+    request: Request,
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> User:
@@ -63,7 +64,8 @@ def get_current_user(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found or inactive",
             )
-        
+
+        request.state.user = user
         return user
     
     except HTTPException:

@@ -3,8 +3,16 @@ import { clearUser, getAccessToken } from '../services/session'
 
 const AUTH_SKIP_PATHS = ['/auth/login', '/auth/google', '/auth/register', '/auth/refresh']
 
+function resolveApiBaseUrl(): string {
+  const backendUrl = import.meta.env.VITE_BACKEND_API_URL?.replace(/\/$/, '')
+  if (backendUrl) {
+    return backendUrl.endsWith('/api/v1') ? backendUrl : `${backendUrl}/api/v1`
+  }
+  return import.meta.env.VITE_API_URL || '/api/v1'
+}
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  baseURL: resolveApiBaseUrl(),
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 })
