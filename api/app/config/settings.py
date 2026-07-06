@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     )
     frontend_url: str = "http://localhost:5173"
 
+    @classmethod
+    def _normalize_url(cls, value: str) -> str:
+        return value.rstrip("/") if value else value
+
+    def model_post_init(self, __context) -> None:
+        self.frontend_url = self._normalize_url(self.frontend_url)
+
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
         env_file_encoding="utf-8",

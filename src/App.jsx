@@ -50,6 +50,14 @@ export default function App() {
           }
         />
         <Route
+          path="/create/design/:websiteId"
+          element={
+            <ProtectedRoute>
+              <DesignQR />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/create/design"
           element={
             <ProtectedRoute>

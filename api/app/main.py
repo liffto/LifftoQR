@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.requests import Request
 
@@ -9,6 +10,14 @@ from app.routes.user_routes import router as user_router
 from app.api.v1 import api_v1
 
 app = FastAPI(title=settings.app_name, version="0.1.0", debug=settings.debug)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.frontend_url],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(health_router)
 app.include_router(user_router)
