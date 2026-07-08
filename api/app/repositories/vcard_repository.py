@@ -2,27 +2,52 @@ from datetime import date
 
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.qr import QR
-from app.models.template import Template
-from app.models.website import Website
+from app.models import QR, Template, Vcard
 from app.repositories.qr_slug import ensure_slug_available
-from app.schemas.website import WebsiteCreate, WebsiteUpdate
+from app.schemas.vcard import VcardContentCreate, VcardCreate, VcardUpdate
 
-WEBSITE_TYPE_KEY = "url"
+VCARD_TYPE_KEY = "vcard"
+
+VCARD_CONTENT_FIELDS = (
+    "photo",
+    "logo",
+    "first_name",
+    "last_name",
+    "org",
+    "title",
+    "phone",
+    "work_phone",
+    "email",
+    "url",
+    "street",
+    "city",
+    "state",
+    "zip",
+    "country",
+    "note",
+)
 
 
-class WebsiteRepository:
+def _vcard_from_content(
+    content: VcardContentCreate, *, qr_id: int, created_by: int | None
+) -> Vcard:
+    vcard = Vcard(created_by=created_by, **content.model_dump())
+    vcard.qr_id = qr_id
+    return vcard
+
+
+class VcardRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def create(self, payload: WebsiteCreate) -> QR:
+    def create(self, payload: VcardCreate) -> QR:
         ensure_slug_available(self.db, payload.slug)
 
         qr = QR(
-            type_key=WEBSITE_TYPE_KEY,
-            type="Website URL",
+            type_key=VCARD_TYPE_KEY,
+            type="Contact Card",
             name=payload.name,
-            url=payload.url,
+            url=payload.url or None,
             slug=payload.slug,
             dynamic=payload.dynamic,
             qr_type=payload.qr_type,
@@ -44,13 +69,14 @@ class WebsiteRepository:
         )
         template.qr_id = qr.id
 
-        website = Website(
-            url=payload.content.url,
+        vcard = _vcard_from_content(
+            payload.content,
+            qr_id=qr.id,
             created_by=payload.created_by,
         )
-        website.qr_id = qr.id
+
         self.db.add(template)
-        self.db.add(website)
+        self.db.add(vcard)
         self.db.commit()
         return self._get_by_qr_id(qr.id)
 
@@ -61,15 +87,15 @@ class WebsiteRepository:
         return (
             self.db.query(QR)
             .options(
-                joinedload(QR.website),
+                joinedload(QR.vcard),
                 joinedload(QR.template),
             )
-            .filter(QR.type_key == WEBSITE_TYPE_KEY)
+            .filter(QR.type_key == VCARD_TYPE_KEY)
             .order_by(QR.id)
             .all()
         )
 
-    def update(self, qr_id: int, payload: WebsiteUpdate) -> QR | None:
+    def update(self, qr_id: int, payload: VcardUpdate) -> QR | None:
         qr = self._get_by_qr_id(qr_id)
         if qr is None:
             return None
@@ -94,18 +120,27 @@ class WebsiteRepository:
 
         qr.edited_on = date.today()
 
-        if payload.content is not None and payload.content.url is not None:
-            if qr.website is None:
-                qr.website = Website(
+        if payload.content is not None:
+            content_data = payload.content.model_dump(exclude_unset=True)
+            if qr.vcard is None:
+                create_data = {
+                    field: content_data.get(field)
+                    for field in VCARD_CONTENT_FIELDS
+                }
+                if not create_data.get("first_name"):
+                    create_data["first_name"] = "Contact"
+                vcard = Vcard(
                     qr_id=qr.id,
-                    url=payload.content.url,
                     created_by=payload.updated_by,
+                    **create_data,
                 )
-                self.db.add(qr.website)
+                self.db.add(vcard)
             else:
-                qr.website.url = payload.content.url
+                for field, value in content_data.items():
+                    if value is not None:
+                        setattr(qr.vcard, field, value)
                 if payload.updated_by is not None:
-                    qr.website.updated_by = payload.updated_by
+                    qr.vcard.updated_by = payload.updated_by
 
         if payload.template is not None:
             template_data = payload.template.model_dump()
@@ -138,9 +173,9 @@ class WebsiteRepository:
         return (
             self.db.query(QR)
             .options(
-                joinedload(QR.website),
+                joinedload(QR.vcard),
                 joinedload(QR.template),
             )
-            .filter(QR.id == qr_id, QR.type_key == WEBSITE_TYPE_KEY)
+            .filter(QR.id == qr_id, QR.type_key == VCARD_TYPE_KEY)
             .first()
         )

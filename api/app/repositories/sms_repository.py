@@ -2,27 +2,25 @@ from datetime import date
 
 from sqlalchemy.orm import Session, joinedload
 
-from app.models.qr import QR
-from app.models.template import Template
-from app.models.website import Website
+from app.models import QR, Sms, Template
 from app.repositories.qr_slug import ensure_slug_available
-from app.schemas.website import WebsiteCreate, WebsiteUpdate
+from app.schemas.sms import SmsCreate, SmsUpdate
 
-WEBSITE_TYPE_KEY = "url"
+SMS_TYPE_KEY = "sms"
 
 
-class WebsiteRepository:
+class SmsRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def create(self, payload: WebsiteCreate) -> QR:
+    def create(self, payload: SmsCreate) -> QR:
         ensure_slug_available(self.db, payload.slug)
 
         qr = QR(
-            type_key=WEBSITE_TYPE_KEY,
-            type="Website URL",
+            type_key=SMS_TYPE_KEY,
+            type="SMS",
             name=payload.name,
-            url=payload.url,
+            url=payload.url or None,
             slug=payload.slug,
             dynamic=payload.dynamic,
             qr_type=payload.qr_type,
@@ -44,13 +42,15 @@ class WebsiteRepository:
         )
         template.qr_id = qr.id
 
-        website = Website(
-            url=payload.content.url,
+        sms = Sms(
+            number=payload.content.number,
+            message=payload.content.message,
             created_by=payload.created_by,
         )
-        website.qr_id = qr.id
+        sms.qr_id = qr.id
+
         self.db.add(template)
-        self.db.add(website)
+        self.db.add(sms)
         self.db.commit()
         return self._get_by_qr_id(qr.id)
 
@@ -61,15 +61,15 @@ class WebsiteRepository:
         return (
             self.db.query(QR)
             .options(
-                joinedload(QR.website),
+                joinedload(QR.sms),
                 joinedload(QR.template),
             )
-            .filter(QR.type_key == WEBSITE_TYPE_KEY)
+            .filter(QR.type_key == SMS_TYPE_KEY)
             .order_by(QR.id)
             .all()
         )
 
-    def update(self, qr_id: int, payload: WebsiteUpdate) -> QR | None:
+    def update(self, qr_id: int, payload: SmsUpdate) -> QR | None:
         qr = self._get_by_qr_id(qr_id)
         if qr is None:
             return None
@@ -94,18 +94,23 @@ class WebsiteRepository:
 
         qr.edited_on = date.today()
 
-        if payload.content is not None and payload.content.url is not None:
-            if qr.website is None:
-                qr.website = Website(
+        if payload.content is not None:
+            content = payload.content
+            if qr.sms is None:
+                sms = Sms(
                     qr_id=qr.id,
-                    url=payload.content.url,
+                    number=content.number or "",
+                    message=content.message,
                     created_by=payload.updated_by,
                 )
-                self.db.add(qr.website)
+                self.db.add(sms)
             else:
-                qr.website.url = payload.content.url
+                if content.number is not None:
+                    qr.sms.number = content.number
+                if content.message is not None:
+                    qr.sms.message = content.message
                 if payload.updated_by is not None:
-                    qr.website.updated_by = payload.updated_by
+                    qr.sms.updated_by = payload.updated_by
 
         if payload.template is not None:
             template_data = payload.template.model_dump()
@@ -138,9 +143,9 @@ class WebsiteRepository:
         return (
             self.db.query(QR)
             .options(
-                joinedload(QR.website),
+                joinedload(QR.sms),
                 joinedload(QR.template),
             )
-            .filter(QR.id == qr_id, QR.type_key == WEBSITE_TYPE_KEY)
+            .filter(QR.id == qr_id, QR.type_key == SMS_TYPE_KEY)
             .first()
         )

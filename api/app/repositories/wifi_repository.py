@@ -4,25 +4,25 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.qr import QR
 from app.models.template import Template
-from app.models.website import Website
+from app.models.wifi import Wifi
 from app.repositories.qr_slug import ensure_slug_available
-from app.schemas.website import WebsiteCreate, WebsiteUpdate
+from app.schemas.wifi import WifiCreate, WifiUpdate
 
-WEBSITE_TYPE_KEY = "url"
+WIFI_TYPE_KEY = "wifi"
 
 
-class WebsiteRepository:
+class WifiRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def create(self, payload: WebsiteCreate) -> QR:
+    def create(self, payload: WifiCreate) -> QR:
         ensure_slug_available(self.db, payload.slug)
 
         qr = QR(
-            type_key=WEBSITE_TYPE_KEY,
-            type="Website URL",
+            type_key=WIFI_TYPE_KEY,
+            type="Wi-Fi",
             name=payload.name,
-            url=payload.url,
+            url=payload.url or None,
             slug=payload.slug,
             dynamic=payload.dynamic,
             qr_type=payload.qr_type,
@@ -44,13 +44,17 @@ class WebsiteRepository:
         )
         template.qr_id = qr.id
 
-        website = Website(
-            url=payload.content.url,
+        wifi = Wifi(
+            ssid=payload.content.ssid,
+            auth=payload.content.auth,
+            hidden=payload.content.hidden,
+            password=payload.content.password,
             created_by=payload.created_by,
         )
-        website.qr_id = qr.id
+        wifi.qr_id = qr.id
+
         self.db.add(template)
-        self.db.add(website)
+        self.db.add(wifi)
         self.db.commit()
         return self._get_by_qr_id(qr.id)
 
@@ -61,15 +65,15 @@ class WebsiteRepository:
         return (
             self.db.query(QR)
             .options(
-                joinedload(QR.website),
+                joinedload(QR.wifi),
                 joinedload(QR.template),
             )
-            .filter(QR.type_key == WEBSITE_TYPE_KEY)
+            .filter(QR.type_key == WIFI_TYPE_KEY)
             .order_by(QR.id)
             .all()
         )
 
-    def update(self, qr_id: int, payload: WebsiteUpdate) -> QR | None:
+    def update(self, qr_id: int, payload: WifiUpdate) -> QR | None:
         qr = self._get_by_qr_id(qr_id)
         if qr is None:
             return None
@@ -94,18 +98,29 @@ class WebsiteRepository:
 
         qr.edited_on = date.today()
 
-        if payload.content is not None and payload.content.url is not None:
-            if qr.website is None:
-                qr.website = Website(
+        if payload.content is not None:
+            content = payload.content
+            if qr.wifi is None:
+                wifi = Wifi(
                     qr_id=qr.id,
-                    url=payload.content.url,
+                    ssid=content.ssid or "",
+                    auth=content.auth or "WPA",
+                    hidden=content.hidden if content.hidden is not None else False,
+                    password=content.password,
                     created_by=payload.updated_by,
                 )
-                self.db.add(qr.website)
+                self.db.add(wifi)
             else:
-                qr.website.url = payload.content.url
+                if content.ssid is not None:
+                    qr.wifi.ssid = content.ssid
+                if content.auth is not None:
+                    qr.wifi.auth = content.auth
+                if content.hidden is not None:
+                    qr.wifi.hidden = content.hidden
+                if content.password is not None:
+                    qr.wifi.password = content.password
                 if payload.updated_by is not None:
-                    qr.website.updated_by = payload.updated_by
+                    qr.wifi.updated_by = payload.updated_by
 
         if payload.template is not None:
             template_data = payload.template.model_dump()
@@ -138,9 +153,9 @@ class WebsiteRepository:
         return (
             self.db.query(QR)
             .options(
-                joinedload(QR.website),
+                joinedload(QR.wifi),
                 joinedload(QR.template),
             )
-            .filter(QR.id == qr_id, QR.type_key == WEBSITE_TYPE_KEY)
+            .filter(QR.id == qr_id, QR.type_key == WIFI_TYPE_KEY)
             .first()
         )
