@@ -46,3 +46,67 @@ class QR(Base):
         cascade="delete, delete-orphan",
         single_parent=True,
     )
+    text = relationship(
+        "Text",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Text.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    wifi = relationship(
+        "Wifi",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Wifi.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    vcard = relationship(
+        "Vcard",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Vcard.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    email = relationship(
+        "Email",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Email.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    sms = relationship(
+        "Sms",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Sms.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    phone = relationship(
+        "Phone",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Phone.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    whatsapp = relationship(
+        "Whatsapp",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Whatsapp.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    event = relationship(
+        "Event",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Event.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
