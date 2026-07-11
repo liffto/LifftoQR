@@ -23,8 +23,9 @@
     "dynamic-qr"
   ],
   "engines": {
-    "node": ">=18"
+    "node": "20.x"
   },
+  "packageManager": "pnpm@10.15.0"
   "scripts": {
     "dev": "vite",
     "build": "vite build",
