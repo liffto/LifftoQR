@@ -21,6 +21,8 @@ app = FastAPI(title=settings.app_name, version="0.1.0", debug=settings.debug)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    # Preview deployments: https://liffto-web-app-<hash>-<team>.vercel.app
+    allow_origin_regex=r"https://liffto-web-app[\w-]*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

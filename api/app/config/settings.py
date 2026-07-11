@@ -5,6 +5,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
+# Browser origins always allowed (even if FRONTEND_URL env is only localhost).
+DEFAULT_CORS_ORIGINS: tuple[str, ...] = (
+    "http://localhost:5173",
+    "https://liffto-web-app.vercel.app",
+    "https://lifto-web-app.vercel.app",
+)
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment and .env."""
@@ -46,14 +53,15 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> list[str]:
-        """Comma-separated FRONTEND_URL values, plus local Vite by default."""
-        origins = [
-            self._normalize_url(part.strip())
-            for part in self.frontend_url.split(",")
-            if part.strip()
-        ]
-        if "http://localhost:5173" not in origins:
-            origins.append("http://localhost:5173")
+        """Origins allowed to call this API from a browser."""
+        origins: list[str] = []
+        for part in self.frontend_url.split(","):
+            cleaned = self._normalize_url(part.strip())
+            if cleaned and cleaned not in origins:
+                origins.append(cleaned)
+        for default in DEFAULT_CORS_ORIGINS:
+            if default not in origins:
+                origins.append(default)
         return origins
 
     model_config = SettingsConfigDict(
