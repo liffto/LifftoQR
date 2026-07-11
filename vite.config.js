@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://liffto-qr.vercel.app/',
+        target: 'https://liffto-qr.vercel.app',
         changeOrigin: true,
       },
     },
