@@ -16,6 +16,18 @@ from app.models.sms import Sms
 from app.models.phone import Phone
 from app.models.whatsapp import Whatsapp
 from app.models.event import Event
+from app.models.locations import Location
+from app.models.social_media import SocialMedia
+from app.models.google_review import GoogleReview
+from app.models.pdf import Pdf
+from app.models.video import Video
+from app.models.audio import Audio
+from app.models.app import App
+from app.models.link_tree import LinkTree
+from app.models.link_tree_link import LinkTreeLink
+from app.models.coupon import Coupon
+from app.models.invitation import Invitation
+from app.models.feedback import Feedback
 
 __all__ = [
     "Base",
@@ -39,4 +51,16 @@ __all__ = [
     "Phone",
     "Whatsapp",
     "Event",
+    "Location",
+    "SocialMedia",
+    "GoogleReview",
+    "Pdf",
+    "Video",
+    "Audio",
+    "App",
+    "LinkTree",
+    "LinkTreeLink",
+    "Coupon",
+    "Invitation",
+    "Feedback",
 ]
