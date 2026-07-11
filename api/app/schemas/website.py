@@ -4,7 +4,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class TemplateBase(BaseModel):
-    logo: str | None = Field(default=None, max_length=500)
+    # Preset keys (e.g. "instagram") or data-URL / http(s) image for custom logos.
+    # Custom uploads are base64 data URLs, so this must allow large strings.
+    logo: str | None = Field(default=None, max_length=2_000_000)
     logo_size: float = Field(default=0.4, ge=0.2, le=0.6)
     frame_text: str | None = Field(default=None, max_length=100)
     frame: str = Field(default="none", max_length=100)

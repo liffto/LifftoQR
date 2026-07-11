@@ -30,7 +30,6 @@ import {
   getDraft,
   setDraft,
   clearDraft,
-  saveQR,
   defaultDesign,
   randomSlug,
   uid,
@@ -47,11 +46,8 @@ import {
   DOWNLOAD_FORMATS,
 } from '../lib/qr'
 import { findType, encodeContent, deriveContentName } from '../lib/qrTypes'
-import {
-  recordToWebsiteCreatePayload,
-  recordToWebsiteUpdatePayload,
-} from '../api/qrcode/website.mappers'
-import { useCreateWebsite, useUpdateWebsite, useWebsite } from '../hooks/useWebsite'
+import { useSaveQr } from '../hooks/useSaveQr'
+import { useQr } from '../hooks/useQr'
 import { getApiErrorMessage } from '../utils/errors'
 import TypeFields from '../components/TypeFields'
 import QRView from '../components/QRView'
@@ -466,12 +462,10 @@ const BUILTIN_TEMPLATES = [
 export default function DesignQR() {
   const navigate = useNavigate()
   const { websiteId: websiteIdParam } = useParams()
-  const websiteId = websiteIdParam ? Number(websiteIdParam) : null
-  const isApiMode = websiteId != null && Number.isFinite(websiteId) && websiteId > 0
-  const { data: websiteRecord, isLoading, isError } = useWebsite(isApiMode ? websiteId : null)
-  const createWebsiteMutation = useCreateWebsite()
-  const updateWebsiteMutation = useUpdateWebsite()
-  const isSaving = createWebsiteMutation.isPending || updateWebsiteMutation.isPending
+  const qrId = websiteIdParam ? Number(websiteIdParam) : null
+  const isApiMode = qrId != null && Number.isFinite(qrId) && qrId > 0
+  const { data: apiRecord, isLoading, isError } = useQr(isApiMode ? qrId : null)
+  const { saveQr, isSaving } = useSaveQr()
 
   const qrRef = useRef(null)
   const fileRef = useRef(null)
@@ -486,11 +480,11 @@ export default function DesignQR() {
       if (!getDraft()) navigate('/create')
       return
     }
-    if (websiteRecord) {
-      setRecord(websiteRecord)
-      setSlugDraft(websiteRecord.slug)
+    if (apiRecord) {
+      setRecord(apiRecord)
+      setSlugDraft(apiRecord.slug)
     }
-  }, [isApiMode, websiteRecord, navigate])
+  }, [isApiMode, apiRecord, navigate])
 
   useEffect(() => {
     if (isApiMode && isError) navigate('/dashboard')
@@ -566,23 +560,11 @@ export default function DesignQR() {
     setTemplateOpen(false)
   }
 
-  const saveWebsiteToApi = async (currentRecord) => {
-    if (currentRecord.typeKey !== 'url') {
-      saveQR(currentRecord)
-      return
-    }
-
-    const payload = recordToWebsiteCreatePayload(currentRecord)
-
-    if (isApiMode) {
-      await updateWebsiteMutation.mutateAsync({
-        websiteId,
-        payload: recordToWebsiteUpdatePayload(currentRecord),
-      })
-      return
-    }
-
-    await createWebsiteMutation.mutateAsync(payload)
+  const saveQrToApi = async (currentRecord) => {
+    await saveQr(currentRecord, {
+      qrId,
+      isUpdate: isApiMode,
+    })
   }
 
   const finishAndGoToList = () => {
@@ -594,7 +576,7 @@ export default function DesignQR() {
     if (isSaving) return
 
     try {
-      await saveWebsiteToApi(record)
+      await saveQrToApi(record)
       qrRef.current?.download(format, record.name || 'qr-code')
 
       if (saveTemplate) {
@@ -632,7 +614,7 @@ export default function DesignQR() {
   const tileBase =
     'shrink-0 rounded-[10px] border-2 flex items-center justify-center bg-white transition-colors'
 
-  if (isApiMode && (isLoading || !websiteRecord)) {
+  if (isApiMode && (isLoading || !apiRecord)) {
     return (
       <div className="min-h-screen bg-canvas flex items-center justify-center">
         <p className="text-sm text-ink-muted">Loading your QR design...</p>

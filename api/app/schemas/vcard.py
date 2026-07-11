@@ -6,8 +6,8 @@ from app.schemas.website import TemplateBase, TemplateItemResponse
 
 
 class VcardContentCreate(BaseModel):
-    photo: str | None = Field(default=None, max_length=500)
-    logo: str | None = Field(default=None, max_length=500)
+    photo: str | None = Field(default=None, max_length=2_000_000)
+    logo: str | None = Field(default=None, max_length=2_000_000)
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str | None = Field(default=None, max_length=100)
     org: str | None = Field(default=None, max_length=255)
@@ -39,8 +39,8 @@ class VcardCreate(BaseModel):
 
 
 class VcardContentUpdate(BaseModel):
-    photo: str | None = Field(default=None, max_length=500)
-    logo: str | None = Field(default=None, max_length=500)
+    photo: str | None = Field(default=None, max_length=2_000_000)
+    logo: str | None = Field(default=None, max_length=2_000_000)
     first_name: str | None = Field(default=None, min_length=1, max_length=100)
     last_name: str | None = Field(default=None, max_length=100)
     org: str | None = Field(default=None, max_length=255)

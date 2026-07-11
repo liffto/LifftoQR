@@ -17,7 +17,7 @@ export function recordToInvitationCreatePayload(record: {
   return {
     ...baseRecordFields(record),
     content: {
-      title: record.content?.title || '',
+      title: record.content?.title?.trim() || record.name || 'Invitation',
       url: record.content?.url || record.url || '',
     },
   }

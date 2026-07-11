@@ -18,7 +18,8 @@ export function recordToGoogleReviewCreatePayload(record: {
     ...baseRecordFields(record),
     content: {
       url: record.content?.url || record.url || '',
-      businessName: record.content?.businessName || '',
+      businessName:
+        record.content?.businessName?.trim() || record.name || 'Business',
     },
   }
 }
