@@ -7,7 +7,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 import hashlib
-import jwt
 from jwt import InvalidTokenError, PyJWTError
 
 from app.db.session import get_db
@@ -43,6 +42,7 @@ from app.auth.service import (
     register_user,
     verify_email,
     revoke_token,
+    is_revoked,
     get_user_by_email,
 )
 from app.auth.dependencies import get_current_user, roles_required, oauth2_scheme
@@ -181,29 +181,41 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenPair:
 
 @router.post("/refresh", response_model=TokenPair, summary="Refresh tokens")
 def refresh(req: RefreshRequest, db: Session = Depends(get_db)) -> TokenPair:
-    """Refresh access token using refresh token."""
+    """Issue a new access token from a valid refresh token."""
     try:
         data = decode_jwt(req.refresh_token, settings.jwt_secret_key)
         if data.get(CLAIM_TYP) != "refresh":
             raise ValueError("Not a refresh token")
-        sub = data[CLAIM_SUB]
-        acc = data[CLAIM_ACC]
 
-        # Fetch fresh roles from DB
-        roles = get_user_roles(db, int(sub))
+        jti = data.get(CLAIM_JTI)
+        if jti and is_revoked(db, jti):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token has been revoked",
+            )
 
-        # Re-issue access token
-        new_access = jwt.encode(
+        user_id = int(data[CLAIM_SUB])
+        user = db.get(User, user_id)
+        if not user or not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found or inactive",
+            )
+
+        roles = get_user_roles(db, user.id)
+        new_access = create_jwt(
             {
-                CLAIM_SUB: sub,
-                CLAIM_ACC: acc,
+                CLAIM_SUB: str(user.id),
+                CLAIM_ACC: user.account_id,
                 CLAIM_ROLE: roles,
                 CLAIM_TYP: "access",
             },
             settings.jwt_secret_key,
-            algorithm="HS256",
+            minutes=settings.access_token_expire_minutes,
         )
         return TokenPair(access_token=new_access, refresh_token=req.refresh_token)
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
