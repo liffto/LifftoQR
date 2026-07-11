@@ -1,5 +1,6 @@
 export * from './types'
 
+export * from './qr'
 export * from './website'
 export * from './location'
 export * from './socialMedia'

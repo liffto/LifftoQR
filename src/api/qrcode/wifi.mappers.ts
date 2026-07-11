@@ -2,6 +2,10 @@ import { defaultDesign } from '../../lib/store'
 import { baseRecordFields, itemToBaseRecord } from './mappers.shared'
 import type { WifiItem } from './wifi'
 
+function asBool(value: unknown): boolean {
+  return value === true || value === 'true' || value === 'Yes'
+}
+
 export function recordToWifiCreatePayload(record: {
   name: string
   url?: string
@@ -11,7 +15,12 @@ export function recordToWifiCreatePayload(record: {
   folder?: string
   status?: string
   scans?: number
-  content?: { ssid?: string; auth?: string; hidden?: boolean; password?: string | null }
+  content?: {
+    ssid?: string
+    auth?: string
+    hidden?: boolean | string
+    password?: string | null
+  }
   design: ReturnType<typeof defaultDesign>
 }) {
   return {
@@ -19,7 +28,7 @@ export function recordToWifiCreatePayload(record: {
     content: {
       ssid: record.content?.ssid || '',
       auth: record.content?.auth || 'WPA',
-      hidden: Boolean(record.content?.hidden),
+      hidden: asBool(record.content?.hidden),
       password: record.content?.password ?? null,
     },
   }
@@ -34,7 +43,12 @@ export function recordToWifiUpdatePayload(record: {
   folder?: string
   status?: string
   scans?: number
-  content?: { ssid?: string; auth?: string; hidden?: boolean; password?: string | null }
+  content?: {
+    ssid?: string
+    auth?: string
+    hidden?: boolean | string
+    password?: string | null
+  }
   design: ReturnType<typeof defaultDesign>
 }) {
   return recordToWifiCreatePayload(record)

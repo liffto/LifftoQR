@@ -18,17 +18,8 @@ import {
   TrendingUp,
   ExternalLink,
 } from 'lucide-react'
-import {
-  deleteQR,
-  duplicateQR,
-  setDraft,
-  clearDraft,
-  shortUrl,
-  formatDate,
-  copyToClipboard,
-} from '../lib/store'
-import { deleteWebsite } from '../api/qrcode/website'
-import { useWebsites } from '../hooks/useWebsite'
+import { deleteQR, duplicateQR, setDraft, clearDraft, shortUrl, formatDate, copyToClipboard } from '../lib/store'
+import { useDeleteQr, useQrs } from '../hooks/useQrs'
 import { DOWNLOAD_FORMATS } from '../lib/qr'
 import QRView from '../components/QRView'
 import Layout from '../components/Layout'
@@ -608,7 +599,8 @@ function QrCard({ row, onOpenModal }) {
 /* ─── Dashboard page ─────────────────────────────────────────────────── */
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { data: list = [], isLoading, refetch } = useWebsites()
+  const { data: list = [], isLoading, refetch } = useQrs()
+  const deleteQrMutation = useDeleteQr()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('All')
   const [visibleCount, setVisibleCount] = useState(BATCH)
@@ -680,7 +672,7 @@ export default function Dashboard() {
 
   const handleDeleteModal = async (id) => {
     if (typeof id === 'number') {
-      await deleteWebsite(id)
+      await deleteQrMutation.mutateAsync(id)
     } else {
       deleteQR(id)
     }

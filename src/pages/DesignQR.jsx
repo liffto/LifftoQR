@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   ChevronLeft,
   ChevronDown,
@@ -30,7 +31,6 @@ import {
   getDraft,
   setDraft,
   clearDraft,
-  saveQR,
   defaultDesign,
   randomSlug,
   uid,
@@ -47,11 +47,9 @@ import {
   DOWNLOAD_FORMATS,
 } from '../lib/qr'
 import { findType, encodeContent, deriveContentName } from '../lib/qrTypes'
-import {
-  recordToWebsiteCreatePayload,
-  recordToWebsiteUpdatePayload,
-} from '../api/qrcode/website.mappers'
-import { useCreateWebsite, useUpdateWebsite, useWebsite } from '../hooks/useWebsite'
+import { compressImageFile } from '../lib/imageCompress'
+import { useSaveQr } from '../hooks/useSaveQr'
+import { useQr, qrQueryKey } from '../hooks/useQr'
 import { getApiErrorMessage } from '../utils/errors'
 import TypeFields from '../components/TypeFields'
 import QRView from '../components/QRView'
@@ -465,16 +463,18 @@ const BUILTIN_TEMPLATES = [
 
 export default function DesignQR() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { websiteId: websiteIdParam } = useParams()
-  const websiteId = websiteIdParam ? Number(websiteIdParam) : null
-  const isApiMode = websiteId != null && Number.isFinite(websiteId) && websiteId > 0
-  const { data: websiteRecord, isLoading, isError } = useWebsite(isApiMode ? websiteId : null)
-  const createWebsiteMutation = useCreateWebsite()
-  const updateWebsiteMutation = useUpdateWebsite()
-  const isSaving = createWebsiteMutation.isPending || updateWebsiteMutation.isPending
+  const qrId = websiteIdParam ? Number(websiteIdParam) : null
+  const isApiMode = qrId != null && Number.isFinite(qrId) && qrId > 0
+  const { data: apiRecord, isLoading, isError } = useQr(isApiMode ? qrId : null)
+  const { saveQr, isSaving } = useSaveQr()
 
   const qrRef = useRef(null)
   const fileRef = useRef(null)
+  // Only hydrate from the API once per QR id — otherwise refetches / new
+  // select() object identities overwrite in-progress edits (e.g. Remove logo).
+  const hydratedQrIdRef = useRef(null)
 
   const [record, setRecord] = useState(() =>
     isApiMode ? fallbackRecord() : getDraft() || fallbackRecord(),
@@ -482,15 +482,20 @@ export default function DesignQR() {
   const [userTemplates, setUserTemplates] = useState(() => getTemplates())
 
   useEffect(() => {
+    hydratedQrIdRef.current = null
+  }, [qrId])
+
+  useEffect(() => {
     if (!isApiMode) {
       if (!getDraft()) navigate('/create')
       return
     }
-    if (websiteRecord) {
-      setRecord(websiteRecord)
-      setSlugDraft(websiteRecord.slug)
-    }
-  }, [isApiMode, websiteRecord, navigate])
+    if (!apiRecord) return
+    if (hydratedQrIdRef.current === apiRecord.id) return
+    hydratedQrIdRef.current = apiRecord.id
+    setRecord(apiRecord)
+    setSlugDraft(apiRecord.slug)
+  }, [isApiMode, apiRecord, navigate])
 
   useEffect(() => {
     if (isApiMode && isError) navigate('/dashboard')
@@ -550,13 +555,16 @@ export default function DesignQR() {
   const design = record.design
 
   const onUploadClick = () => fileRef.current?.click()
-  const onFileChange = (e) => {
+  const onFileChange = async (e) => {
     const file = e.target.files && e.target.files[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => updateDesign({ logo: reader.result })
-    reader.readAsDataURL(file)
     e.target.value = ''
+    if (!file) return
+    try {
+      const dataUrl = await compressImageFile(file)
+      updateDesign({ logo: dataUrl })
+    } catch (err) {
+      toast.error(err?.message || 'Could not upload that image. Try another file.')
+    }
   }
 
   const allTemplates = [...BUILTIN_TEMPLATES, ...userTemplates]
@@ -566,23 +574,11 @@ export default function DesignQR() {
     setTemplateOpen(false)
   }
 
-  const saveWebsiteToApi = async (currentRecord) => {
-    if (currentRecord.typeKey !== 'url') {
-      saveQR(currentRecord)
-      return
-    }
-
-    const payload = recordToWebsiteCreatePayload(currentRecord)
-
-    if (isApiMode) {
-      await updateWebsiteMutation.mutateAsync({
-        websiteId,
-        payload: recordToWebsiteUpdatePayload(currentRecord),
-      })
-      return
-    }
-
-    await createWebsiteMutation.mutateAsync(payload)
+  const saveQrToApi = async (currentRecord) => {
+    await saveQr(currentRecord, {
+      qrId,
+      isUpdate: isApiMode,
+    })
   }
 
   const finishAndGoToList = () => {
@@ -594,7 +590,10 @@ export default function DesignQR() {
     if (isSaving) return
 
     try {
-      await saveWebsiteToApi(record)
+      await saveQrToApi(record)
+      if (isApiMode && qrId) {
+        await queryClient.invalidateQueries({ queryKey: qrQueryKey(qrId) })
+      }
       qrRef.current?.download(format, record.name || 'qr-code')
 
       if (saveTemplate) {
@@ -632,7 +631,7 @@ export default function DesignQR() {
   const tileBase =
     'shrink-0 rounded-[10px] border-2 flex items-center justify-center bg-white transition-colors'
 
-  if (isApiMode && (isLoading || !websiteRecord)) {
+  if (isApiMode && (isLoading || !apiRecord)) {
     return (
       <div className="min-h-screen bg-canvas flex items-center justify-center">
         <p className="text-sm text-ink-muted">Loading your QR design...</p>
@@ -824,34 +823,7 @@ export default function DesignQR() {
               ))}
             </div>
 
-            {/* Upload zone */}
-            {design.logo != null &&
-            typeof design.logo === 'string' &&
-            design.logo.startsWith('data:') ? (
-              <div className="mt-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <span className="w-20 text-sm text-ink-soft">Logo Size</span>
-                  <input
-                    type="range"
-                    className="range-primary flex-1"
-                    min={0.2}
-                    max={0.6}
-                    step={0.02}
-                    value={design.logoSize}
-                    onChange={(e) =>
-                      updateDesign({ logoSize: parseFloat(e.target.value) })
-                    }
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => updateDesign({ logo: null })}
-                  className="flex w-full items-center justify-center gap-2 rounded-[10px] border-2 border-dashed border-danger py-3 text-sm font-medium text-danger hover:bg-red-50"
-                >
-                  <Trash2 size={16} /> Remove logo
-                </button>
-              </div>
-            ) : design.logo != null ? (
+            {design.logo != null && (
               <div className="mt-4 flex items-center gap-3">
                 <span className="w-20 text-sm text-ink-soft">Logo Size</span>
                 <input
@@ -866,37 +838,57 @@ export default function DesignQR() {
                   }
                 />
               </div>
-            ) : (
-              <>
-                {/* Upload drop zone */}
-                <button
-                  type="button"
-                  onClick={onUploadClick}
-                  className="mt-4 w-full rounded-[10px] border-2 border-dashed border-line hover:border-primary hover:bg-primary/[0.02] transition-colors p-5 flex flex-col items-center gap-2 group"
-                >
-                  <div className="w-10 h-10 rounded-[10px] bg-canvas border border-line group-hover:border-primary group-hover:bg-primary/10 flex items-center justify-center transition-colors">
-                    <CloudUpload
-                      size={20}
-                      className="text-ink-muted group-hover:text-primary transition-colors"
-                    />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-ink-soft group-hover:text-primary transition-colors">
-                      Upload your logo
-                    </p>
-                    <p className="text-xs text-ink-faint mt-0.5">
-                      PNG, JPG, SVG · Max 2MB
-                    </p>
-                  </div>
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={onFileChange}
+            )}
+
+            {/* Always available: upload your own logo (also replaces a preset) */}
+            <button
+              type="button"
+              onClick={onUploadClick}
+              className="mt-4 w-full rounded-[10px] border-2 border-dashed border-line hover:border-primary hover:bg-primary/[0.02] transition-colors p-5 flex flex-col items-center gap-2 group"
+            >
+              {typeof design.logo === 'string' &&
+              design.logo.startsWith('data:') ? (
+                <img
+                  src={design.logo}
+                  alt="Uploaded logo"
+                  className="h-12 w-12 rounded-[8px] object-contain border border-line bg-white"
                 />
-              </>
+              ) : (
+                <div className="w-10 h-10 rounded-[10px] bg-canvas border border-line group-hover:border-primary group-hover:bg-primary/10 flex items-center justify-center transition-colors">
+                  <CloudUpload
+                    size={20}
+                    className="text-ink-muted group-hover:text-primary transition-colors"
+                  />
+                </div>
+              )}
+              <div className="text-center">
+                <p className="text-sm font-medium text-ink-soft group-hover:text-primary transition-colors">
+                  {typeof design.logo === 'string' &&
+                  design.logo.startsWith('data:')
+                    ? 'Change uploaded logo'
+                    : 'Upload your logo'}
+                </p>
+                <p className="text-xs text-ink-faint mt-0.5">
+                  PNG, JPG, SVG · Max 2MB
+                </p>
+              </div>
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onFileChange}
+            />
+
+            {design.logo != null && (
+              <button
+                type="button"
+                onClick={() => updateDesign({ logo: null })}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-[10px] border-2 border-dashed border-danger py-3 text-sm font-medium text-danger hover:bg-red-50"
+              >
+                <Trash2 size={16} /> Remove logo
+              </button>
             )}
           </AccordionSection>
 
