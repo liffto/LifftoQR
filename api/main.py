@@ -1,17 +1,10 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+"""ASGI entrypoint for local uvicorn and Vercel.
 
-app = FastAPI()
+Vercel looks for `app` in this file. The real FastAPI application (routes,
+auth, CORS, etc.) lives in `app.main` — re-export it so production is not an
+empty FastAPI shell.
+"""
 
-origins = [
-    "http://localhost:5173",
-    "https://lifto-web-app.vercel.app",
-]
+from app.main import app
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+__all__ = ["app"]
