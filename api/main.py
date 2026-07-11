@@ -1,7 +1,17 @@
-from app.main import app
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
+app = FastAPI()
 
-if __name__ == "__main__":
-    import uvicorn
+origins = [
+    "http://localhost:5173",
+    "https://lifto-web-app.vercel.app",
+]
 
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
