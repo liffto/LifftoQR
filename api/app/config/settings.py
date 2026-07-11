@@ -44,6 +44,18 @@ class Settings(BaseSettings):
     def model_post_init(self, __context) -> None:
         self.frontend_url = self._normalize_url(self.frontend_url)
 
+    @property
+    def cors_origins(self) -> list[str]:
+        """Comma-separated FRONTEND_URL values, plus local Vite by default."""
+        origins = [
+            self._normalize_url(part.strip())
+            for part in self.frontend_url.split(",")
+            if part.strip()
+        ]
+        if "http://localhost:5173" not in origins:
+            origins.append("http://localhost:5173")
+        return origins
+
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
         env_file_encoding="utf-8",
