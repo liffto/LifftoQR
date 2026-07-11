@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.qr import QR
 from app.models.template import Template
 from app.models.website import Website
+from app.repositories.qr_slug import ensure_slug_available
 from app.schemas.website import WebsiteCreate, WebsiteUpdate
 
 WEBSITE_TYPE_KEY = "url"
@@ -15,6 +16,8 @@ class WebsiteRepository:
         self.db = db
 
     def create(self, payload: WebsiteCreate) -> QR:
+        ensure_slug_available(self.db, payload.slug)
+
         qr = QR(
             type_key=WEBSITE_TYPE_KEY,
             type="Website URL",
@@ -70,6 +73,9 @@ class WebsiteRepository:
         qr = self._get_by_qr_id(qr_id)
         if qr is None:
             return None
+
+        if payload.slug is not None:
+            ensure_slug_available(self.db, payload.slug, exclude_qr_id=qr_id)
 
         for field in (
             "name",

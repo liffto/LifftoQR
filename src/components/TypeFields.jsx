@@ -1,4 +1,5 @@
 import { Plus, X, ChevronDown, ImagePlus } from 'lucide-react'
+import { compressImageFile } from '../lib/imageCompress'
 
 // Pretty option labels for selects (values stay raw so encoders keep working).
 const OPTION_LABELS = {
@@ -91,15 +92,18 @@ function LinkListField({ field, value, onChange }) {
   )
 }
 
-// Image upload → stored as a data URL in content[key]
+// Image upload → stored as a compressed data URL in content[key]
 function ImageField({ field, value, onChange }) {
-  const onFile = (e) => {
+  const onFile = async (e) => {
     const file = e.target.files && e.target.files[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => onChange(field.key, reader.result)
-    reader.readAsDataURL(file)
     e.target.value = ''
+    if (!file) return
+    try {
+      const dataUrl = await compressImageFile(file)
+      onChange(field.key, dataUrl)
+    } catch {
+      // Keep existing value if compression fails
+    }
   }
   const round = field.shape === 'circle' ? 'rounded-full' : 'rounded-[10px]'
   return (

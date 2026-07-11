@@ -7,6 +7,7 @@ import {
 } from '../api/qrcode/website'
 import type { WebsiteCreatePayload, WebsiteUpdatePayload } from '../api/qrcode/website'
 import { websiteToRecord } from '../api/qrcode/website.mappers'
+import { qrsQueryKey } from './useQrs'
 
 export const websiteQueryKey = (websiteId: number) => ['website', websiteId] as const
 export const websitesQueryKey = ['websites'] as const
@@ -35,6 +36,7 @@ export function useCreateWebsite() {
     mutationFn: (payload: WebsiteCreatePayload) => createWebsite(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: websitesQueryKey })
+      queryClient.invalidateQueries({ queryKey: qrsQueryKey })
     },
   })
 }
@@ -53,6 +55,7 @@ export function useUpdateWebsite() {
     onSuccess: (_, { websiteId }) => {
       queryClient.invalidateQueries({ queryKey: websitesQueryKey })
       queryClient.invalidateQueries({ queryKey: websiteQueryKey(websiteId) })
+      queryClient.invalidateQueries({ queryKey: qrsQueryKey })
     },
   })
 }
