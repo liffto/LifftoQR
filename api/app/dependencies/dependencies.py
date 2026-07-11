@@ -22,6 +22,7 @@ from app.controllers.video_controller import VideoController
 from app.controllers.website_controller import WebsiteController
 from app.controllers.whatsapp_controller import WhatsappController
 from app.controllers.wifi_controller import WifiController
+from app.controllers.qr_controller import QrController
 from app.db.session import get_db
 from app.repositories.app_repository import AppRepository
 from app.repositories.audio_repository import AudioRepository
@@ -35,6 +36,7 @@ from app.repositories.link_tree_repository import LinkTreeRepository
 from app.repositories.location_repository import LocationRepository
 from app.repositories.pdf_repository import PdfRepository
 from app.repositories.phone_repository import PhoneRepository
+from app.repositories.qr_repository import QrRepository
 from app.repositories.sms_repository import SmsRepository
 from app.repositories.social_media_repository import SocialMediaRepository
 from app.repositories.text_repository import TextRepository
@@ -56,6 +58,7 @@ from app.services.link_tree_service import LinkTreeService
 from app.services.location_service import LocationService
 from app.services.pdf_service import PdfService
 from app.services.phone_service import PhoneService
+from app.services.qr_service import QrService
 from app.services.sms_service import SmsService
 from app.services.social_media_service import SocialMediaService
 from app.services.text_service import TextService
@@ -149,3 +152,7 @@ def get_invitation_controller(db: Session = Depends(get_db)) -> InvitationContro
 
 def get_feedback_controller(db: Session = Depends(get_db)) -> FeedbackController:
     return FeedbackController(FeedbackService(FeedbackRepository(db)))
+
+
+def get_qr_controller(db: Session = Depends(get_db)) -> QrController:
+    return QrController(QrService(QrRepository(db)))

@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
@@ -15,7 +15,7 @@ class Template(Base):
         unique=True,
         index=True,
     )
-    logo = Column(String(500), nullable=True)
+    logo = Column(Text, nullable=True)
     logo_size = Column(Float, nullable=False, default=0.4)
     frame_text = Column(String(100), nullable=True)
     frame = Column(String(100), nullable=False, default="none")

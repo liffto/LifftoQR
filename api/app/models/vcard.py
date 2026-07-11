@@ -15,8 +15,8 @@ class Vcard(Base):
         unique=True,
         index=True,
     )
-    photo = Column(String(500), nullable=True)
-    logo = Column(String(500), nullable=True)
+    photo = Column(SqlText, nullable=True)
+    logo = Column(SqlText, nullable=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=True)
     org = Column(String(255), nullable=True)

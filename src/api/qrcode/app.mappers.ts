@@ -20,7 +20,7 @@ export function recordToAppCreatePayload(record: {
       iosUrl: record.content?.iosUrl ?? null,
       androidUrl: record.content?.androidUrl ?? null,
       fallbackUrl: record.content?.fallbackUrl ?? null,
-      name: record.content?.name || '',
+      name: record.content?.name?.trim() || record.name || 'App',
     },
   }
 }
