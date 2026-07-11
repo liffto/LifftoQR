@@ -17,7 +17,7 @@ export function recordToLinkTreeCreatePayload(record: {
   return {
     ...baseRecordFields(record),
     content: {
-      title: record.content?.title || '',
+      title: record.content?.title?.trim() || record.name || 'My Links',
       links: (record.content?.links || []).map((link, index) => ({
         label: link.label || '',
         url: link.url || '',

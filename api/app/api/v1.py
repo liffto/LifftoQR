@@ -15,6 +15,7 @@ from app.routes.link_tree_routes import router as link_tree_router
 from app.routes.location_routes import router as location_router
 from app.routes.pdf_routes import router as pdf_router
 from app.routes.phone_routes import router as phone_router
+from app.routes.qr_routes import router as qr_router
 from app.routes.sms_routes import router as sms_router
 from app.routes.social_media_routes import router as social_media_router
 from app.routes.text_routes import router as text_router
@@ -26,6 +27,7 @@ from app.routes.wifi_routes import router as wifi_router
 
 api_v1 = APIRouter()
 api_v1.include_router(auth_router)
+api_v1.include_router(qr_router)
 api_v1.include_router(website_router)
 api_v1.include_router(text_router)
 api_v1.include_router(wifi_router)
