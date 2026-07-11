@@ -92,8 +92,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           getRefreshToken(),
         )
       } else if (currentUserQuery.isError) {
-        clearUser()
-        queryClientInstance.removeQueries({ queryKey: CURRENT_USER_QUERY_KEY })
+        // Only clear session when refresh also failed (no tokens left).
+        // A recoverable 401 is handled by the axios refresh interceptor.
+        if (!getAccessToken() && !getRefreshToken()) {
+          clearUser()
+          queryClientInstance.removeQueries({ queryKey: CURRENT_USER_QUERY_KEY })
+        }
       }
       setBootstrapped(true)
     }

@@ -46,3 +46,155 @@ class QR(Base):
         cascade="delete, delete-orphan",
         single_parent=True,
     )
+    text = relationship(
+        "Text",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Text.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    wifi = relationship(
+        "Wifi",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Wifi.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    vcard = relationship(
+        "Vcard",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Vcard.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    email = relationship(
+        "Email",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Email.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    sms = relationship(
+        "Sms",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Sms.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    phone = relationship(
+        "Phone",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Phone.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    whatsapp = relationship(
+        "Whatsapp",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Whatsapp.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    event = relationship(
+        "Event",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Event.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    location = relationship(
+        "Location",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Location.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    social_media = relationship(
+        "SocialMedia",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="SocialMedia.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    google_review = relationship(
+        "GoogleReview",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="GoogleReview.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    pdf = relationship(
+        "Pdf",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Pdf.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    video = relationship(
+        "Video",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Video.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    audio = relationship(
+        "Audio",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Audio.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    app = relationship(
+        "App",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="App.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    link_tree = relationship(
+        "LinkTree",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="LinkTree.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    coupon = relationship(
+        "Coupon",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Coupon.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    invitation = relationship(
+        "Invitation",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Invitation.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )
+    feedback = relationship(
+        "Feedback",
+        back_populates="qr",
+        uselist=False,
+        foreign_keys="Feedback.qr_id",
+        cascade="delete, delete-orphan",
+        single_parent=True,
+    )

@@ -1,9 +1,16 @@
 import { api } from './axios'
-import type { ApiUserResponse, LoginResponse } from '../types/auth'
+import type { ApiUserResponse, LoginResponse, TokenPair } from '../types/auth'
 
 export async function googleLogin(idToken: string): Promise<LoginResponse> {
   const { data } = await api.post<LoginResponse>('/auth/google', {
     id_token: idToken,
+  })
+  return data
+}
+
+export async function refreshTokens(refreshToken: string): Promise<TokenPair> {
+  const { data } = await api.post<TokenPair>('/auth/refresh', {
+    refresh_token: refreshToken,
   })
   return data
 }

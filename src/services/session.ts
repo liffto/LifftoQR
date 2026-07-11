@@ -63,5 +63,5 @@ export function clearUser(): void {
 
 export function hasStoredSession(): boolean {
   const session = readSession()
-  return Boolean(session.accessToken)
+  return Boolean(session.accessToken || session.refreshToken)
 }
