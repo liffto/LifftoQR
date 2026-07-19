@@ -74,7 +74,7 @@ cp .env.example .env
 | Variable                | Default         | Description                           |
 | ----------------------- | --------------- | ------------------------------------- |
 | `VITE_APP_NAME`         | `Affinityx QR`  | App name shown in the UI              |
-| `VITE_SHORT_URL_DOMAIN` | `affinityx.com` | Domain used for generated short links |
+| `VITE_SHORT_URL_DOMAIN` | `liffto-qr.vercel.app` | Domain used for generated short links |
 
 > ⚠️ **Vite exposes any `VITE_`-prefixed variable to the browser bundle.** Never put real secrets or API keys in client-side env vars — they ship to every visitor.
 

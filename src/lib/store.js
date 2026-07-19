@@ -177,8 +177,18 @@ export const formatDate = (iso) => {
   }
 }
 
-export const SHORT_HOST = 'affinityx.com'
+// Short-link host for Dynamic QRs (display + encode). Override via VITE_SHORT_URL_DOMAIN.
+const rawShortDomain =
+  (typeof import.meta !== 'undefined' &&
+    import.meta.env?.VITE_SHORT_URL_DOMAIN) ||
+  'liffto-qr.vercel.app'
+export const SHORT_HOST = String(rawShortDomain)
+  .replace(/^https?:\/\//i, '')
+  .replace(/\/$/, '')
+export const SHORT_BASE_URL = `https://${SHORT_HOST}`
 export const shortUrl = (slug) => `${SHORT_HOST}/${slug}`
+export const shortUrlAbsolute = (slug) =>
+  slug ? `${SHORT_BASE_URL}/${slug}` : SHORT_BASE_URL
 
 // ---- templates -----------------------------------------------------------
 

@@ -8,6 +8,12 @@ import {
 import QRCodeStyling from 'qr-code-styling'
 import { buildQRConfig } from '../lib/qr'
 
+// On-screen previews are small (down to ~36px thumbnails), and qr-code-styling
+// rasterizes PNG/JPEG/WEBP at the instance's render size — so downloading the
+// preview directly produces a pixelated file. For raster exports we render a
+// throwaway high-resolution instance instead, so the file is crisp for print.
+const DOWNLOAD_SIZE = 2048
+
 // Renders a live, styled QR for a record.
 // Exposes `download(format, name)` via ref for the download buttons.
 //
@@ -61,8 +67,16 @@ const QRView = forwardRef(function QRView(
 
   useImperativeHandle(ref, () => ({
     download: (format = 'PNG', name = 'qr-code') => {
-      if (!instanceRef.current) return
-      instanceRef.current.download({ name, extension: format.toLowerCase() })
+      const extension = format.toLowerCase()
+      // SVG is vector — resolution-independent, so the on-screen instance is fine.
+      if (extension === 'svg') {
+        instanceRef.current?.download({ name, extension })
+        return
+      }
+      // Raster formats: render a fresh high-resolution instance from the same
+      // config so the exported image isn't limited to the preview size.
+      const hiRes = new QRCodeStyling(buildQRConfig(record, DOWNLOAD_SIZE))
+      hiRes.download({ name, extension })
     },
   }))
 
