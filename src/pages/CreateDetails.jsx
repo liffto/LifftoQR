@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, ArrowRight, Info } from 'lucide-react'
-import { getDraft, setDraft } from '../lib/store'
+import { getDraft, setDraft, SHORT_HOST } from '../lib/store'
 import {
   findType,
   isComplete,
@@ -188,7 +188,7 @@ export default function CreateDetails() {
           <ScanPreview record={record} />
           <p className="mt-3 text-center text-[11px] text-ink-faint leading-relaxed max-w-[280px] mx-auto">
             {record.dynamic
-              ? 'Dynamic QR — opens through affinityx.com so you can edit it later and track scans.'
+              ? `Dynamic QR — opens through ${SHORT_HOST} so you can edit it later and track scans.`
               : 'Static QR — your device handles this directly when scanned.'}
           </p>
         </div>

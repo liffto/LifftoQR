@@ -2,6 +2,7 @@
 // and exposes the metadata that the design controls render from.
 
 import { findEncoder, encodeContent } from './qrEncoders'
+import { SHORT_BASE_URL, shortUrlAbsolute } from './store'
 
 // --- inline SVG brand logos (data URLs so they embed cleanly in the QR) ----
 
@@ -163,7 +164,7 @@ const gradient = (c1, c2) => ({
 // - Legacy records (no typeKey) keep the original URL behaviour.
 export const buildPayload = (record) => {
   if (record?.dynamic && record?.slug) {
-    return `https://affinityx.com/${record.slug}`
+    return shortUrlAbsolute(record.slug)
   }
   const typeKey = record?.typeKey
   const t = typeKey ? findEncoder(typeKey) : null
@@ -171,10 +172,10 @@ export const buildPayload = (record) => {
     return (
       encodeContent(typeKey, record.content || {}) ||
       record?.url ||
-      'https://affinityx.com'
+      SHORT_BASE_URL
     )
   }
-  return record?.url || 'https://affinityx.com'
+  return record?.url || SHORT_BASE_URL
 }
 
 export const buildQRConfig = (record, size = 280) => {
