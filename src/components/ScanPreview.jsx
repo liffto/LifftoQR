@@ -38,6 +38,7 @@ import {
   FaTelegram,
 } from 'react-icons/fa6'
 import { findType } from '../lib/qrTypes'
+import { shortUrl } from '../lib/store'
 import QRView from './QRView'
 
 // Brand identity per social platform (for the scan preview).
@@ -100,7 +101,7 @@ function AddressBar({ slug }) {
     <div className="bg-white px-3 pb-2 pt-9">
       <div className="flex items-center gap-1.5 rounded-full bg-canvas px-3 py-1.5 text-[11px] text-ink-muted">
         <Lock size={10} className="shrink-0" />
-        <span className="truncate">affinityx.com/{slug || 'xxxx'}</span>
+        <span className="truncate">{shortUrl(slug || 'xxxx')}</span>
       </div>
     </div>
   )

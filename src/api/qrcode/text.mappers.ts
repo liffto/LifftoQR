@@ -1,4 +1,4 @@
-import { defaultDesign } from '../../lib/store'
+import { defaultDesign, shortUrlAbsolute, SHORT_BASE_URL } from '../../lib/store'
 import { baseRecordFields, itemToBaseRecord } from './mappers.shared'
 import type { TextItem } from './text'
 
@@ -8,10 +8,10 @@ function resolveTextUrl(record: {
   content?: { text?: string }
 }) {
   if (record.url && record.url.trim()) return record.url
-  if (record.slug) return `https://affinityx.com/${record.slug}`
+  if (record.slug) return shortUrlAbsolute(record.slug)
   const text = record.content?.text?.trim()
   if (text) return text.slice(0, 500)
-  return 'https://affinityx.com/text'
+  return `${SHORT_BASE_URL}/text`
 }
 
 export function recordToTextCreatePayload(record: {

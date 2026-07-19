@@ -40,7 +40,9 @@ export default function GoogleSignInButton({
 
     if (!googleButton) {
       onError?.(
-        new Error('Google sign-in is still loading. Please wait a moment and try again.'),
+        new Error(
+          'Google sign-in is still loading. Please wait a moment and try again.',
+        ),
       )
       return
     }
@@ -56,7 +58,7 @@ export default function GoogleSignInButton({
         type="button"
         onClick={handleClick}
         disabled={isDisabled}
-        className="w-full h-[52px] rounded-[10px] border border-line bg-white hover:bg-canvas/80 hover:border-primary/30 flex items-center justify-center gap-3 font-semibold text-ink transition-colors shadow-sm disabled:opacity-70"
+        className="google-signin-btn"
       >
         {loading ? (
           <>

@@ -30,7 +30,7 @@ const INITIAL = [
     bg: 'bg-primary/10',
     fg: 'text-primary',
     title: 'First Scan!',
-    body: '"affinityx.com/m7c0YZ" received its very first scan — congratulations!',
+    body: '"liffto-qr.vercel.app/m7c0YZ" received its very first scan — congratulations!',
     time: '1 hr ago',
     day: 'today',
     read: false,
