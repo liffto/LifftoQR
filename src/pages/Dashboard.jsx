@@ -17,17 +17,154 @@ import {
   Plus,
   TrendingUp,
   ExternalLink,
+  LayoutGrid,
+  List,
 } from 'lucide-react'
-import { deleteQR, duplicateQR, setDraft, clearDraft, shortUrl, formatDate, copyToClipboard } from '../lib/store'
-import { useDeleteQr, useQrs } from '../hooks/useQrs'
+import {
+  setDraft,
+  clearDraft,
+  shortUrl,
+  formatDate,
+  copyToClipboard,
+  duplicateQR,
+  deleteQR,
+} from '../lib/store'
+import { useQrs, useDeleteQr, useSetQrStatus } from '../hooks/useQrs'
 import { DOWNLOAD_FORMATS } from '../lib/qr'
+import { findType } from '../lib/qrTypes'
 import QRView from '../components/QRView'
 import Layout from '../components/Layout'
+import { Toggle } from '../components/ui'
 
 const normaliseType = (t) => (t === 'Statistic' ? 'Static QR' : t)
 
 const FILTERS = ['All', 'Dynamic QR', 'Static QR']
 const BATCH = 8
+const VIEWS = ['card', 'table']
+
+// Device-appropriate default when the user hasn't picked a view yet: the compact
+// table/list on phones, the roomier card grid on larger screens. An explicit
+// choice (persisted to localStorage) always wins over this.
+const defaultView = () =>
+  typeof window !== 'undefined' && window.innerWidth < 768 ? 'table' : 'card'
+
+/* ─── Shared card primitives ─────────────────────────────────────────── */
+// The type pill + the short-URL copy toggle are rendered identically across the
+// table row, the mobile list card, and the grid card — extracted so the colour
+// rule and the copy-with-feedback behaviour live in one place.
+function TypeBadge({ type, short = false }) {
+  return (
+    <span
+      className={`inline-block shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+        type === 'Dynamic QR'
+          ? 'bg-primary/10 text-primary'
+          : 'bg-emerald-50 text-emerald-600'
+      }`}
+    >
+      {short ? type.replace(' QR', '') : type}
+    </span>
+  )
+}
+
+// Content type of the QR (Website URL, Text, Wi-Fi, Contact Card, …) — the icon
+// + label from the type registry, keyed off the record's typeKey. Distinct from
+// the Dynamic/Static "mode" shown by TypeBadge.
+function ContentType({ typeKey, className = '' }) {
+  const t = findType(typeKey)
+  const Icon = t.Icon
+  return (
+    <span className={`inline-flex min-w-0 items-center gap-1.5 ${className}`}>
+      <span
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-[10px] ${t.tint}`}
+      >
+        <Icon size={13} />
+      </span>
+      <span className="truncate text-[13px] font-medium text-ink">
+        {t.label}
+      </span>
+    </span>
+  )
+}
+
+// Active/Inactive status pill (dot + label). Dynamic QRs can be toggled
+// inactive; anything not explicitly 'Inactive' reads as Active.
+function isInactiveStatus(status) {
+  return (
+    status === 'Inactive' ||
+    status === false ||
+    status === 0 ||
+    status === 'false'
+  )
+}
+
+function StatusIndicator({ status, className = '' }) {
+  const inactive = isInactiveStatus(status)
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 font-semibold ${inactive ? 'text-ink-faint' : 'text-success'} ${className}`}
+    >
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${inactive ? 'bg-ink-faint' : 'bg-success'}`}
+      />
+      {inactive ? 'Inactive' : 'Active'}
+    </span>
+  )
+}
+
+function useCopySlug(slug) {
+  const [copied, setCopied] = useState(false)
+  const copy = (e) => {
+    e.stopPropagation()
+    copyToClipboard(shortUrl(slug))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+  return [copied, copy]
+}
+
+function CopySlugButton({ slug }) {
+  const [copied, copy] = useCopySlug(slug)
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className={`shrink-0 transition-colors ${copied ? 'text-success' : 'text-ink-faint hover:text-primary'}`}
+      title={copied ? 'Copied!' : 'Copy short URL'}
+      aria-label={copied ? 'Copied' : 'Copy short URL'}
+    >
+      {copied ? <Check size={12} /> : <Copy size={12} />}
+    </button>
+  )
+}
+
+function ViewToggle({ view, onChange, className = '' }) {
+  return (
+    <div
+      className={`flex items-center gap-1 rounded-[10px] bg-canvas p-1 shrink-0 ${className}`}
+    >
+      {[
+        { k: 'card', Icon: LayoutGrid, label: 'Card view' },
+        { k: 'table', Icon: List, label: 'Table view' },
+      ].map(({ k, Icon, label }) => (
+        <button
+          key={k}
+          type="button"
+          onClick={() => onChange(k)}
+          aria-label={label}
+          aria-pressed={view === k}
+          title={label}
+          className={`w-8 h-8 rounded-[8px] flex items-center justify-center transition-colors ${
+            view === k
+              ? 'bg-white text-primary shadow-sm'
+              : 'text-ink-faint hover:text-ink'
+          }`}
+        >
+          <Icon size={16} />
+        </button>
+      ))}
+    </div>
+  )
+}
 
 function SkeletonRow() {
   return (
@@ -64,13 +201,21 @@ function SkeletonRow() {
 }
 
 /* ─── QR Details Modal ───────────────────────────────────────────────── */
-function QrModal({ row, onClose, onDelete, onEdit }) {
+function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
   const qrRef = useRef(null)
   const [urlCopied, setUrlCopied] = useState(false)
   const [format, setFormat] = useState('PNG')
   const [fmtOpen, setFmtOpen] = useState(false)
   const fmtWrapRef = useRef(null)
+  // Local UI status so the Active toggle flips instantly (same as AffinityX).
+  const [status, setStatus] = useState(row.status ?? 'Active')
   const typeLabel = normaliseType(row.qrType)
+  const isDynamic = Boolean(row.dynamic) || typeLabel === 'Dynamic QR'
+  const isActive = !isInactiveStatus(status)
+
+  useEffect(() => {
+    setStatus(row.status ?? 'Active')
+  }, [row.id, row.status])
 
   useEffect(() => {
     const h = (e) => {
@@ -91,8 +236,7 @@ function QrModal({ row, onClose, onDelete, onEdit }) {
   }, [fmtOpen])
 
   const handleDownload = () => {
-    
-    qrRef.current?.download(format, row.name || 'qr-code')    
+    qrRef.current?.download(format, row.name || 'qr-code')
     setFmtOpen(false)
   }
 
@@ -107,6 +251,12 @@ function QrModal({ row, onClose, onDelete, onEdit }) {
       onDelete(row.id)
       onClose()
     }
+  }
+
+  const handleToggleActive = (v) => {
+    const next = v ? 'Active' : 'Inactive'
+    setStatus(next)
+    onToggleStatus?.(row.id, next)
   }
 
   return (
@@ -139,19 +289,9 @@ function QrModal({ row, onClose, onDelete, onEdit }) {
               {row.name}
             </p>
             <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap">
-              <span
-                className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                  typeLabel === 'Dynamic QR'
-                    ? 'bg-primary/10 text-primary'
-                    : 'bg-emerald-50 text-emerald-600'
-                }`}
-              >
-                {typeLabel}
-              </span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-success">
-                <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                Active
-              </span>
+              <ContentType typeKey={row.typeKey} />
+              <TypeBadge type={typeLabel} />
+              <StatusIndicator status={status} className="text-[11px]" />
             </div>
           </div>
         </div>
@@ -209,6 +349,29 @@ function QrModal({ row, onClose, onDelete, onEdit }) {
             </div>
           </div>
 
+          {/* Active / Inactive — Dynamic QRs only (same UI as AffinityX) */}
+          {isDynamic && (
+            <div className="flex items-center justify-between gap-3 rounded-[10px] border border-line px-3.5 py-3">
+              <div className="min-w-0">
+                <p className="text-[13px] font-semibold text-ink">
+                  {isActive ? 'QR is Active' : 'QR is Inactive'}
+                </p>
+                <p className="text-[11px] text-ink-muted mt-0.5 leading-snug">
+                  {isActive
+                    ? 'Scans redirect to your destination.'
+                    : 'Scans show an inactive notice — no redirect.'}
+                </p>
+              </div>
+              <Toggle
+                checked={isActive}
+                ariaLabel={
+                  isActive ? 'Deactivate this QR code' : 'Activate this QR code'
+                }
+                onChange={handleToggleActive}
+              />
+            </div>
+          )}
+
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-2 pt-1">
             {[
@@ -217,7 +380,11 @@ function QrModal({ row, onClose, onDelete, onEdit }) {
                 value: row.scans > 0 ? row.scans.toLocaleString() : '—',
               },
               { label: 'Edited', value: formatDate(row.editedOn) },
-              { label: 'Status', value: 'Active', green: true },
+              {
+                label: 'Status',
+                value: isActive ? 'Active' : 'Inactive',
+                green: isActive,
+              },
             ].map(({ label, value, green }) => (
               <div
                 key={label}
@@ -315,16 +482,20 @@ function QrModal({ row, onClose, onDelete, onEdit }) {
   )
 }
 
-/* ─── Table row ──────────────────────────────────────────────────────── */
-function QrRow({ row, onRefresh, onOpenModal }) {
+/* ─── Row / card action menu (Edit · Duplicate · Delete) ─────────────── */
+// The table wrapper uses overflow-x-auto, which per the CSS overflow spec
+// implicitly forces overflow-y to auto too — any absolutely-positioned dropdown
+// that extends past the table's own box gets clipped. Rendering the menu with
+// position:fixed (computed from the trigger's rect) escapes that clipping since
+// fixed elements lay out against the viewport. Shared by the table row and the
+// grid card.
+function ActionMenu({ row }) {
   const navigate = useNavigate()
-  const qrRef = useRef(null)
+  const deleteMutation = useDeleteQr()
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuPos, setMenuPos] = useState(null)
-  const [rowCopied, setRowCopied] = useState(false)
   const menuWrapRef = useRef(null)
   const menuBtnRef = useRef(null)
-  const typeLabel = normaliseType(row.qrType)
 
   useEffect(() => {
     if (!menuOpen) return undefined
@@ -332,8 +503,8 @@ function QrRow({ row, onRefresh, onOpenModal }) {
       if (menuWrapRef.current && !menuWrapRef.current.contains(e.target))
         setMenuOpen(false)
     }
-    // Close on scroll too — the menu is viewport-fixed so it won't
-    // follow the row if the table (or page) scrolls underneath it.
+    // Close on scroll too — the menu is viewport-fixed so it won't follow the
+    // trigger if the page scrolls underneath it.
     const closeOnScroll = () => setMenuOpen(false)
     document.addEventListener('mousedown', h)
     window.addEventListener('scroll', closeOnScroll, true)
@@ -343,14 +514,10 @@ function QrRow({ row, onRefresh, onOpenModal }) {
     }
   }, [menuOpen])
 
-  // The table wrapper uses overflow-x-auto, which per the CSS overflow spec
-  // implicitly forces overflow-y to auto too — any absolutely-positioned
-  // dropdown that extends past the table's own box gets clipped. Rendering
-  // the menu with position:fixed (computed from the button's rect) escapes
-  // that clipping since fixed elements lay out against the viewport.
   const MENU_W = 176 // w-44
   const MENU_H = 122 // ~3 items + divider
-  const toggleMenu = () => {
+  const toggleMenu = (e) => {
+    e.stopPropagation()
     if (!menuOpen && menuBtnRef.current) {
       const rect = menuBtnRef.current.getBoundingClientRect()
       const openUp = rect.bottom + MENU_H > window.innerHeight
@@ -362,7 +529,8 @@ function QrRow({ row, onRefresh, onOpenModal }) {
     setMenuOpen((v) => !v)
   }
 
-  const handleEdit = () => {
+  const handleEdit = (e) => {
+    e.stopPropagation()
     if (typeof row.id === 'number') {
       navigate(`/create/design/${row.id}`)
       return
@@ -370,27 +538,69 @@ function QrRow({ row, onRefresh, onOpenModal }) {
     setDraft(row)
     navigate('/create/design')
   }
-  const handleDuplicate = () => {
+  const handleDuplicate = (e) => {
+    e.stopPropagation()
     duplicateQR(row.id)
     setMenuOpen(false)
-    onRefresh()
   }
-  const handleDelete = async () => {
+  const handleDelete = (e) => {
+    e.stopPropagation()
     if (typeof row.id === 'number') {
-      await deleteWebsite(row.id)
+      deleteMutation.mutate(row.id)
     } else {
       deleteQR(row.id)
     }
     setMenuOpen(false)
-    onRefresh()
   }
 
-  const copySlug = (e) => {
-    e.stopPropagation()
-    copyToClipboard(shortUrl(row.slug))
-    setRowCopied(true)
-    setTimeout(() => setRowCopied(false), 1500)
-  }
+  return (
+    <div className="relative" ref={menuWrapRef}>
+      <button
+        ref={menuBtnRef}
+        type="button"
+        onClick={toggleMenu}
+        className="w-8 h-8 rounded-[10px] border border-line text-ink-faint flex items-center justify-center hover:bg-canvas transition-colors"
+        aria-label="More actions"
+      >
+        <MoreVertical size={14} />
+      </button>
+      {menuOpen && menuPos && (
+        <div
+          style={{ position: 'fixed', top: menuPos.top, left: menuPos.left }}
+          className="w-44 bg-white rounded-[10px] shadow-pop border border-line py-1 z-50 animate-pop"
+        >
+          <button
+            type="button"
+            onClick={handleEdit}
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas hover:text-ink"
+          >
+            <Pencil size={14} className="text-ink-faint" /> Edit Design
+          </button>
+          <button
+            type="button"
+            onClick={handleDuplicate}
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas hover:text-ink"
+          >
+            <Copy size={14} className="text-ink-faint" /> Duplicate
+          </button>
+          <div className="my-1 border-t border-line" />
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-danger hover:bg-red-50"
+          >
+            <Trash2 size={14} /> Delete
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─── Table row ──────────────────────────────────────────────────────── */
+function QrRow({ row, onOpenModal }) {
+  const qrRef = useRef(null)
+  const typeLabel = normaliseType(row.qrType)
 
   return (
     <tr
@@ -411,30 +621,18 @@ function QrRow({ row, onRefresh, onOpenModal }) {
               <span className="text-xs text-primary truncate">
                 {shortUrl(row.slug)}
               </span>
-              <button
-                type="button"
-                onClick={copySlug}
-                className={`shrink-0 transition-colors ${rowCopied ? 'text-success' : 'text-ink-faint hover:text-primary'}`}
-                title={rowCopied ? 'Copied!' : 'Copy short URL'}
-              >
-                {rowCopied ? <Check size={12} /> : <Copy size={12} />}
-              </button>
+              <CopySlugButton slug={row.slug} />
             </div>
           </div>
         </div>
       </td>
 
-      {/* Type badge */}
+      {/* Type — content type (Website URL, Wi-Fi, …) + Dynamic/Static mode */}
       <td className="py-3.5 pr-4">
-        <span
-          className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-            typeLabel === 'Dynamic QR'
-              ? 'bg-primary/10 text-primary'
-              : 'bg-emerald-50 text-emerald-600'
-          }`}
-        >
-          {typeLabel}
-        </span>
+        <div className="flex flex-col items-start gap-1.5">
+          <ContentType typeKey={row.typeKey} />
+          <TypeBadge type={typeLabel} />
+        </div>
       </td>
 
       {/* Edited on */}
@@ -444,10 +642,7 @@ function QrRow({ row, onRefresh, onOpenModal }) {
 
       {/* Status */}
       <td className="py-3.5 pr-4">
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-success">
-          <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />
-          Active
-        </span>
+        <StatusIndicator status={row.status} className="text-xs" />
       </td>
 
       {/* Scans */}
@@ -468,7 +663,9 @@ function QrRow({ row, onRefresh, onOpenModal }) {
           {/* Download — always visible */}
           <button
             type="button"
-            onClick={() => qrRef.current?.download('PNG', row.name)}
+            onClick={() =>
+              qrRef.current?.download('PNG', row.name || 'qr-code')
+            }
             className="w-8 h-8 rounded-[10px] border border-line text-ink-faint flex items-center justify-center hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-colors"
             aria-label="Download"
             title="Download PNG"
@@ -477,49 +674,7 @@ function QrRow({ row, onRefresh, onOpenModal }) {
           </button>
 
           {/* Three-dot menu */}
-          <div className="relative" ref={menuWrapRef}>
-            <button
-              ref={menuBtnRef}
-              type="button"
-              onClick={toggleMenu}
-              className="w-8 h-8 rounded-[10px] border border-line text-ink-faint flex items-center justify-center hover:bg-canvas transition-colors"
-            >
-              <MoreVertical size={14} />
-            </button>
-            {menuOpen && menuPos && (
-              <div
-                style={{
-                  position: 'fixed',
-                  top: menuPos.top,
-                  left: menuPos.left,
-                }}
-                className="w-44 bg-white rounded-[10px] shadow-pop border border-line py-1 z-50 animate-pop"
-              >
-                <button
-                  type="button"
-                  onClick={handleEdit}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas hover:text-ink"
-                >
-                  <Pencil size={14} className="text-ink-faint" /> Edit Design
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDuplicate}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas hover:text-ink"
-                >
-                  <Copy size={14} className="text-ink-faint" /> Duplicate
-                </button>
-                <div className="my-1 border-t border-line" />
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-danger hover:bg-red-50"
-                >
-                  <Trash2 size={14} /> Delete
-                </button>
-              </div>
-            )}
-          </div>
+          <ActionMenu row={row} />
         </div>
       </td>
     </tr>
@@ -529,15 +684,7 @@ function QrRow({ row, onRefresh, onOpenModal }) {
 /* ─── Mobile card (replaces the table row on small screens) ──────────── */
 function QrCard({ row, onOpenModal }) {
   const qrRef = useRef(null)
-  const [rowCopied, setRowCopied] = useState(false)
   const typeLabel = normaliseType(row.qrType)
-
-  const copySlug = (e) => {
-    e.stopPropagation()
-    copyToClipboard(shortUrl(row.slug))
-    setRowCopied(true)
-    setTimeout(() => setRowCopied(false), 1500)
-  }
 
   return (
     <div
@@ -555,37 +702,24 @@ function QrCard({ row, onOpenModal }) {
           <span className="text-xs text-primary truncate">
             {shortUrl(row.slug)}
           </span>
-          <button
-            type="button"
-            onClick={copySlug}
-            className={`shrink-0 transition-colors ${rowCopied ? 'text-success' : 'text-ink-faint'}`}
-            aria-label={rowCopied ? 'Copied' : 'Copy short URL'}
-          >
-            {rowCopied ? <Check size={12} /> : <Copy size={12} />}
-          </button>
+          <CopySlugButton slug={row.slug} />
         </div>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span
-            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
-              typeLabel === 'Dynamic QR'
-                ? 'bg-primary/10 text-primary'
-                : 'bg-emerald-50 text-emerald-600'
-            }`}
-          >
-            {typeLabel}
-          </span>
-          <span className="text-[11px] text-ink-faint">
-            {row.scans > 0
-              ? `${row.scans.toLocaleString()} scans`
-              : 'No scans yet'}
-          </span>
+        <div className="flex items-center gap-2 mt-1.5 min-w-0">
+          <ContentType typeKey={row.typeKey} />
+          {/* Surface an inactive QR here; the row is too narrow to show both,
+              so the exceptional state takes the mode badge's slot. */}
+          {isInactiveStatus(row.status) ? (
+            <StatusIndicator status={row.status} className="text-[11px]" />
+          ) : (
+            <TypeBadge type={typeLabel} short />
+          )}
         </div>
       </div>
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation()
-          qrRef.current?.download('PNG', row.name)
+          qrRef.current?.download('PNG', row.name || 'qr-code')
         }}
         className="w-9 h-9 rounded-[10px] border border-line text-ink-faint flex items-center justify-center shrink-0 active:bg-canvas"
         aria-label="Download"
@@ -596,20 +730,127 @@ function QrCard({ row, onOpenModal }) {
   )
 }
 
+/* ─── Grid card (card / gallery view) ────────────────────────────────── */
+function QrGridCard({ row, onOpenModal }) {
+  const qrRef = useRef(null)
+  const typeLabel = normaliseType(row.qrType)
+
+  return (
+    <div
+      onClick={() => onOpenModal(row)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpenModal(row)
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`View details for ${row.name || 'QR code'}`}
+      className="group flex flex-col rounded-[10px] border border-line bg-white p-4 cursor-pointer transition-all hover:border-primary/30 hover:shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+    >
+      {/* Top: content type + actions menu */}
+      <div className="flex items-center justify-between gap-2">
+        <ContentType typeKey={row.typeKey} />
+        <div onClick={(e) => e.stopPropagation()}>
+          <ActionMenu row={row} />
+        </div>
+      </div>
+
+      {/* QR preview */}
+      <div className="mt-3 flex justify-center">
+        <div className="w-[124px] h-[124px] rounded-[10px] border border-line/70 bg-white p-2 flex items-center justify-center overflow-hidden shadow-sm">
+          <QRView ref={qrRef} record={row} size={104} />
+        </div>
+      </div>
+
+      {/* Name + short URL */}
+      <div className="mt-3 text-center min-w-0">
+        <div className="font-semibold text-ink truncate text-sm">
+          {row.name}
+        </div>
+        <div className="flex items-center justify-center gap-1 mt-1 min-w-0">
+          <span className="text-xs text-primary truncate">
+            {shortUrl(row.slug)}
+          </span>
+          <CopySlugButton slug={row.slug} />
+        </div>
+      </div>
+
+      {/* Meta: mode (Dynamic/Static) · status · scans */}
+      <div className="mt-3 pt-3 border-t border-line flex items-center justify-between gap-2 text-[11px]">
+        <TypeBadge type={typeLabel} />
+        <span className="inline-flex items-center gap-2 shrink-0">
+          <StatusIndicator status={row.status} />
+          <span className="font-semibold text-ink">
+            {row.scans > 0 ? row.scans.toLocaleString() : '—'}
+            <span className="font-normal text-ink-faint"> scans</span>
+          </span>
+        </span>
+      </div>
+
+      {/* Download */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          qrRef.current?.download('PNG', row.name || 'qr-code')
+        }}
+        className="mt-3 h-9 rounded-[10px] border border-line text-ink-soft text-xs font-bold flex items-center justify-center gap-1.5 hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-colors"
+      >
+        <Download size={14} /> Download
+      </button>
+    </div>
+  )
+}
+
+function SkeletonCard() {
+  return (
+    <div className="rounded-[10px] border border-line bg-white p-4">
+      <div className="flex items-center justify-between">
+        <div className="h-5 w-20 rounded-full shimmer" />
+        <div className="h-8 w-8 rounded-[10px] shimmer" />
+      </div>
+      <div className="mt-3 flex justify-center">
+        <div className="w-[124px] h-[124px] rounded-[10px] shimmer" />
+      </div>
+      <div className="mt-3 mx-auto h-4 w-3/4 rounded shimmer" />
+      <div className="mt-2 mx-auto h-3 w-1/2 rounded shimmer" />
+      <div className="mt-4 h-9 w-full rounded-[10px] shimmer" />
+    </div>
+  )
+}
+
 /* ─── Dashboard page ─────────────────────────────────────────────────── */
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { data: list = [], isLoading, refetch } = useQrs()
-  const deleteQrMutation = useDeleteQr()
+  const { data: list = [], isLoading, isError, refetch } = useQrs()
+  const deleteMutation = useDeleteQr()
+  const statusMutation = useSetQrStatus()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('All')
   const [visibleCount, setVisibleCount] = useState(BATCH)
   const [loadingMore, setLoadingMore] = useState(false)
   const [selectedRow, setSelectedRow] = useState(null)
+  // View mode — persisted across visits; defaults per device (table on mobile,
+  // card on desktop) until the user makes an explicit choice.
+  const [view, setView] = useState(() => {
+    try {
+      const stored = localStorage.getItem('affinityx.dashboardView')
+      return VIEWS.includes(stored) ? stored : defaultView()
+    } catch {
+      return defaultView()
+    }
+  })
   const sentinelRef = useRef(null)
 
-  const refresh = () => {
-    refetch()
+  const changeView = (v) => {
+    setView(v)
+    try {
+      localStorage.setItem('affinityx.dashboardView', v)
+    } catch {
+      /* ignore storage failures */
+    }
   }
 
   useEffect(() => {
@@ -629,7 +870,6 @@ export default function Dashboard() {
 
   const total = derived.length
   const visible = derived.slice(0, visibleCount)
-  
   const hasMore = visibleCount < total
 
   useEffect(() => {
@@ -672,11 +912,24 @@ export default function Dashboard() {
 
   const handleDeleteModal = async (id) => {
     if (typeof id === 'number') {
-      await deleteQrMutation.mutateAsync(id)
+      await deleteMutation.mutateAsync(id)
     } else {
       deleteQR(id)
     }
-    refresh()
+  }
+
+  const handleToggleStatus = (id, status) => {
+    // UI: keep the open modal / list row status in sync.
+    setSelectedRow((prev) =>
+      prev && prev.id === id ? { ...prev, status } : prev,
+    )
+
+    // Best-effort save — UI already updated above.
+    const row =
+      (selectedRow && selectedRow.id === id ? selectedRow : null) ||
+      list.find((r) => r.id === id)
+    if (!row?.typeKey || typeof id !== 'number') return
+    statusMutation.mutate({ id, typeKey: row.typeKey, status })
   }
 
   const totalScans = list.reduce((s, r) => s + (r.scans || 0), 0)
@@ -763,56 +1016,112 @@ export default function Dashboard() {
       {/* Table card */}
       <div className="bg-white rounded-[10px] shadow-card">
         {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3.5 border-b border-line">
-          <div className="flex-1 relative">
-            <Search
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none"
+        <div className="flex flex-col gap-3 px-4 py-3.5 border-b border-line sm:flex-row sm:items-center">
+          {/* Search — on mobile the view toggle sits beside it so the filter
+              row below gets the full width and doesn't feel cramped */}
+          <div className="flex items-center gap-2 sm:flex-1">
+            <div className="relative flex-1">
+              <Search
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none"
+              />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by name, URL or slug…"
+                className="w-full pl-10 h-10 rounded-[10px] bg-canvas border border-transparent focus:border-primary focus:bg-white outline-none text-sm text-ink placeholder:text-ink-faint transition"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <ViewToggle
+              view={view}
+              onChange={changeView}
+              className="sm:hidden"
             />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, URL or slug…"
-              className="w-full pl-10 h-10 rounded-[10px] bg-canvas border border-transparent focus:border-primary focus:bg-white outline-none text-sm text-ink placeholder:text-ink-faint transition"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink transition-colors"
-              >
-                <X size={14} />
-              </button>
-            )}
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+
+          {/* Filters — full-width evenly-spaced pills on mobile, auto on desktop */}
+          <div className="flex items-center gap-1.5 sm:shrink-0">
             {FILTERS.map((f) => (
               <button
                 key={f}
                 type="button"
                 onClick={() => setFilter(f)}
-                className={`h-9 px-3.5 rounded-[10px] text-xs font-bold transition-colors ${
+                className={`h-9 flex-1 whitespace-nowrap px-3 rounded-[10px] text-xs font-bold transition-colors sm:flex-none sm:px-3.5 ${
                   filter === f
                     ? 'bg-primary text-white shadow-sm shadow-primary/25'
                     : 'bg-canvas text-ink-muted hover:bg-line/60'
                 }`}
               >
-                {f}
+                {/* "QR" is redundant in a QR app — drop it on mobile to keep
+                    each pill on one line; show the full label on desktop */}
+                <span className="sm:hidden">{f.replace(' QR', '')}</span>
+                <span className="hidden sm:inline">{f}</span>
               </button>
             ))}
           </div>
+
+          {/* View toggle — desktop only (mobile copy lives beside search) */}
+          <ViewToggle
+            view={view}
+            onChange={changeView}
+            className="hidden sm:flex"
+          />
         </div>
 
         {isLoading ? (
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <tbody>
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <SkeletonRow key={`loading-${i}`} />
-                ))}
-              </tbody>
-            </table>
+          /* Loading — skeletons matching the active view */
+          view === 'card' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 p-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <SkeletonCard key={`sk-${i}`} />
+              ))}
+            </div>
+          ) : (
+            <div className="divide-y divide-line">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={`sk-${i}`} className="flex items-center gap-3 p-3">
+                  <div className="h-11 w-11 shrink-0 rounded-[10px] shimmer" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 w-40 shimmer rounded" />
+                    <div className="h-3 w-24 shimmer rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : isError ? (
+          /* Error state with retry */
+          <div className="py-16 px-4 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-14 h-14 rounded-[10px] bg-danger/10 flex items-center justify-center">
+                <QrCode size={24} className="text-danger" />
+              </div>
+              <div>
+                <p className="font-bold text-ink mb-1">
+                  Couldn&apos;t load your QR codes
+                </p>
+                <p className="text-sm text-ink-muted max-w-[240px] mx-auto leading-relaxed">
+                  Something went wrong fetching your library. Please try again.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="mt-1 bg-primary text-white rounded-[10px] px-5 h-10 text-sm font-bold hover:bg-primary-600 transition-colors"
+              >
+                Try again
+              </button>
+            </div>
           </div>
         ) : total === 0 ? (
           /* Empty state (shared) */
@@ -847,6 +1156,17 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+        ) : view === 'card' ? (
+          /* Card / gallery view (default) — responsive grid on all screens */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 p-4">
+            {visible.map((row) => (
+              <QrGridCard key={row.id} row={row} onOpenModal={setSelectedRow} />
+            ))}
+            {loadingMore &&
+              Array.from({
+                length: Math.min(4, total - visibleCount),
+              }).map((_, i) => <SkeletonCard key={`skc-${i}`} />)}
+          </div>
         ) : (
           <>
             {/* Desktop / tablet table */}
@@ -856,7 +1176,7 @@ export default function Dashboard() {
                   <tr className="border-b border-line">
                     {[
                       { label: 'Name', cls: 'pl-4' },
-                      { label: 'QR Type', cls: '' },
+                      { label: 'Type', cls: '' },
                       { label: 'Edited On', cls: '' },
                       { label: 'Status', cls: '' },
                       { label: 'Scans', cls: '' },
@@ -882,7 +1202,6 @@ export default function Dashboard() {
                     <QrRow
                       key={row.id}
                       row={row}
-                      onRefresh={refresh}
                       onOpenModal={setSelectedRow}
                     />
                   ))}
@@ -924,6 +1243,7 @@ export default function Dashboard() {
           onClose={() => setSelectedRow(null)}
           onDelete={handleDeleteModal}
           onEdit={handleEditModal}
+          onToggleStatus={handleToggleStatus}
         />
       )}
     </Layout>

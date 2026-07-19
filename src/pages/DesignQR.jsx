@@ -38,6 +38,8 @@ import {
   getTemplates,
   saveUserTemplate,
   copyToClipboard,
+  SHORT_BASE_URL,
+  shortUrlAbsolute,
 } from '../lib/store'
 import {
   LOGO_OPTIONS,
@@ -61,8 +63,8 @@ const fallbackRecord = () => ({
   name: '',
   type: 'Website URL',
   typeKey: 'url',
-  content: { url: 'https://affinityx.com' },
-  url: 'https://affinityx.com',
+  content: { url: SHORT_BASE_URL },
+  url: SHORT_BASE_URL,
   slug: randomSlug(),
   dynamic: true,
   qrType: 'Dynamic QR',
@@ -623,7 +625,7 @@ export default function DesignQR() {
   }
 
   const handleCopyUrl = () => {
-    copyToClipboard(`https://affinityx.com/${record.slug}`)
+    copyToClipboard(shortUrlAbsolute(record.slug))
     setCopied(true)
     setTimeout(() => setCopied(false), 1800)
   }
@@ -907,7 +909,7 @@ export default function DesignQR() {
                     <div className="relative flex-1">
                       <input
                         readOnly
-                        value={`https://affinityx.com/${record.slug}`}
+                        value={shortUrlAbsolute(record.slug)}
                         className="h-12 w-full rounded-[10px] border border-line bg-canvas px-4 pr-11 text-sm text-ink"
                       />
                       <button
@@ -942,7 +944,7 @@ export default function DesignQR() {
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     <input
                       readOnly
-                      value="https://affinityx.com/"
+                      value={`${SHORT_BASE_URL}/`}
                       className="h-12 min-w-[180px] flex-1 rounded-[10px] border border-line bg-canvas px-4 text-sm text-ink-muted"
                     />
                     <div className="relative">

@@ -1,13 +1,14 @@
 import { Check } from 'lucide-react'
 
 // Brand toggle switch.
-export function Toggle({ checked, onChange, id }) {
+export function Toggle({ checked, onChange, id, ariaLabel }) {
   return (
     <button
       type="button"
       id={id}
       role="switch"
       aria-checked={checked}
+      aria-label={ariaLabel}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 ${
         checked ? 'bg-primary' : 'bg-gray-300'
