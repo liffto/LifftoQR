@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_CLIENT_ID: string
   readonly VITE_APP_NAME?: string
   readonly VITE_SHORT_URL_DOMAIN?: string
+  readonly VITE_WS_BASE_URL?: string
 }
 
 interface ImportMeta {
