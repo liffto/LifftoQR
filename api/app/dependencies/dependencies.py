@@ -23,6 +23,7 @@ from app.controllers.website_controller import WebsiteController
 from app.controllers.whatsapp_controller import WhatsappController
 from app.controllers.wifi_controller import WifiController
 from app.controllers.qr_controller import QrController
+from app.controllers.scan_controller import ScanController
 from app.db.session import get_db
 from app.repositories.app_repository import AppRepository
 from app.repositories.audio_repository import AudioRepository
@@ -59,6 +60,7 @@ from app.services.location_service import LocationService
 from app.services.pdf_service import PdfService
 from app.services.phone_service import PhoneService
 from app.services.qr_service import QrService
+from app.services.scan_service import ScanService
 from app.services.sms_service import SmsService
 from app.services.social_media_service import SocialMediaService
 from app.services.text_service import TextService
@@ -156,3 +158,7 @@ def get_feedback_controller(db: Session = Depends(get_db)) -> FeedbackController
 
 def get_qr_controller(db: Session = Depends(get_db)) -> QrController:
     return QrController(QrService(QrRepository(db)))
+
+
+def get_scan_controller(db: Session = Depends(get_db)) -> ScanController:
+    return ScanController(ScanService(QrRepository(db)))
