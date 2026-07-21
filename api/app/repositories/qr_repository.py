@@ -1,3 +1,4 @@
+from sqlalchemy import update
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import LinkTree, QR
@@ -54,3 +55,20 @@ class QrRepository:
         self.db.delete(qr)
         self.db.commit()
         return True
+
+    def get_by_slug(self, slug: str) -> QR | None:
+        return (
+            self._with_content_options(self.db.query(QR))
+            .filter(QR.slug == slug)
+            .first()
+        )
+
+    def increment_scans(self, slug: str) -> int:
+        """Atomically increment scans for dynamic QRs only."""
+        result = self.db.execute(
+            update(QR)
+            .where(QR.slug == slug, QR.dynamic.is_(True))
+            .values(scans=QR.scans + 1)
+        )
+        self.db.commit()
+        return result.rowcount

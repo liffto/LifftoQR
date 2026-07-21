@@ -13,6 +13,7 @@ from app.core.exceptions import (
 )
 from app.repositories.qr_slug import SlugAlreadyExistsError
 from app.routes.health import router as health_router
+from app.routes.scan_routes import router as scan_router
 from app.routes.user_routes import router as user_router
 from app.api.v1 import api_v1
 
@@ -31,6 +32,7 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(user_router)
 app.include_router(api_v1, prefix="/api/v1")
+app.include_router(scan_router)
 
 app.add_exception_handler(ValueError, value_error_handler)
 app.add_exception_handler(SlugAlreadyExistsError, slug_already_exists_handler)
