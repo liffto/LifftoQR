@@ -52,6 +52,10 @@ import { findType, encodeContent, deriveContentName } from '../lib/qrTypes'
 import { compressImageFile } from '../lib/imageCompress'
 import { useSaveQr } from '../hooks/useSaveQr'
 import { useQr, qrQueryKey } from '../hooks/useQr'
+import {
+  connectionStatusLabel,
+  useQrScanCount,
+} from '../hooks/useQrScanCount'
 import { getApiErrorMessage } from '../utils/errors'
 import TypeFields from '../components/TypeFields'
 import QRView from '../components/QRView'
@@ -553,6 +557,10 @@ export default function DesignQR() {
   const [format, setFormat] = useState('PNG')
   const [formatOpen, setFormatOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const { scanCount, connectionStatus } = useQrScanCount(
+    isApiMode && record.dynamic ? record.slug : null,
+  )
+  const displayScans = scanCount ?? record.scans ?? 0
 
   const design = record.design
 
@@ -975,6 +983,30 @@ export default function DesignQR() {
                     >
                       Cancel
                     </button>
+                  </div>
+                )}
+
+                {isApiMode && (
+                  <div className="mt-4 flex items-center justify-between rounded-[10px] border border-line bg-canvas px-3.5 py-2.5">
+                    <p className="text-sm text-ink-muted">
+                      QR Code:{' '}
+                      <span className="font-semibold text-ink">{record.slug}</span>
+                    </p>
+                    <p className="text-sm text-ink-muted">
+                      Total Scans:{' '}
+                      <span className="font-semibold text-ink">
+                        {displayScans.toLocaleString()}
+                      </span>
+                    </p>
+                    <p
+                      className={`text-xs font-bold ${
+                        connectionStatus === 'connected'
+                          ? 'text-success'
+                          : 'text-ink-faint'
+                      }`}
+                    >
+                      {connectionStatusLabel(connectionStatus)}
+                    </p>
                   </div>
                 )}
               </AccordionSection>

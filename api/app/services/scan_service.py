@@ -13,6 +13,6 @@ class ScanService:
     def resolve_destination(self, qr: QR) -> str | None:
         return resolve_destination_url(qr)
 
-    def record_scan(self, slug: str) -> None:
-        """Increment scan count for dynamic QRs only."""
-        self.repository.increment_scans(slug)
+    def record_scan(self, slug: str) -> int | None:
+        """Increment scan count for dynamic QRs only; returns new count."""
+        return self.repository.increment_scans(slug)

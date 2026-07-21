@@ -63,12 +63,13 @@ class QrRepository:
             .first()
         )
 
-    def increment_scans(self, slug: str) -> int:
-        """Atomically increment scans for dynamic QRs only."""
-        result = self.db.execute(
+    def increment_scans(self, slug: str) -> int | None:
+        """Atomically increment scans for dynamic QRs only; returns new count."""
+        new_scans = self.db.execute(
             update(QR)
             .where(QR.slug == slug, QR.dynamic.is_(True))
             .values(scans=QR.scans + 1)
-        )
+            .returning(QR.scans)
+        ).scalar_one_or_none()
         self.db.commit()
-        return result.rowcount
+        return new_scans

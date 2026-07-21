@@ -30,6 +30,10 @@ import {
   deleteQR,
 } from '../lib/store'
 import { useQrs, useDeleteQr, useSetQrStatus } from '../hooks/useQrs'
+import {
+  connectionStatusLabel,
+  useQrScanCount,
+} from '../hooks/useQrScanCount'
 import { DOWNLOAD_FORMATS } from '../lib/qr'
 import { findType } from '../lib/qrTypes'
 import QRView from '../components/QRView'
@@ -47,6 +51,11 @@ const VIEWS = ['card', 'table']
 // choice (persisted to localStorage) always wins over this.
 const defaultView = () =>
   typeof window !== 'undefined' && window.innerWidth < 768 ? 'table' : 'card'
+
+function QrScanSubscriber({ slug }) {
+  useQrScanCount(slug)
+  return null
+}
 
 /* ─── Shared card primitives ─────────────────────────────────────────── */
 // The type pill + the short-URL copy toggle are rendered identically across the
@@ -207,6 +216,10 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
   const [format, setFormat] = useState('PNG')
   const [fmtOpen, setFmtOpen] = useState(false)
   const fmtWrapRef = useRef(null)
+  const { scanCount, connectionStatus } = useQrScanCount(
+    row.dynamic ? row.slug : null,
+  )
+  const displayScans = scanCount ?? row.scans ?? 0
   // Local UI status so the Active toggle flips instantly (same as AffinityX).
   const [status, setStatus] = useState(row.status ?? 'Active')
   const typeLabel = normaliseType(row.qrType)
@@ -377,7 +390,8 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
             {[
               {
                 label: 'Scans',
-                value: row.scans > 0 ? row.scans.toLocaleString() : '—',
+                value:
+                  displayScans > 0 ? displayScans.toLocaleString() : '—',
               },
               { label: 'Edited', value: formatDate(row.editedOn) },
               {
@@ -401,6 +415,26 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
               </div>
             ))}
           </div>
+
+          {isDynamic && (
+            <div className="flex items-center justify-between rounded-[10px] border border-line bg-canvas px-3.5 py-2.5">
+              <p className="text-[11px] font-semibold text-ink-muted">
+                Total Scans:{' '}
+                <span className="text-ink">
+                  {displayScans > 0 ? displayScans.toLocaleString() : '0'}
+                </span>
+              </p>
+              <p
+                className={`text-[11px] font-bold ${
+                  connectionStatus === 'connected'
+                    ? 'text-success'
+                    : 'text-ink-faint'
+                }`}
+              >
+                {connectionStatusLabel(connectionStatus)}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ── Actions ── */}
@@ -969,6 +1003,11 @@ export default function Dashboard() {
 
   return (
     <Layout breadcrumb="My QR Codes">
+      {list
+        .filter((row) => row.dynamic && row.slug)
+        .map((row) => (
+          <QrScanSubscriber key={row.slug} slug={row.slug} />
+        ))}
       {/* Stats — stacked on mobile, single bar on desktop */}
       <div className="bg-white rounded-[10px] shadow-card flex flex-col divide-y divide-line sm:flex-row sm:divide-y-0 sm:divide-x mb-5">
         {STATS.map(({ label, value, sub, up, icon: Icon, cls }) => (
