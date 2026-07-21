@@ -15,6 +15,7 @@ from app.repositories.qr_slug import SlugAlreadyExistsError
 from app.routes.health import router as health_router
 from app.routes.scan_routes import router as scan_router
 from app.routes.user_routes import router as user_router
+from app.routes.ws_routes import router as ws_router
 from app.api.v1 import api_v1
 
 app = FastAPI(title=settings.app_name, version="0.1.0", debug=settings.debug)
@@ -32,6 +33,7 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(user_router)
 app.include_router(api_v1, prefix="/api/v1")
+app.include_router(ws_router)
 app.include_router(scan_router)
 
 app.add_exception_handler(ValueError, value_error_handler)
