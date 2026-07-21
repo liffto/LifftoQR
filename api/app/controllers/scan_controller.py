@@ -2,11 +2,17 @@ from fastapi import HTTPException, status
 from fastapi.responses import RedirectResponse
 
 from app.services.scan_service import ScanService
+from app.services.ws_manager import ConnectionManager, manager
 
 
 class ScanController:
-    def __init__(self, service: ScanService) -> None:
+    def __init__(
+        self,
+        service: ScanService,
+        ws_manager: ConnectionManager = manager,
+    ) -> None:
         self.service = service
+        self.ws_manager = ws_manager
 
     async def scan(self, slug: str) -> RedirectResponse:
         qr = self.service.get_qr_by_slug(slug)
@@ -30,6 +36,15 @@ class ScanController:
             )
 
         if qr.dynamic:
-            self.service.record_scan(slug)
+            new_scans = self.service.record_scan(slug)
+            if new_scans is not None:
+                await self.ws_manager.broadcast(
+                    slug,
+                    {
+                        "event": "scan_count_updated",
+                        "slug": slug,
+                        "scan_count": new_scans,
+                    },
+                )
 
         return RedirectResponse(url=destination, status_code=status.HTTP_302_FOUND)
