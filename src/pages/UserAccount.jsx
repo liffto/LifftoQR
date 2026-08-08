@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { useMutation } from '@tanstack/react-query'
 import {
@@ -15,12 +15,14 @@ import {
   Tablet,
   LogOut,
   X,
+  Loader2,
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { uploadAvatar, mapApiUser } from '../api/auth.api'
+import { useQrs } from '../hooks/useQrs'
+import { compressImageFile, dataUrlToFile } from '../lib/imageCompress'
 import { getApiErrorMessage } from '../utils/errors'
-import { getQRs } from '../lib/store'
 import {
   getDisplayName,
   getFirstName,
@@ -207,7 +209,14 @@ export default function UserAccount() {
   const firstName = getFirstName(user)
   const lastName = getLastName(user)
   const email = user?.email ?? ''
-  const pictureUrl = resolvePictureUrl(user?.picture, user?.pictureCacheKey)
+  const serverPictureUrl = resolvePictureUrl(user?.picture, user?.pictureCacheKey)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const [avatarImageError, setAvatarImageError] = useState(false)
+  const displayAvatarUrl = avatarPreview || serverPictureUrl
+
+  useEffect(() => {
+    setAvatarImageError(false)
+  }, [displayAvatarUrl])
   const [notifs, setNotifs] = useState({
     scans: true,
     weekly: true,
@@ -220,6 +229,7 @@ export default function UserAccount() {
   const avatarUpload = useMutation({
     mutationFn: uploadAvatar,
     onSuccess: (profile) => {
+      setAvatarPreview(null)
       updateUser({
         ...mapApiUser(profile),
         pictureCacheKey: Date.now(),
@@ -227,6 +237,7 @@ export default function UserAccount() {
       toast.success('Profile photo updated')
     },
     onError: (error) => {
+      setAvatarPreview(null)
       toast.error(getApiErrorMessage(error, 'Failed to upload profile photo'))
     },
   })
@@ -235,27 +246,39 @@ export default function UserAccount() {
     fileInputRef.current?.click()
   }
 
-  const handleAvatarChange = (event) => {
+  const handleAvatarChange = async (event) => {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
 
+    if (file.type === 'image/svg+xml') {
+      toast.error('SVG is not supported for profile photos. Use PNG or JPG.')
+      return
+    }
     if (!file.type.startsWith('image/')) {
       toast.error('Please choose an image file (JPG, PNG, WebP, or GIF)')
       return
     }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Image must be smaller than 2 MB')
-      return
-    }
 
-    avatarUpload.mutate(file)
+    try {
+      const preview = await compressImageFile(file, {
+        maxSize: 512,
+        quality: 0.88,
+      })
+      setAvatarPreview(preview)
+      setAvatarImageError(false)
+
+      avatarUpload.mutate(dataUrlToFile(preview, 'avatar.jpg'))
+    } catch (err) {
+      setAvatarPreview(null)
+      toast.error(err?.message || 'Could not process that image. Try another file.')
+    }
   }
 
   const handleConfirmDelete = () => {
     logout()
   }
-  const qrs = getQRs()
+  const { data: qrs = [], isLoading: qrsLoading } = useQrs()
   const totalScans = qrs.reduce((s, r) => s + (r.scans || 0), 0)
 
   return (
@@ -283,16 +306,22 @@ export default function UserAccount() {
                   className="hidden"
                   onChange={handleAvatarChange}
                 />
-                {pictureUrl ? (
+                {!avatarImageError && displayAvatarUrl ? (
                   <img
-                    key={pictureUrl}
-                    src={pictureUrl}
-                    alt={displayName}
+                    key={displayAvatarUrl}
+                    src={displayAvatarUrl}
+                    alt=""
                     className="w-[72px] h-[72px] rounded-full object-cover ring-4 ring-white shadow-lg"
+                    onError={() => setAvatarImageError(true)}
                   />
                 ) : (
                   <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-primary to-[#7c3aed] text-white flex items-center justify-center text-2xl font-bold select-none ring-4 ring-white shadow-lg">
                     {initials}
+                  </div>
+                )}
+                {avatarUpload.isPending && (
+                  <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center ring-4 ring-white">
+                    <Loader2 size={20} className="text-white animate-spin" />
                   </div>
                 )}
                 <button
@@ -313,12 +342,14 @@ export default function UserAccount() {
               <div className="mt-4 w-full grid grid-cols-2 gap-2.5">
                 <div className="bg-canvas rounded-[10px] p-3 text-center">
                   <p className="text-[11px] text-ink-muted mb-1">QR Codes</p>
-                  <p className="text-xl font-bold text-ink">{qrs.length}</p>
+                  <p className="text-xl font-bold text-ink">
+                    {qrsLoading ? '—' : qrs.length.toLocaleString()}
+                  </p>
                 </div>
                 <div className="bg-canvas rounded-[10px] p-3 text-center">
                   <p className="text-[11px] text-ink-muted mb-1">Total Scans</p>
                   <p className="text-xl font-bold text-ink">
-                    {totalScans.toLocaleString()}
+                    {qrsLoading ? '—' : totalScans.toLocaleString()}
                   </p>
                 </div>
               </div>
