@@ -3,6 +3,8 @@ export interface User {
   email: string
   name: string
   picture: string | null
+  /** Bumped after avatar upload so the browser reloads the image immediately. */
+  pictureCacheKey?: number
   first_name?: string
   last_name?: string
   account_id?: number
@@ -48,5 +50,6 @@ export interface AuthContextType {
   loading: boolean
   isAuthenticated: boolean
   login: (session: SessionData) => void
+  updateUser: (user: User) => void
   logout: () => Promise<void>
 }

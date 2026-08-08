@@ -42,6 +42,14 @@ class Settings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("GOOGLE_CLIENT_SECRET", "CLIENT_SECRET"),
     )
+    blob_read_write_token: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("BLOB_READ_WRITE_TOKEN"),
+    )
+    blob_store_id: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("BLOB_STORE_ID"),
+    )
     frontend_url: str = "http://localhost:5173"
 
     @classmethod

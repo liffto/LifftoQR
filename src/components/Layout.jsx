@@ -342,7 +342,7 @@ export default function Layout({ children, breadcrumb }) {
   const { user, logout } = useAuth()
   const displayName = getDisplayName(user)
   const initials = getInitials(user)
-  const pictureUrl = resolvePictureUrl(user?.picture)
+  const pictureUrl = resolvePictureUrl(user?.picture, user?.pictureCacheKey)
   const unreadCount = INIT_NOTIFS.filter((n) => !n.read).length
 
   const handleCreate = () => {
@@ -485,6 +485,7 @@ export default function Layout({ children, breadcrumb }) {
             >
               {pictureUrl ? (
                 <img
+                  key={pictureUrl}
                   src={pictureUrl}
                   alt={displayName}
                   className="w-6 h-6 rounded-full object-cover shrink-0"
