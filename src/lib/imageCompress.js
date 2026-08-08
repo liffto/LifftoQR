@@ -52,3 +52,23 @@ export function compressImageFile(file, { maxSize = 400, quality = 0.82 } = {}) 
     img.src = objectUrl
   })
 }
+
+export function dataUrlToFile(dataUrl, filename = 'image.jpg') {
+  const [header, base64] = dataUrl.split(',')
+  const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg'
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return new File([bytes], filename, { type: mime })
+}
+
+/** Compress an image and return a File ready for multipart upload. */
+export async function compressImageFileToUpload(
+  file,
+  { maxSize = 400, quality = 0.82, filename = 'image.jpg' } = {},
+) {
+  const dataUrl = await compressImageFile(file, { maxSize, quality })
+  return dataUrlToFile(dataUrl, filename)
+}
