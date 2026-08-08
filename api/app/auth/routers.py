@@ -291,7 +291,7 @@ async def upload_avatar(
     db: Session = Depends(get_db),
 ) -> UserOut:
     """Upload or replace the current user's profile photo."""
-    avatar_url = await save_user_avatar(user.id, file)
+    avatar_url = await save_user_avatar(user.id, file, user.avatar_url)
     user.avatar_url = avatar_url
     db.commit()
     db.refresh(user)
