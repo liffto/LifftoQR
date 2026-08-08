@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './middleware/ProtectedRoute'
 import PublicRoute from './middleware/PublicRoute'
+import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import CreateUrl from './pages/CreateUrl'
@@ -17,6 +18,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
+        <Route path="/" element={<Landing />} />
         <Route
           path="/login"
           element={
@@ -105,7 +107,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ErrorBoundary>
   )

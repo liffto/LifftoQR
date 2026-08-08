@@ -5,6 +5,7 @@ import { googleLogin as googleLoginRequest, getCurrentUser, mapApiUser } from '.
 import { useAuth } from '../context/AuthContext'
 import { CURRENT_USER_QUERY_KEY } from '../providers/QueryProvider'
 import { saveTokens } from '../services/session'
+import { takePendingRedirect } from '../lib/store'
 import { getApiErrorMessage } from '../utils/errors'
 
 export function useGoogleLogin() {
@@ -31,7 +32,8 @@ export function useGoogleLogin() {
     onSuccess: (user) => {
       queryClient.setQueryData(CURRENT_USER_QUERY_KEY, user)
       toast.success('Signed in successfully')
-      navigate('/dashboard', { replace: true })
+      const dest = takePendingRedirect() || '/dashboard'
+      navigate(dest, { replace: true })
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, 'Google sign-in failed. Please try again.'))
