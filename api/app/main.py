@@ -24,9 +24,13 @@ from app.api.v1 import api_v1
 app = FastAPI(title=settings.app_name, version="0.1.0", debug=settings.debug)
 
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-(UPLOADS_DIR / "avatars").mkdir(parents=True, exist_ok=True)
-app.mount("/api/v1/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+try:
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    (UPLOADS_DIR / "avatars").mkdir(parents=True, exist_ok=True)
+    app.mount("/api/v1/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+except OSError:
+    # Vercel serverless has a read-only filesystem — avatars use Blob storage there.
+    pass
 
 app.add_middleware(
     CORSMiddleware,

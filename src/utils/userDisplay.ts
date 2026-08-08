@@ -8,13 +8,23 @@ function resolveApiBaseUrl(): string {
   return ''
 }
 
-export function resolvePictureUrl(picture: string | null | undefined): string | null {
+export function resolvePictureUrl(
+  picture: string | null | undefined,
+  cacheKey?: number | string,
+): string | null {
   if (!picture) return null
-  if (/^https?:\/\//i.test(picture)) return picture
+  if (/^https?:\/\//i.test(picture)) {
+    if (!cacheKey) return picture
+    const separator = picture.includes('?') ? '&' : '?'
+    return `${picture}${separator}v=${cacheKey}`
+  }
 
   const path = picture.startsWith('/') ? picture : `/${picture}`
   const apiBase = resolveApiBaseUrl()
-  return apiBase ? `${apiBase}${path}` : path
+  const base = apiBase ? `${apiBase}${path}` : path
+  if (!cacheKey) return base
+  const separator = base.includes('?') ? '&' : '?'
+  return `${base}${separator}v=${cacheKey}`
 }
 
 export function getDisplayName(user: User | null | undefined): string {

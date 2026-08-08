@@ -22,7 +22,7 @@ import {
   hasStoredSession,
   saveUser,
 } from '../services/session'
-import type { AuthContextType, SessionData } from '../types/auth'
+import type { AuthContextType, SessionData, User } from '../types/auth'
 import { getApiErrorMessage } from '../utils/errors'
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -48,6 +48,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       saveUser(session.user, session.accessToken, session.refreshToken)
       queryClientInstance.setQueryData(CURRENT_USER_QUERY_KEY, session.user)
     }
+  }, [queryClientInstance])
+
+  const updateUser = useCallback((nextUser: User) => {
+    saveUser(nextUser, getAccessToken(), getRefreshToken())
+    queryClientInstance.setQueryData(CURRENT_USER_QUERY_KEY, nextUser)
   }, [queryClientInstance])
 
   const performLocalLogout = useCallback(() => {
@@ -124,9 +129,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       loading,
       isAuthenticated: Boolean(user),
       login,
+      updateUser,
       logout,
     }),
-    [user, loading, login, logout],
+    [user, loading, login, updateUser, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

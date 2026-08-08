@@ -30,10 +30,7 @@ import {
   deleteQR,
 } from '../lib/store'
 import { useQrs, useDeleteQr, useSetQrStatus } from '../hooks/useQrs'
-import {
-  connectionStatusLabel,
-  useQrScanCount,
-} from '../hooks/useQrScanCount'
+import { useQrScanCount } from '../hooks/useQrScanCount'
 import { DOWNLOAD_FORMATS } from '../lib/qr'
 import { findType } from '../lib/qrTypes'
 import QRView from '../components/QRView'
@@ -216,19 +213,31 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
   const [format, setFormat] = useState('PNG')
   const [fmtOpen, setFmtOpen] = useState(false)
   const fmtWrapRef = useRef(null)
-  const { scanCount, connectionStatus } = useQrScanCount(
-    row.dynamic ? row.slug : null,
-  )
-  const displayScans = scanCount ?? row.scans ?? 0
-  // Local UI status so the Active toggle flips instantly (same as AffinityX).
-  const [status, setStatus] = useState(row.status ?? 'Active')
   const typeLabel = normaliseType(row.qrType)
   const isDynamic = Boolean(row.dynamic) || typeLabel === 'Dynamic QR'
+  const { scanCount, connectionStatus } = useQrScanCount(
+    isDynamic ? row.slug : null,
+  )
+  const scansLoading =
+    isDynamic &&
+    scanCount === null &&
+    (connectionStatus === 'connecting' || connectionStatus === 'connected')
+  const resolvedScans = scanCount ?? row.scans
+  // Local UI status so the Active toggle flips instantly (same as AffinityX).
+  const [status, setStatus] = useState(row.status ?? 'Active')
   const isActive = !isInactiveStatus(status)
 
   useEffect(() => {
     setStatus(row.status ?? 'Active')
   }, [row.id, row.status])
+
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
 
   useEffect(() => {
     const h = (e) => {
@@ -274,14 +283,14 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/40 backdrop-blur-sm animate-fade"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="bg-white rounded-[10px] shadow-2xl w-full max-w-[480px] animate-pop overflow-hidden">
+      <div className="bg-white rounded-t-[10px] sm:rounded-[10px] shadow-2xl w-full max-w-[480px] max-h-[100dvh] sm:max-h-[min(720px,calc(100dvh-2rem))] flex flex-col animate-pop overflow-hidden">
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-line">
+        <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-line">
           <h2 className="font-bold text-ink text-[15px]">QR Details</h2>
           <button
             type="button"
@@ -292,6 +301,7 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
           </button>
         </div>
 
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
         {/* ── QR preview strip ── */}
         <div className="bg-gradient-to-b from-canvas to-white px-5 pt-6 pb-4 flex flex-col items-center gap-3 border-b border-line">
           <div className="w-[164px] h-[164px] rounded-[10px] bg-white shadow-md border border-line flex items-center justify-center overflow-hidden">
@@ -387,58 +397,51 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
 
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-2 pt-1">
-            {[
-              {
-                label: 'Scans',
-                value:
-                  displayScans > 0 ? displayScans.toLocaleString() : '—',
-              },
-              { label: 'Edited', value: formatDate(row.editedOn) },
-              {
-                label: 'Status',
-                value: isActive ? 'Active' : 'Inactive',
-                green: isActive,
-              },
-            ].map(({ label, value, green }) => (
-              <div
-                key={label}
-                className="bg-canvas rounded-[10px] px-3 py-2.5 text-center"
-              >
-                <p className="text-[10px] font-bold text-ink-faint uppercase tracking-wide mb-1">
-                  {label}
-                </p>
-                <p
-                  className={`text-sm font-bold ${green ? 'text-success' : 'text-ink'}`}
-                >
-                  {value}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {isDynamic && (
-            <div className="flex items-center justify-between rounded-[10px] border border-line bg-canvas px-3.5 py-2.5">
-              <p className="text-[11px] font-semibold text-ink-muted">
-                Total Scans:{' '}
-                <span className="text-ink">
-                  {displayScans > 0 ? displayScans.toLocaleString() : '0'}
-                </span>
+            <div className="bg-canvas rounded-[10px] px-3 py-2.5 text-center">
+              <p className="text-[10px] font-bold text-ink-faint uppercase tracking-wide mb-1">
+                Scans
               </p>
-              <p
-                className={`text-[11px] font-bold ${
-                  connectionStatus === 'connected'
-                    ? 'text-success'
-                    : 'text-ink-faint'
-                }`}
-              >
-                {connectionStatusLabel(connectionStatus)}
+              <p className="text-sm font-bold text-ink">
+                {scansLoading ? (
+                  <span className="inline-flex items-center justify-center gap-1">
+                    <span
+                      className="inline-block h-3.5 w-8 rounded shimmer"
+                      aria-hidden
+                    />
+                    <span className="font-normal text-ink-faint"> scans</span>
+                  </span>
+                ) : (
+                  <>
+                    {resolvedScans > 0 ? resolvedScans.toLocaleString() : '—'}
+                    <span className="font-normal text-ink-faint"> scans</span>
+                  </>
+                )}
               </p>
             </div>
-          )}
+            <div className="bg-canvas rounded-[10px] px-3 py-2.5 text-center">
+              <p className="text-[10px] font-bold text-ink-faint uppercase tracking-wide mb-1">
+                Edited
+              </p>
+              <p className="text-sm font-bold text-ink">
+                {formatDate(row.editedOn)}
+              </p>
+            </div>
+            <div className="bg-canvas rounded-[10px] px-3 py-2.5 text-center">
+              <p className="text-[10px] font-bold text-ink-faint uppercase tracking-wide mb-1">
+                Status
+              </p>
+              <p
+                className={`text-sm font-bold ${isActive ? 'text-success' : 'text-ink'}`}
+              >
+                {isActive ? 'Active' : 'Inactive'}
+              </p>
+            </div>
+          </div>
+        </div>
         </div>
 
         {/* ── Actions ── */}
-        <div className="px-5 pb-5 flex flex-col sm:flex-row gap-2.5">
+        <div className="shrink-0 border-t border-line bg-white px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col sm:flex-row gap-2.5">
           {/* Download + format selector (split control) */}
           <div ref={fmtWrapRef} className="relative w-full sm:flex-1">
             <div className="flex h-10 rounded-[10px] border border-line overflow-hidden">
