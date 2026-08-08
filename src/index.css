@@ -2,8 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme tokens as space-separated RGB channels (for Tailwind's
+   `rgb(var(--x) / <alpha-value>)` colors). Light is the default; `.dark` on
+   <html> flips to the dark palette. */
 :root {
   color-scheme: light;
+  --c-primary-50: 238 243 255;
+  --c-ink: 31 36 48;
+  --c-ink-soft: 58 63 75;
+  --c-ink-muted: 107 114 128;
+  --c-ink-faint: 156 163 175;
+  --c-line: 230 232 236;
+  --c-canvas: 244 245 247;
+  --c-surface: 255 255 255;
+  --c-success: 22 163 74;
+  --c-danger: 239 68 68;
+  --shimmer-1: 237 239 242;
+  --shimmer-2: 246 248 250;
+  --scrollbar: 207 211 218;
+}
+.dark {
+  color-scheme: dark;
+  --c-primary-50: 30 42 68;
+  --c-ink: 234 236 239;
+  --c-ink-soft: 196 201 208;
+  --c-ink-muted: 154 161 171;
+  --c-ink-faint: 107 114 124;
+  --c-line: 42 47 55;
+  --c-canvas: 15 18 22;
+  --c-surface: 26 30 36;
+  --c-success: 52 211 153;
+  --c-danger: 248 113 113;
+  --shimmer-1: 31 36 43;
+  --shimmer-2: 42 49 58;
+  --scrollbar: 58 63 71;
+}
+
+.no-transitions * {
+  transition: none !important;
 }
 
 * {
@@ -20,33 +56,31 @@ body,
 body {
   margin: 0;
   font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
-  background: #f4f5f7;
-  color: #1f2430;
+  background: rgb(var(--c-canvas));
+  color: rgb(var(--c-ink));
 }
 
-/* Thin scrollbars for the horizontal option strips */
 .scroll-x {
   scrollbar-width: thin;
-  scrollbar-color: #cfd3da transparent;
+  scrollbar-color: rgb(var(--scrollbar)) transparent;
 }
 .scroll-x::-webkit-scrollbar {
   height: 6px;
 }
 .scroll-x::-webkit-scrollbar-thumb {
-  background: #cfd3da;
+  background: rgb(var(--scrollbar));
   border-radius: 999px;
 }
 .scroll-x::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* Range slider — brand styled */
 input[type='range'].range-primary {
   -webkit-appearance: none;
   appearance: none;
   height: 6px;
   border-radius: 999px;
-  background: #e6e8ec;
+  background: rgb(var(--c-line));
   outline: none;
 }
 input[type='range'].range-primary::-webkit-slider-thumb {
@@ -95,7 +129,28 @@ input[type='range'].range-primary::-moz-range-thumb {
   animation: fade-in 0.2s ease-out;
 }
 
-/* Shimmer skeleton used by the dashboard infinite scroll */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.reveal {
+  opacity: 1;
+}
+.reveal-in {
+  animation: reveal-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-in {
+    animation: none;
+  }
+}
+
 @keyframes shimmer {
   0% {
     background-position: -600px 0;
@@ -105,12 +160,12 @@ input[type='range'].range-primary::-moz-range-thumb {
   }
 }
 .shimmer {
-  background-color: #edeff2;
+  background-color: rgb(var(--shimmer-1));
   background-image: linear-gradient(
     90deg,
-    #edeff2 0px,
-    #f6f8fa 60px,
-    #edeff2 120px
+    rgb(var(--shimmer-1)) 0px,
+    rgb(var(--shimmer-2)) 60px,
+    rgb(var(--shimmer-1)) 120px
   );
   background-size: 600px 100%;
   background-repeat: no-repeat;
@@ -118,7 +173,6 @@ input[type='range'].range-primary::-moz-range-thumb {
   animation: shimmer 1.25s ease-in-out infinite;
 }
 
-/* Custom Google sign-in button — matches AffinityX Login styling */
 .google-signin-btn {
   display: flex;
   width: 100%;
@@ -127,19 +181,19 @@ input[type='range'].range-primary::-moz-range-thumb {
   justify-content: center;
   gap: 12px;
   border-radius: 10px;
-  border: 1px solid #e6e8ec;
-  background: #ffffff;
+  border: 1px solid rgb(var(--c-line));
+  background: rgb(var(--c-surface));
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
   font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   font-size: 15px;
   font-weight: 600;
-  color: #1f2430;
+  color: rgb(var(--c-ink));
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .google-signin-btn:hover:not(:disabled) {
-  background: #f4f5f7;
+  background: rgb(var(--c-canvas));
   border-color: rgba(27, 89, 245, 0.3);
 }
 
@@ -148,7 +202,6 @@ input[type='range'].range-primary::-moz-range-thumb {
   cursor: not-allowed;
 }
 
-/* Keep Google's rendered button off-screen so it never overlaps the custom UI */
 .google-signin-hidden-host {
   position: fixed;
   top: 0;

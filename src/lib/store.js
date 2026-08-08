@@ -8,6 +8,7 @@ const KEYS = {
   draft: 'affinityx.draft',
   seedVersion: 'affinityx.seedVersion',
   templates: 'affinityx.templates',
+  pendingRedirect: 'affinityx.pendingRedirect',
 }
 
 // Bump to re-seed the dashboard with a fresh dataset on next load.
@@ -145,6 +146,27 @@ export const duplicateQR = (id) => {
 export const getDraft = () => read(KEYS.draft, null)
 export const setDraft = (draft) => write(KEYS.draft, draft)
 export const clearDraft = () => localStorage.removeItem(KEYS.draft)
+
+// Where to send the user after signing in — set when a visitor starts a QR on
+// the public landing page and has to authenticate to continue.
+export const setPendingRedirect = (path) => {
+  if (
+    typeof path === 'string' &&
+    path.startsWith('/') &&
+    !path.startsWith('//')
+  )
+    write(KEYS.pendingRedirect, path)
+}
+export const takePendingRedirect = () => {
+  const path = read(KEYS.pendingRedirect, null)
+  localStorage.removeItem(KEYS.pendingRedirect)
+  return typeof path === 'string' &&
+    path.startsWith('/') &&
+    !path.startsWith('//')
+    ? path
+    : null
+}
+export const hasPendingRedirect = () => !!read(KEYS.pendingRedirect, null)
 
 // ---- auth (delegates to session service) --------------------------------
 
