@@ -21,7 +21,7 @@ import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { uploadAvatar, mapApiUser } from '../api/auth.api'
 import { useQrs } from '../hooks/useQrs'
-import { compressImageFile, dataUrlToFile } from '../lib/imageCompress'
+import { compressImageFile } from '../lib/imageCompress'
 import { getApiErrorMessage } from '../utils/errors'
 import {
   getDisplayName,
@@ -268,7 +268,7 @@ export default function UserAccount() {
       setAvatarPreview(preview)
       setAvatarImageError(false)
 
-      avatarUpload.mutate(dataUrlToFile(preview, 'avatar.jpg'))
+      avatarUpload.mutate(preview)
     } catch (err) {
       setAvatarPreview(null)
       toast.error(err?.message || 'Could not process that image. Try another file.')
