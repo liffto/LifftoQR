@@ -791,10 +791,10 @@ function QrGridCard({ row, onOpenModal }) {
         </div>
       </div>
 
-      {/* QR preview */}
+      {/* QR preview — inner box matches QRView size so static/dynamic fill evenly */}
       <div className="mt-3 flex justify-center">
-        <div className="w-[124px] h-[124px] rounded-[10px] border border-line/70 bg-white p-2 flex items-center justify-center overflow-hidden shadow-sm">
-          <QRView ref={qrRef} record={row} size={104} />
+        <div className="w-[108px] h-[108px] rounded-[10px] border border-line/70 bg-white flex items-center justify-center overflow-hidden shadow-sm">
+          <QRView ref={qrRef} record={row} size={108} />
         </div>
       </div>
 
@@ -846,7 +846,7 @@ function SkeletonCard() {
         <div className="h-8 w-8 rounded-[10px] shimmer" />
       </div>
       <div className="mt-3 flex justify-center">
-        <div className="w-[124px] h-[124px] rounded-[10px] shimmer" />
+        <div className="w-[108px] h-[108px] rounded-[10px] shimmer" />
       </div>
       <div className="mt-3 mx-auto h-4 w-3/4 rounded shimmer" />
       <div className="mt-2 mx-auto h-3 w-1/2 rounded shimmer" />

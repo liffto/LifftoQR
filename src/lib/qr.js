@@ -207,6 +207,11 @@ export const buildQRConfig = (record, size = 280) => {
     dotsOptions: {
       type: pattern.type,
       color: design.bodyColor1 || '#000000',
+      // roundSize defaults to true and floors module size, which leaves large
+      // empty bands inside the canvas for data-heavy codes (e.g. dynamic short
+      // URLs). false lets modules use fractional pixels so previews fill their
+      // box consistently across static and dynamic records.
+      roundSize: false,
       ...(design.bodyGradient
         ? { gradient: gradient(design.bodyColor1, design.bodyColor2) }
         : {}),

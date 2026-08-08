@@ -81,12 +81,24 @@ const QRView = forwardRef(function QRView(
   }))
 
   const holder = useMemo(
-    () => <div ref={holderRef} className={className} />,
+    () => (
+      <div
+        ref={holderRef}
+        className={`h-full w-full [&_svg]:block [&_svg]:h-full [&_svg]:w-full ${className}`}
+      />
+    ),
     [className],
   )
 
   // Always the same structure — no conditional wrapper changes.
-  return <div className="inline-flex">{holder}</div>
+  return (
+    <div
+      className="inline-flex shrink-0"
+      style={{ width: size, height: size }}
+    >
+      {holder}
+    </div>
+  )
 })
 
 export default QRView

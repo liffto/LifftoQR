@@ -1,5 +1,22 @@
 import type { User } from '../types/auth'
 
+function resolveApiBaseUrl(): string {
+  const backendUrl = import.meta.env.VITE_BACKEND_API_URL?.replace(/\/$/, '')
+  if (backendUrl) {
+    return backendUrl.endsWith('/api/v1') ? backendUrl.slice(0, -'/api/v1'.length) : backendUrl
+  }
+  return ''
+}
+
+export function resolvePictureUrl(picture: string | null | undefined): string | null {
+  if (!picture) return null
+  if (/^https?:\/\//i.test(picture)) return picture
+
+  const path = picture.startsWith('/') ? picture : `/${picture}`
+  const apiBase = resolveApiBaseUrl()
+  return apiBase ? `${apiBase}${path}` : path
+}
+
 export function getDisplayName(user: User | null | undefined): string {
   if (!user) return 'User'
 

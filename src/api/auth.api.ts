@@ -20,6 +20,13 @@ export async function getCurrentUser(): Promise<ApiUserResponse> {
   return data
 }
 
+export async function uploadAvatar(file: File): Promise<ApiUserResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const { data } = await api.post<ApiUserResponse>('/auth/me/avatar', formData)
+  return data
+}
+
 export async function logout(): Promise<void> {
   await api.post('/auth/logout')
 }
