@@ -1,6 +1,9 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.requests import Request
 
 from sqlalchemy.exc import IntegrityError
@@ -19,6 +22,11 @@ from app.routes.ws_routes import router as ws_router
 from app.api.v1 import api_v1
 
 app = FastAPI(title=settings.app_name, version="0.1.0", debug=settings.debug)
+
+UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+(UPLOADS_DIR / "avatars").mkdir(parents=True, exist_ok=True)
+app.mount("/api/v1/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
