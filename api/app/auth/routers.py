@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, Form, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Form, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -33,6 +33,7 @@ from app.auth.schemas import (
     ForgotPasswordRequest,
     ResetPasswordRequest,
     GoogleAuthRequest,
+    AvatarUploadRequest,
 )
 from app.auth.service import (
     authenticate_user,
@@ -45,7 +46,7 @@ from app.auth.service import (
     is_revoked,
     get_user_by_email,
 )
-from app.auth.avatar import save_user_avatar
+from app.auth.avatar import save_user_avatar_data_url
 from app.auth.dependencies import get_current_user, roles_required, oauth2_scheme
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -286,13 +287,12 @@ def me(user=Depends(get_current_user), db: Session = Depends(get_db)) -> UserOut
 
 @router.post("/me/avatar", response_model=UserOut, summary="Upload profile photo")
 async def upload_avatar(
-    file: UploadFile = File(...),
+    payload: AvatarUploadRequest,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> UserOut:
     """Upload or replace the current user's profile photo."""
-    avatar_url = await save_user_avatar(user.id, file, user.avatar_url)
-    user.avatar_url = avatar_url
+    user.avatar_url = save_user_avatar_data_url(payload.picture)
     db.commit()
     db.refresh(user)
     roles = get_user_roles(db, user.id)

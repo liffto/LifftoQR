@@ -38,6 +38,12 @@ class GoogleAuthRequest(BaseModel):
     id_token: str
 
 
+class AvatarUploadRequest(BaseModel):
+    """Compressed profile photo as a data URL (same format as QR logo uploads)."""
+
+    picture: str = Field(min_length=1, max_length=2_000_000)
+
+
 class UserOut(BaseModel):
     """User response model."""
     id: int
