@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import toast from 'react-hot-toast'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Camera,
   User,
@@ -16,12 +18,17 @@ import {
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
+import { uploadAvatar, mapApiUser } from '../api/auth.api'
+import { CURRENT_USER_QUERY_KEY } from '../providers/QueryProvider'
+import { getAccessToken, getRefreshToken, saveUser } from '../services/session'
+import { getApiErrorMessage } from '../utils/errors'
 import { getQRs } from '../lib/store'
 import {
   getDisplayName,
   getFirstName,
   getInitials,
   getLastName,
+  resolvePictureUrl,
 } from '../utils/userDisplay'
 
 const DELETE_CONFIRM_PHRASE = 'Delete Account'
@@ -196,11 +203,14 @@ function SaveButton({ label = 'Save Changes', onClick }) {
 
 export default function UserAccount() {
   const { user, logout } = useAuth()
+  const queryClient = useQueryClient()
+  const fileInputRef = useRef(null)
   const displayName = getDisplayName(user)
   const initials = getInitials(user)
   const firstName = getFirstName(user)
   const lastName = getLastName(user)
   const email = user?.email ?? ''
+  const pictureUrl = resolvePictureUrl(user?.picture)
   const [notifs, setNotifs] = useState({
     scans: true,
     weekly: true,
@@ -210,6 +220,40 @@ export default function UserAccount() {
   const removeDevice = (id) => setDevices((ds) => ds.filter((d) => d.id !== id))
   const signOutOthers = () => setDevices((ds) => ds.filter((d) => d.current))
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const avatarUpload = useMutation({
+    mutationFn: uploadAvatar,
+    onSuccess: (profile) => {
+      const updatedUser = mapApiUser(profile)
+      queryClient.setQueryData(CURRENT_USER_QUERY_KEY, updatedUser)
+      saveUser(updatedUser, getAccessToken(), getRefreshToken())
+      toast.success('Profile photo updated')
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error, 'Failed to upload profile photo'))
+    },
+  })
+
+  const handleAvatarPick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleAvatarChange = (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please choose an image file (JPG, PNG, WebP, or GIF)')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be smaller than 2 MB')
+      return
+    }
+
+    avatarUpload.mutate(file)
+  }
+
   const handleConfirmDelete = () => {
     logout()
   }
@@ -234,9 +278,16 @@ export default function UserAccount() {
             </div>
             <div className="px-5 pb-5 flex flex-col items-center text-center -mt-9">
               <div className="relative mb-3">
-                {user?.picture ? (
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+                {pictureUrl ? (
                   <img
-                    src={user.picture}
+                    src={pictureUrl}
                     alt={displayName}
                     className="w-[72px] h-[72px] rounded-full object-cover ring-4 ring-white shadow-lg"
                   />
@@ -247,7 +298,9 @@ export default function UserAccount() {
                 )}
                 <button
                   type="button"
-                  className="absolute bottom-0.5 right-0.5 w-6 h-6 rounded-full bg-white border border-line text-ink-soft flex items-center justify-center shadow-sm hover:border-primary hover:text-primary transition-colors"
+                  onClick={handleAvatarPick}
+                  disabled={avatarUpload.isPending}
+                  className="absolute bottom-0.5 right-0.5 w-6 h-6 rounded-full bg-white border border-line text-ink-soft flex items-center justify-center shadow-sm hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
                   aria-label="Change avatar"
                 >
                   <Camera size={11} />

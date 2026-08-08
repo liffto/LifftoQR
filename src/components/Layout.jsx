@@ -21,6 +21,7 @@ import { clearDraft } from '../lib/store'
 import {
   getDisplayName,
   getInitials,
+  resolvePictureUrl,
 } from '../utils/userDisplay'
 
 /* ── Brand mark (white, for dark sidebar) ───────────────────────── */
@@ -341,6 +342,7 @@ export default function Layout({ children, breadcrumb }) {
   const { user, logout } = useAuth()
   const displayName = getDisplayName(user)
   const initials = getInitials(user)
+  const pictureUrl = resolvePictureUrl(user?.picture)
   const unreadCount = INIT_NOTIFS.filter((n) => !n.read).length
 
   const handleCreate = () => {
@@ -481,9 +483,17 @@ export default function Layout({ children, breadcrumb }) {
               onClick={() => navigate('/account')}
               className="flex items-center gap-2 h-9 pl-1.5 pr-1.5 sm:pr-3 rounded-[10px] border border-line hover:bg-canvas transition-colors"
             >
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-[#7c3aed] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                {initials}
-              </div>
+              {pictureUrl ? (
+                <img
+                  src={pictureUrl}
+                  alt={displayName}
+                  className="w-6 h-6 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-[#7c3aed] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                  {initials}
+                </div>
+              )}
               <span className="hidden sm:block text-xs font-semibold text-ink-soft leading-none">
                 {displayName}
               </span>
