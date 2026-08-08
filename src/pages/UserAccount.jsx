@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import toast from 'react-hot-toast'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import {
   Camera,
   User,
@@ -19,8 +19,6 @@ import {
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { uploadAvatar, mapApiUser } from '../api/auth.api'
-import { CURRENT_USER_QUERY_KEY } from '../providers/QueryProvider'
-import { getAccessToken, getRefreshToken, saveUser } from '../services/session'
 import { getApiErrorMessage } from '../utils/errors'
 import { getQRs } from '../lib/store'
 import {
@@ -202,15 +200,14 @@ function SaveButton({ label = 'Save Changes', onClick }) {
 }
 
 export default function UserAccount() {
-  const { user, logout } = useAuth()
-  const queryClient = useQueryClient()
+  const { user, logout, updateUser } = useAuth()
   const fileInputRef = useRef(null)
   const displayName = getDisplayName(user)
   const initials = getInitials(user)
   const firstName = getFirstName(user)
   const lastName = getLastName(user)
   const email = user?.email ?? ''
-  const pictureUrl = resolvePictureUrl(user?.picture)
+  const pictureUrl = resolvePictureUrl(user?.picture, user?.pictureCacheKey)
   const [notifs, setNotifs] = useState({
     scans: true,
     weekly: true,
@@ -223,9 +220,10 @@ export default function UserAccount() {
   const avatarUpload = useMutation({
     mutationFn: uploadAvatar,
     onSuccess: (profile) => {
-      const updatedUser = mapApiUser(profile)
-      queryClient.setQueryData(CURRENT_USER_QUERY_KEY, updatedUser)
-      saveUser(updatedUser, getAccessToken(), getRefreshToken())
+      updateUser({
+        ...mapApiUser(profile),
+        pictureCacheKey: Date.now(),
+      })
       toast.success('Profile photo updated')
     },
     onError: (error) => {
@@ -287,6 +285,7 @@ export default function UserAccount() {
                 />
                 {pictureUrl ? (
                   <img
+                    key={pictureUrl}
                     src={pictureUrl}
                     alt={displayName}
                     className="w-[72px] h-[72px] rounded-full object-cover ring-4 ring-white shadow-lg"
