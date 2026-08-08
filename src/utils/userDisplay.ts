@@ -13,6 +13,7 @@ export function resolvePictureUrl(
   cacheKey?: number | string,
 ): string | null {
   if (!picture) return null
+  if (picture.startsWith('data:')) return picture
   if (/^https?:\/\//i.test(picture)) {
     if (!cacheKey) return picture
     const separator = picture.includes('?') ? '&' : '?'

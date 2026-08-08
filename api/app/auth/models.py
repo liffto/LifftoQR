@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, UniqueConstraint, Text
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base, PKMixin, TimestampMixin, TenantMixin
 
@@ -23,7 +23,7 @@ class User(PKMixin, TenantMixin, TimestampMixin, Base):
     is_staff = Column(Boolean, nullable=False, default=False)
     google_id = Column(String(255), nullable=True, index=True)
     auth_provider = Column(String(50), nullable=False, default="local")
-    avatar_url = Column(String(500), nullable=True)
+    avatar_url = Column(Text, nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
 
     account = relationship("Account", back_populates="users")
