@@ -19,3 +19,8 @@ venv/
 # IDE
 .vscode/
 .idea/
+
+# Uploaded user files
+api/uploads/**
+!api/uploads/avatars/
+!api/uploads/avatars/.gitkeep

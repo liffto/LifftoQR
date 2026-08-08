@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Form, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Form, UploadFile, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -45,9 +45,23 @@ from app.auth.service import (
     is_revoked,
     get_user_by_email,
 )
+from app.auth.avatar import save_user_avatar
 from app.auth.dependencies import get_current_user, roles_required, oauth2_scheme
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+def _user_out(user: User, roles: list[str]) -> UserOut:
+    return UserOut(
+        id=user.id,
+        email=user.email,
+        first_name=user.first_name or "",
+        last_name=user.last_name or "",
+        account_id=user.account_id,
+        roles=roles,
+        is_superuser=user.is_superuser,
+        picture=user.avatar_url,
+    )
 
 
 async def get_token_form(
@@ -267,15 +281,22 @@ def logout(
 def me(user=Depends(get_current_user), db: Session = Depends(get_db)) -> UserOut:
     """Get current authenticated user info."""
     roles = get_user_roles(db, user.id)
-    return UserOut(
-        id=user.id,
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        account_id=user.account_id,
-        roles=roles,
-        is_superuser=user.is_superuser,
-    )
+    return _user_out(user, roles)
+
+
+@router.post("/me/avatar", response_model=UserOut, summary="Upload profile photo")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> UserOut:
+    """Upload or replace the current user's profile photo."""
+    avatar_url = await save_user_avatar(user.id, file)
+    user.avatar_url = avatar_url
+    db.commit()
+    db.refresh(user)
+    roles = get_user_roles(db, user.id)
+    return _user_out(user, roles)
 
 
 @router.post("/token", response_model=TokenPair, summary="OAuth2 password flow (Swagger)")

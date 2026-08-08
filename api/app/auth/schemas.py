@@ -47,6 +47,7 @@ class UserOut(BaseModel):
     account_id: int
     roles: List[str]
     is_superuser: bool
+    picture: Optional[str] = None
 
 
 class VerifyEmailRequest(BaseModel):
