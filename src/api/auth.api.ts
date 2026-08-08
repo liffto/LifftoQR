@@ -20,10 +20,10 @@ export async function getCurrentUser(): Promise<ApiUserResponse> {
   return data
 }
 
-export async function uploadAvatar(file: File): Promise<ApiUserResponse> {
-  const formData = new FormData()
-  formData.append('file', file)
-  const { data } = await api.post<ApiUserResponse>('/auth/me/avatar', formData)
+export async function uploadAvatar(pictureDataUrl: string): Promise<ApiUserResponse> {
+  const { data } = await api.post<ApiUserResponse>('/auth/me/avatar', {
+    picture: pictureDataUrl,
+  })
   return data
 }
 
