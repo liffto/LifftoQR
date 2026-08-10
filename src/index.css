@@ -58,6 +58,10 @@ body {
   font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   background: rgb(var(--c-canvas));
   color: rgb(var(--c-ink));
+  /* Pairs with the viewport meta: drops the double-tap-to-zoom gesture (and
+     the 300ms tap delay that comes with it) while leaving scrolling intact. */
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
 }
 
 .scroll-x {

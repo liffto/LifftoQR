@@ -23,6 +23,7 @@ from app.controllers.website_controller import WebsiteController
 from app.controllers.whatsapp_controller import WhatsappController
 from app.controllers.wifi_controller import WifiController
 from app.controllers.qr_controller import QrController
+from app.controllers.public_controller import PublicController
 from app.controllers.scan_controller import ScanController
 from app.db.session import get_db
 from app.repositories.app_repository import AppRepository
@@ -162,3 +163,7 @@ def get_qr_controller(db: Session = Depends(get_db)) -> QrController:
 
 def get_scan_controller(db: Session = Depends(get_db)) -> ScanController:
     return ScanController(ScanService(QrRepository(db)))
+
+
+def get_public_controller(db: Session = Depends(get_db)) -> PublicController:
+    return PublicController(ScanService(QrRepository(db)))

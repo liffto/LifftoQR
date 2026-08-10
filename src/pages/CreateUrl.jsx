@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, ChevronLeft, ArrowRight } from 'lucide-react'
+import { Check, ChevronLeft, ArrowRight, AlertCircle } from 'lucide-react'
 import {
   randomSlug,
   uid,
@@ -14,6 +14,7 @@ import {
   defaultContent,
   deriveContentName,
   encodeContent,
+  isValidWebsiteUrl,
 } from '../lib/qrTypes'
 import Logo from '../components/Logo'
 import { Toggle } from '../components/ui'
@@ -22,8 +23,11 @@ import DynamicQRInfo from '../components/DynamicQRInfo'
 export default function CreateUrl() {
   const navigate = useNavigate()
   const [url, setUrl] = useState('')
+  const [urlTouched, setUrlTouched] = useState(false)
   const [dynamic, setDynamic] = useState(true)
   const UrlIcon = findType('url').Icon
+  const urlValid = isValidWebsiteUrl(url)
+  const showUrlError = urlTouched && url.trim() !== '' && !urlValid
 
   const buildAndGo = (typeKey, content, dyn, target) => {
     const t = findType(typeKey)
@@ -48,8 +52,10 @@ export default function CreateUrl() {
     navigate(target)
   }
 
-  const startUrl = () =>
+  const startUrl = () => {
+    if (!isValidWebsiteUrl(url)) return
     buildAndGo('url', { url: url.trim() }, dynamic, '/create/design')
+  }
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -105,21 +111,42 @@ export default function CreateUrl() {
               </label>
               <div className="relative">
                 <input
+                  type="url"
                   value={url}
-                  onChange={(e) => setUrl(e.target.value)}
+                  onChange={(e) => setUrl(e.target.value.toLowerCase())}
+                  onBlur={() => setUrlTouched(true)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && url.trim()) startUrl()
+                    if (e.key === 'Enter') startUrl()
                   }}
                   placeholder="https://example.com"
-                  className="h-12 w-full rounded-[10px] border border-line bg-white px-4 pr-11 text-sm text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 placeholder:text-ink-faint"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  className={`h-12 w-full rounded-[10px] border bg-white px-4 pr-11 text-sm text-ink outline-none transition focus:ring-2 placeholder:text-ink-faint ${
+                    showUrlError
+                      ? 'border-danger focus:border-danger focus:ring-danger/10'
+                      : 'border-line focus:border-primary focus:ring-primary/10'
+                  }`}
                 />
-                {url.trim() && (
-                  <Check
-                    size={18}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-primary"
-                  />
-                )}
+                {url.trim() &&
+                  (showUrlError ? (
+                    <AlertCircle
+                      size={18}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-danger"
+                    />
+                  ) : (
+                    urlValid && (
+                      <Check
+                        size={18}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-primary"
+                      />
+                    )
+                  ))}
               </div>
+              {showUrlError && (
+                <p className="mt-1.5 text-xs text-danger">
+                  Enter a valid URL, e.g. example.com
+                </p>
+              )}
             </div>
 
             <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -139,7 +166,7 @@ export default function CreateUrl() {
               <button
                 type="button"
                 onClick={startUrl}
-                disabled={!url.trim()}
+                disabled={!urlValid}
                 className="bg-primary text-white rounded-[10px] px-6 h-11 font-semibold flex items-center justify-center gap-2 hover:bg-primary-600 transition-colors whitespace-nowrap shadow-sm shadow-primary/25 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Generate QR <ArrowRight size={17} />

@@ -1,5 +1,17 @@
-import { Plus, X, ChevronDown, ImagePlus } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Plus, X, ChevronDown, ImagePlus, Eye, EyeOff } from 'lucide-react'
 import { compressImageFile } from '../lib/imageCompress'
+import {
+  COUNTRIES,
+  digitsOnly,
+  findByDial,
+  findCountry,
+  isValidNationalNumber,
+  joinPhone,
+  lengthHint,
+  maxLengthFor,
+  splitPhone,
+} from '../lib/countries'
 
 // Pretty option labels for selects (values stay raw so encoders keep working).
 const OPTION_LABELS = {
@@ -155,19 +167,215 @@ function ImageField({ field, value, onChange }) {
   )
 }
 
-function Field({ field, value, onChange }) {
+// Country picker + national number, stored as a single E.164 string ("+9198…").
+// The accepted digit count comes from the selected country, so India requires
+// exactly 10 while Singapore requires 8 and Germany accepts a range.
+function PhoneField({ field, value, onChange }) {
+  const { national } = splitPhone(value)
+  const [iso, setIso] = useState(() => splitPhone(value).iso)
+  const [touched, setTouched] = useState(false)
+  const id = `f-${field.key}`
+
+  // A saved record loading from the API carries its country inside the value —
+  // adopt it. Compared by dial code so countries that share one (US/Canada on
+  // +1) don't yank the dropdown away from the user's pick.
+  useEffect(() => {
+    const next = splitPhone(value)
+    if (next.national && findCountry(next.iso).dial !== findCountry(iso).dial) {
+      setIso(next.iso)
+    }
+  }, [value, iso])
+
+  const setCountry = (nextIso) => {
+    setIso(nextIso)
+    onChange(field.key, joinPhone(nextIso, national))
+  }
+  const setNumber = (raw) =>
+    onChange(field.key, joinPhone(iso, digitsOnly(raw).slice(0, maxLengthFor(iso))))
+
+  const invalid = touched && national !== '' && !isValidNationalNumber(iso, national)
+
+  return (
+    <div className={field.half ? 'col-span-2 sm:col-span-1' : 'col-span-2'}>
+      <label
+        htmlFor={id}
+        className="mb-1.5 block text-xs font-medium text-ink-muted"
+      >
+        {field.label}
+        {field.required && <span className="text-danger"> *</span>}
+      </label>
+      <div className="flex gap-2">
+        <div className="relative shrink-0">
+          <select
+            aria-label="Country code"
+            value={iso}
+            onChange={(e) => setCountry(e.target.value)}
+            className={INPUT_CLS + ' w-[116px] appearance-none cursor-pointer pr-8'}
+          >
+            {COUNTRIES.map((c) => (
+              <option key={c.iso} value={c.iso}>
+                {c.flag} +{c.dial}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={14}
+            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
+          />
+        </div>
+        <input
+          id={id}
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel-national"
+          value={national}
+          onChange={(e) => setNumber(e.target.value)}
+          onBlur={() => setTouched(true)}
+          placeholder={'0'.repeat(maxLengthFor(iso))}
+          className={
+            INPUT_CLS +
+            (invalid
+              ? ' border-danger focus:border-danger focus:ring-danger/10'
+              : '')
+          }
+        />
+      </div>
+      <p className={`mt-1 text-[11px] ${invalid ? 'text-danger' : 'text-ink-faint'}`}>
+        {invalid
+          ? `${findCountry(iso).name} numbers are ${lengthHint(iso)}`
+          : lengthHint(iso)}
+      </p>
+    </div>
+  )
+}
+
+// WhatsApp stores the dial code and the number in separate columns, so those
+// two get their own fields instead of the combined PhoneField above.
+function DialCodeField({ field, value, onChange }) {
+  const selected = findByDial(value)
+  const id = `f-${field.key}`
+  return (
+    <div className={field.half ? 'col-span-2 sm:col-span-1' : 'col-span-2'}>
+      <label
+        htmlFor={id}
+        className="mb-1.5 block text-xs font-medium text-ink-muted"
+      >
+        {field.label}
+        {field.required && <span className="text-danger"> *</span>}
+      </label>
+      <div className="relative">
+        <select
+          id={id}
+          value={selected ? selected.iso : ''}
+          onChange={(e) => onChange(field.key, findCountry(e.target.value).dial)}
+          className={INPUT_CLS + ' appearance-none cursor-pointer pr-10'}
+        >
+          {!selected && <option value="">Select a country</option>}
+          {COUNTRIES.map((c) => (
+            <option key={c.iso} value={c.iso}>
+              {c.flag} {c.name} (+{c.dial})
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          size={16}
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint"
+        />
+      </div>
+    </div>
+  )
+}
+
+// National number whose valid length is driven by a sibling dial-code field.
+function NationalNumberField({ field, value, onChange, content }) {
+  const [touched, setTouched] = useState(false)
+  const country = findByDial(content?.[field.dialFrom])
+  const digits = digitsOnly(value)
+  const id = `f-${field.key}`
+  const invalid =
+    touched &&
+    digits !== '' &&
+    country != null &&
+    !isValidNationalNumber(country.iso, digits)
+
+  return (
+    <div className={field.half ? 'col-span-2 sm:col-span-1' : 'col-span-2'}>
+      <label
+        htmlFor={id}
+        className="mb-1.5 block text-xs font-medium text-ink-muted"
+      >
+        {field.label}
+        {field.required && <span className="text-danger"> *</span>}
+      </label>
+      <input
+        id={id}
+        type="tel"
+        inputMode="numeric"
+        value={digits}
+        onChange={(e) =>
+          onChange(
+            field.key,
+            country
+              ? digitsOnly(e.target.value).slice(0, maxLengthFor(country.iso))
+              : digitsOnly(e.target.value),
+          )
+        }
+        onBlur={() => setTouched(true)}
+        placeholder={country ? '0'.repeat(maxLengthFor(country.iso)) : field.placeholder}
+        className={
+          INPUT_CLS +
+          (invalid ? ' border-danger focus:border-danger focus:ring-danger/10' : '')
+        }
+      />
+      {country && (
+        <p
+          className={`mt-1 text-[11px] ${invalid ? 'text-danger' : 'text-ink-faint'}`}
+        >
+          {invalid
+            ? `${country.name} numbers are ${lengthHint(country.iso)}`
+            : lengthHint(country.iso)}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// The "Website URL" QR type's own url field only — not every field that
+// happens to accept a link (vCard website, PDF/video links, …), since those
+// can be legitimately case-sensitive (e.g. a YouTube video id).
+function isWebsiteUrlField(typeKey, field) {
+  return typeKey === 'url' && field.key === 'url'
+}
+
+function Field({ field, value, onChange, typeKey, content }) {
   const { key, label, inputType, placeholder, required, options } = field
   const id = `f-${key}`
+  const lowercaseOnType = isWebsiteUrlField(typeKey, field)
+  const [passwordVisible, setPasswordVisible] = useState(false)
   const common = {
     id,
     value: value ?? '',
-    onChange: (e) => onChange(key, e.target.value),
+    onChange: (e) =>
+      onChange(key, lowercaseOnType ? e.target.value.toLowerCase() : e.target.value),
   }
 
   if (inputType === 'linklist')
     return <LinkListField field={field} value={value} onChange={onChange} />
   if (inputType === 'image')
     return <ImageField field={field} value={value} onChange={onChange} />
+  if (inputType === 'phone')
+    return <PhoneField field={field} value={value} onChange={onChange} />
+  if (inputType === 'dialcode')
+    return <DialCodeField field={field} value={value} onChange={onChange} />
+  if (inputType === 'national')
+    return (
+      <NationalNumberField
+        field={field}
+        value={value}
+        onChange={onChange}
+        content={content}
+      />
+    )
 
   return (
     <div className={field.half ? 'col-span-2 sm:col-span-1' : 'col-span-2'}>
@@ -205,11 +413,30 @@ function Field({ field, value, onChange }) {
             className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint"
           />
         </div>
+      ) : inputType === 'password' ? (
+        <div className="relative">
+          <input
+            {...common}
+            type={passwordVisible ? 'text' : 'password'}
+            placeholder={placeholder}
+            className={INPUT_CLS + ' pr-10'}
+          />
+          <button
+            type="button"
+            onClick={() => setPasswordVisible((v) => !v)}
+            aria-label={passwordVisible ? 'Hide password' : 'Show password'}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint hover:text-primary transition-colors"
+          >
+            {passwordVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
       ) : (
         <input
           {...common}
           type={inputType}
           placeholder={placeholder}
+          autoCapitalize={lowercaseOnType ? 'none' : undefined}
+          spellCheck={lowercaseOnType ? false : undefined}
           className={INPUT_CLS}
         />
       )}
@@ -233,6 +460,8 @@ export default function TypeFields({
           field={f}
           value={content[f.key]}
           onChange={onChange}
+          typeKey={type.key}
+          content={content}
         />
       ))}
     </div>
