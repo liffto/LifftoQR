@@ -116,10 +116,10 @@ export default function FAQ() {
             <p className="text-sm text-ink-soft mt-0.5">
               Can't find an answer?{' '}
               <a
-                href="mailto:support@affinityx.com"
+                href="mailto:support@liffto.com"
                 className="text-primary hover:underline"
               >
-                support@affinityx.com
+                support@liffto.com
               </a>
             </p>
           </div>

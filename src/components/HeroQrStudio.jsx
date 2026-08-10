@@ -63,7 +63,7 @@ const STYLES = [
   },
 ]
 
-const SWATCH_URL = 'https://affinityx.com'
+const SWATCH_URL = 'https://liffto.com'
 const CYCLE_MS = 2000
 
 // Built once. Rebuilding these per render gave every swatch a new record object,

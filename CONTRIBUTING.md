@@ -1,12 +1,12 @@
-# Contributing to Affinityx QR
+# Contributing to Liffto QR
 
 Thanks for your interest in contributing! 🎉
 
 ## Getting started
 
 ```bash
-git clone https://github.com/<your-username>/affinityx-qr.git
-cd affinityx-qr
+git clone https://github.com/<your-username>/liffto-qr.git
+cd liffto-qr
 npm install
 npm run dev
 ```

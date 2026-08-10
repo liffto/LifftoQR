@@ -77,7 +77,7 @@ const INITIAL = [
     icon: Info,
     bg: 'bg-violet-50',
     fg: 'text-violet-500',
-    title: 'Welcome to AffinityX!',
+    title: 'Welcome to Liffto!',
     body: 'Get started by creating your first QR code. It only takes 30 seconds.',
     time: '3 days ago',
     day: 'earlier',

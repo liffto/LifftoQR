@@ -468,7 +468,7 @@ export default function UserAccount() {
                 {
                   key: 'product',
                   label: 'Product Updates',
-                  desc: 'New features and updates from AffinityX',
+                  desc: 'New features and updates from Liffto',
                 },
               ].map(({ key, label, desc }) => (
                 <div

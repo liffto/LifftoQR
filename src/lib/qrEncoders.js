@@ -271,12 +271,12 @@ const encodeEvent = (c) => {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 40) || 'event'
-  const uid = slug + '-' + (toDate(c.start) || 'x') + '@affinityx.qr'
+  const uid = slug + '-' + (toDate(c.start) || 'x') + '@liffto.qr'
   const dtstamp = stampOf(c.start) || stampOf(c.end)
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//AffinityX//QR//EN',
+    'PRODID:-//Liffto//QR//EN',
     'BEGIN:VEVENT',
   ]
   lines.push('UID:' + uid)

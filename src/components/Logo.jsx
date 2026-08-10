@@ -1,4 +1,4 @@
-// AFFINITYX brand mark + wordmark.
+// LIFFTO brand mark + wordmark.
 // variant: 'create' | 'platform'
 // white: true = white text (for dark backgrounds)
 export default function Logo({
@@ -24,7 +24,7 @@ export default function Logo({
       </svg>
       <div className="leading-none">
         <div className={`text-sm font-semibold tracking-wide ${nameColor}`}>
-          AFFINITYX
+          LIFFTO
         </div>
         {variant === 'create' ? (
           <div className={`text-base font-bold leading-tight ${subColor}`}>

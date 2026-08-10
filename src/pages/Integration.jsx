@@ -123,7 +123,7 @@ export default function Integration() {
           <div className="space-y-4">
             <CopyField
               label="API Key"
-              value="ak_live_affinityx_••••••••••••••••3F9A"
+              value="ak_live_liffto_••••••••••••••••3F9A"
             />
             <CopyField
               label="Secret Key"

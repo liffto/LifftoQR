@@ -1,14 +1,14 @@
-// Lightweight localStorage-backed store for the AFFINITYX QR prototype.
+// Lightweight localStorage-backed store for the LIFFTO QR prototype.
 // Holds the QR records shown on the dashboard, the auth flag, and the
 // in-progress "draft" used by the two-step create flow.
 
 const KEYS = {
-  qrs: 'affinityx.qrs',
-  auth: 'affinityx.auth',
-  draft: 'affinityx.draft',
-  seedVersion: 'affinityx.seedVersion',
-  templates: 'affinityx.templates',
-  pendingRedirect: 'affinityx.pendingRedirect',
+  qrs: 'liffto.qrs',
+  auth: 'liffto.auth',
+  draft: 'liffto.draft',
+  seedVersion: 'liffto.seedVersion',
+  templates: 'liffto.templates',
+  pendingRedirect: 'liffto.pendingRedirect',
 }
 
 // Bump to re-seed the dashboard with a fresh dataset on next load.

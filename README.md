@@ -1,10 +1,10 @@
 <div align="center">
 
-# Affinityx QR
+# Liffto QR
 
 **Design, customize, and manage dynamic & static QR codes — with logos, gradients, frames, custom patterns, and a full management dashboard.**
 
-[![CI](https://github.com/<your-username>/affinityx-qr/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-username>/affinityx-qr/actions/workflows/ci.yml)
+[![CI](https://github.com/<your-username>/liffto-qr/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-username>/liffto-qr/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![React](https://img.shields.io/badge/React-18-61dafb.svg)
 ![Vite](https://img.shields.io/badge/Vite-5-646cff.svg)
@@ -15,7 +15,7 @@
 
 ## 📖 Overview
 
-Affinityx QR is a client-side web app for creating richly styled QR codes through a guided, two-step flow, then managing them from a searchable dashboard. It supports **dynamic QR codes** (editable destination + scan statistics) and **static QR codes**, live-previewing every design change in real time.
+Liffto QR is a client-side web app for creating richly styled QR codes through a guided, two-step flow, then managing them from a searchable dashboard. It supports **dynamic QR codes** (editable destination + scan statistics) and **static QR codes**, live-previewing every design change in real time.
 
 > Replace this section with your own product positioning, target users, and the problem it solves.
 
@@ -53,8 +53,8 @@ Affinityx QR is a client-side web app for creating richly styled QR codes throug
 
 ```bash
 # 1. Clone
-git clone https://github.com/<your-username>/affinityx-qr.git
-cd affinityx-qr
+git clone https://github.com/<your-username>/liffto-qr.git
+cd liffto-qr
 
 # 2. Install dependencies
 npm install
@@ -73,7 +73,7 @@ cp .env.example .env
 
 | Variable                | Default         | Description                           |
 | ----------------------- | --------------- | ------------------------------------- |
-| `VITE_APP_NAME`         | `Affinityx QR`  | App name shown in the UI              |
+| `VITE_APP_NAME`         | `Liffto QR`  | App name shown in the UI              |
 | `VITE_SHORT_URL_DOMAIN` | `liffto-qr.vercel.app` | Domain used for generated short links |
 
 > ⚠️ **Vite exposes any `VITE_`-prefixed variable to the browser bundle.** Never put real secrets or API keys in client-side env vars — they ship to every visitor.
@@ -94,7 +94,7 @@ npm run test         # run unit tests with Vitest
 ## 🗂️ Project Structure
 
 ```text
-affinityx-qr/
+liffto-qr/
 ├── public/              # static assets served as-is (favicon, etc.)
 ├── src/
 │   ├── assets/          # imported images & static assets
