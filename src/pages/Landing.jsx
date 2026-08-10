@@ -59,11 +59,11 @@ const SCAN_DEMOS = [
       content: {
         firstName: 'Kavuthamraj',
         lastName: 'GS',
-        org: 'AffinityX',
+        org: 'Liffto',
         title: 'Product & Design',
         phone: '+91 98400 00000',
-        email: 'hello@affinityx.com',
-        url: 'https://affinityx.com',
+        email: 'hello@liffto.com',
+        url: 'https://liffto.com',
         city: 'Chennai',
         country: 'India',
       },
@@ -91,8 +91,8 @@ const SCAN_DEMOS = [
 const FEATURE_QR = {
   typeKey: 'url',
   dynamic: false,
-  content: { url: 'https://affinityx.com' },
-  url: 'https://affinityx.com',
+  content: { url: 'https://liffto.com' },
+  url: 'https://liffto.com',
   design: {
     ...defaultDesign(),
     bodyPattern: 'extra-rounded',
@@ -295,7 +295,7 @@ export default function Landing() {
           <button
             type="button"
             onClick={scrollTo('top')}
-            aria-label="AffinityX"
+            aria-label="Liffto"
           >
             <Logo variant="create" white={!solidNav} />
           </button>
@@ -643,7 +643,7 @@ export default function Landing() {
           <Reveal>
             <div className="max-w-[560px]">
               <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
-                Why AffinityX
+                Why Liffto
               </span>
               <h2 className="mt-3 text-[26px] sm:text-[32px] leading-[1.12] font-extrabold tracking-[-0.02em] text-ink">
                 Not a generator. A place to run QR codes.
@@ -829,7 +829,7 @@ export default function Landing() {
                               Summer menu
                             </span>
                             <span className="block text-[10px] text-primary truncate">
-                              affinityx.com/aX7f2b
+                              liffto.com/aX7f2b
                             </span>
                           </span>
                           <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-success">
@@ -941,10 +941,10 @@ export default function Landing() {
           <p className="mt-8 text-[14px] text-ink-muted">
             Still stuck?{' '}
             <a
-              href="mailto:support@affinityx.com"
+              href="mailto:support@liffto.com"
               className="font-semibold text-primary hover:underline"
             >
-              support@affinityx.com
+              support@liffto.com
             </a>
           </p>
         </div>
@@ -1032,7 +1032,7 @@ export default function Landing() {
                   </li>
                   <li>
                     <a
-                      href="mailto:support@affinityx.com"
+                      href="mailto:support@liffto.com"
                       className="text-[13px] text-ink-soft hover:text-primary transition-colors"
                     >
                       Contact support
@@ -1045,7 +1045,7 @@ export default function Landing() {
 
           <div className="mt-12 pt-6 border-t border-line flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[12px] text-ink-faint">
-              © {new Date().getFullYear()} AffinityX. All rights reserved.
+              © {new Date().getFullYear()} Liffto. All rights reserved.
             </p>
             <div className="flex items-center gap-5 text-[12px] text-ink-faint">
               <a className="hover:text-ink-soft cursor-pointer transition-colors">

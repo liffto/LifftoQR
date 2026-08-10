@@ -53,7 +53,7 @@ export default function DynamicSwapDemo() {
           Printed once
         </p>
         <p className="mt-1 text-[13px] font-mono text-ink-soft">
-          affinityx.com/{SLUG}
+          liffto.com/{SLUG}
         </p>
       </div>
 

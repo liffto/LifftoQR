@@ -1,10 +1,10 @@
 # Architecture
 
-A high-level map of how Affinityx QR is put together.
+A high-level map of how Liffto QR is put together.
 
 ## Overview
 
-Affinityx QR is a **client-only single-page application**. There is no backend in
+Liffto QR is a **client-only single-page application**. There is no backend in
 the prototype — all state lives in the browser via `localStorage`. Swapping the
 data layer for a real API is the primary path to production (see Roadmap).
 

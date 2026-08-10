@@ -226,7 +226,7 @@ const INIT_NOTIFS = [
     icon: Info,
     bg: 'bg-violet-50',
     fg: 'text-violet-500',
-    title: 'Welcome to AffinityX!',
+    title: 'Welcome to Liffto!',
     body: 'Get started by creating your first QR code in 30 seconds.',
     time: '3 days ago',
     day: 'Earlier',
@@ -446,7 +446,7 @@ export default function Layout({ children, breadcrumb }) {
               {greeting}
             </p>
             <p className="text-[12px] text-ink-faint leading-none">
-              Welcome to AffinityX QR Generator
+              Welcome to Liffto QR Generator
             </p>
           </div>
 

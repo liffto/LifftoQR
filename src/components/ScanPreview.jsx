@@ -177,7 +177,7 @@ function RedirectPage({
       <div className="mt-6 w-full">
         <Btn icon={ExternalLink}>{action}</Btn>
       </div>
-      <p className="mt-4 text-[10px] text-ink-faint">Powered by AffinityX</p>
+      <p className="mt-4 text-[10px] text-ink-faint">Powered by Liffto</p>
     </div>
   )
 }

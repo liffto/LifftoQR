@@ -69,7 +69,7 @@ export default function Login() {
 
         <div className="relative z-10 bg-white/10 border border-white/15 rounded-[10px] p-4">
           <p className="text-white/75 text-sm italic leading-relaxed">
-            "We switched all our restaurant menus to AffinityX QR codes. The
+            "We switched all our restaurant menus to Liffto QR codes. The
             analytics alone saved us thousands in printing costs."
           </p>
           <div className="flex items-center gap-2.5 mt-3">
@@ -121,7 +121,7 @@ export default function Login() {
           </div>
 
           <p className="mt-6 text-center text-[11px] text-ink-faint leading-relaxed">
-            By continuing you agree to AffinityX's{' '}
+            By continuing you agree to Liffto's{' '}
             <a className="underline cursor-pointer">Terms of Service</a> &{' '}
             <a className="underline cursor-pointer">Privacy Policy</a>.
           </p>

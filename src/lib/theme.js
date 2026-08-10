@@ -3,8 +3,8 @@
 // (Tailwind `darkMode: 'class'`). A matching inline script in index.html
 // applies it before paint to avoid a flash.
 
-const KEY = 'affinityx.theme'
-export const THEME_EVENT = 'affinityx:theme'
+const KEY = 'liffto.theme'
+export const THEME_EVENT = 'liffto:theme'
 
 export const getTheme = () => {
   try {

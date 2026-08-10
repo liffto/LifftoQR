@@ -4,7 +4,7 @@ import QRView from './QRView'
 // Design range, proven. Every tile is a real code rendered by the same engine the
 // studio uses — not an illustration — so the wall itself is the argument.
 
-const mk = (design, url = 'https://affinityx.com') => ({
+const mk = (design, url = 'https://liffto.com') => ({
   typeKey: 'url',
   dynamic: false,
   content: { url },

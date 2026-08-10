@@ -1,6 +1,6 @@
 import type { SessionData, User } from '../types/auth'
 
-const SESSION_KEY = 'affinityx.session'
+const SESSION_KEY = 'liffto.session'
 
 const readSession = (): SessionData => {
   try {

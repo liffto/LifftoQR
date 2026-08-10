@@ -242,7 +242,7 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
     scanCount === null &&
     (connectionStatus === 'connecting' || connectionStatus === 'connected')
   const resolvedScans = scanCount ?? row.scans
-  // Local UI status so the Active toggle flips instantly (same as AffinityX).
+  // Local UI status so the Active toggle flips instantly (same as Liffto).
   const [status, setStatus] = useState(row.status ?? 'Active')
   const isActive = !isInactiveStatus(status)
 
@@ -400,7 +400,7 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
             </div>
           )}
 
-          {/* Active / Inactive — Dynamic QRs only (same UI as AffinityX) */}
+          {/* Active / Inactive — Dynamic QRs only (same UI as Liffto) */}
           {isDynamic && (
             <div className="flex items-center justify-between gap-3 rounded-[10px] border border-line px-3.5 py-3">
               <div className="min-w-0">
@@ -938,7 +938,7 @@ export default function Dashboard() {
   // card on desktop) until the user makes an explicit choice.
   const [view, setView] = useState(() => {
     try {
-      const stored = localStorage.getItem('affinityx.dashboardView')
+      const stored = localStorage.getItem('liffto.dashboardView')
       return VIEWS.includes(stored) ? stored : defaultView()
     } catch {
       return defaultView()
@@ -949,7 +949,7 @@ export default function Dashboard() {
   const changeView = (v) => {
     setView(v)
     try {
-      localStorage.setItem('affinityx.dashboardView', v)
+      localStorage.setItem('liffto.dashboardView', v)
     } catch {
       /* ignore storage failures */
     }

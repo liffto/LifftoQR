@@ -1,18 +1,18 @@
 {
-  "name": "affinityx-qr",
+  "name": "liffto-qr",
   "private": true,
   "version": "1.0.0",
-  "description": "Affinityx QR — design, customize, and manage dynamic & static QR codes (logos, gradients, frames, patterns) with a built-in dashboard.",
+  "description": "Liffto QR — design, customize, and manage dynamic & static QR codes (logos, gradients, frames, patterns) with a built-in dashboard.",
   "type": "module",
   "license": "MIT",
   "author": "Your Name <you@example.com>",
-  "homepage": "https://github.com/<your-username>/affinityx-qr#readme",
+  "homepage": "https://github.com/<your-username>/liffto-qr#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/<your-username>/affinityx-qr.git"
+    "url": "https://github.com/<your-username>/liffto-qr.git"
   },
   "bugs": {
-    "url": "https://github.com/<your-username>/affinityx-qr/issues"
+    "url": "https://github.com/<your-username>/liffto-qr/issues"
   },
   "keywords": [
     "qr-code",

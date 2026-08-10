@@ -50,7 +50,7 @@ export default function DynamicQRInfo() {
                 <div>
                   <p className="text-sm font-semibold text-ink">Dynamic QR</p>
                   <p className="text-xs text-ink-muted mt-0.5 leading-relaxed">
-                    Scanning it opens a short AffinityX link that takes people
+                    Scanning it opens a short Liffto link that takes people
                     to your content. You can change the destination anytime and
                     see how many times it's scanned — all without reprinting the
                     code.

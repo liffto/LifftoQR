@@ -44,8 +44,8 @@ export default function StepStyleDemo() {
   const record = {
     typeKey: 'url',
     dynamic: false,
-    content: { url: 'https://affinityx.com' },
-    url: 'https://affinityx.com',
+    content: { url: 'https://liffto.com' },
+    url: 'https://liffto.com',
     design: {
       ...defaultDesign(),
       ...preset.design,
@@ -57,8 +57,8 @@ export default function StepStyleDemo() {
   const swatchRecord = (p) => ({
     typeKey: 'url',
     dynamic: false,
-    content: { url: 'https://affinityx.com' },
-    url: 'https://affinityx.com',
+    content: { url: 'https://liffto.com' },
+    url: 'https://liffto.com',
     design: {
       ...defaultDesign(),
       ...p.design,
