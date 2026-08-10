@@ -254,7 +254,7 @@ export default function HeroQrStudio({ onStart }) {
           Customise &amp; download <ArrowRight size={18} />
         </button>
         <p className="mt-3 text-center text-[11px] text-ink-faint leading-relaxed">
-          Sign in with Google to save it — free during launch, no card needed.
+          Sign in with Google to save it — free, no card needed.
         </p>
       </div>
     </div>

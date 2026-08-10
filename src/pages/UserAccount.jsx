@@ -337,8 +337,8 @@ export default function UserAccount() {
               </div>
               <p className="font-bold text-ink text-base">{displayName}</p>
               <p className="text-xs text-ink-muted mt-0.5">{email}</p>
-              <span className="mt-2.5 text-[11px] bg-amber-50 border border-amber-200 text-amber-600 rounded-full px-3 py-1 font-semibold">
-                Free Plan
+              <span className="mt-2.5 text-[11px] bg-success/10 border border-success/20 text-success rounded-full px-3 py-1 font-semibold">
+                All features unlocked
               </span>
               <div className="mt-4 w-full grid grid-cols-2 gap-2.5">
                 <div className="bg-canvas rounded-[10px] p-3 text-center">

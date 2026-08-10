@@ -50,8 +50,8 @@ const CATEGORIES = [
     iconCls: 'bg-amber-50 text-amber-500',
     items: [
       {
-        q: 'How many QR codes can I create on the Free plan?',
-        a: 'The Free plan allows up to 5 QR codes. If you need more, or want access to Dynamic QR codes and analytics, upgrade to Pro. During our launch phase, all plans are completely free.',
+        q: 'How many QR codes can I create?',
+        a: 'As many as you like — there is no limit. Dynamic QR codes, analytics and every download format are included too. Liffto is free, with no plans to compare and nothing to upgrade.',
       },
     ],
   },
