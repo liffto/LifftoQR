@@ -12,6 +12,7 @@ from jwt import InvalidTokenError, PyJWTError
 from app.db.session import get_db
 from app.config.settings import settings
 from app.core.security import (
+    CLAIM_SID,
     CLAIM_SUB,
     CLAIM_ACC,
     CLAIM_ROLE,
@@ -22,8 +23,9 @@ from app.core.security import (
     hash_password,
 )
 from app.auth.models import User
-from app.auth.models_extras import EmailVerification
+from app.auth.models_extras import EmailVerification, UserSession
 from app.auth.schemas import (
+    DeviceOut,
     RegisterRequest,
     VerifyEmailRequest,
     LoginRequest,
@@ -34,6 +36,7 @@ from app.auth.schemas import (
     ResetPasswordRequest,
     GoogleAuthRequest,
     AvatarUploadRequest,
+    ProfileUpdateRequest,
 )
 from app.auth.service import (
     authenticate_user,
@@ -45,6 +48,11 @@ from app.auth.service import (
     revoke_token,
     is_revoked,
     get_user_by_email,
+    start_session,
+    attach_refresh_jti,
+    touch_session,
+    list_sessions,
+    revoke_session,
 )
 from app.auth.avatar import save_user_avatar_data_url
 from app.auth.dependencies import get_current_user, roles_required, oauth2_scheme
@@ -62,6 +70,7 @@ def _user_out(user: User, roles: list[str]) -> UserOut:
         roles=roles,
         is_superuser=user.is_superuser,
         picture=user.avatar_url,
+        phone=user.phone,
     )
 
 
@@ -143,6 +152,7 @@ def verify(req: VerifyEmailRequest, db: Session = Depends(get_db)) -> dict:
 @router.post("/google", response_model=TokenPair, summary="Sign in with Google")
 def google_login(
     payload: GoogleAuthRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> TokenPair:
     """Verify a Google ID token and issue the same JWT login response as normal auth."""
@@ -176,13 +186,19 @@ def google_login(
         ) from exc
 
     roles = get_user_roles(db, user.id)
-    access, refresh = issue_tokens(user, roles)
+    session = start_session(db, user, request)
+    access, refresh = issue_tokens(user, roles, session_id=session.id)
+    attach_refresh_jti(session, refresh)
     db.commit()
     return TokenPair(access_token=access, refresh_token=refresh)
 
 
 @router.post("/login", response_model=TokenPair, summary="Login with email/password")
-def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenPair:
+def login(
+    payload: LoginRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> TokenPair:
     """Login with email and password, returns access and refresh tokens."""
     user = authenticate_user(db, payload.email, payload.password)
     if not user:
@@ -190,7 +206,10 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenPair:
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
     roles = get_user_roles(db, user.id)
-    access, refresh = issue_tokens(user, roles)
+    session = start_session(db, user, request)
+    access, refresh = issue_tokens(user, roles, session_id=session.id)
+    attach_refresh_jti(session, refresh)
+    db.commit()
     return TokenPair(access_token=access, refresh_token=refresh)
 
 
@@ -218,6 +237,9 @@ def refresh(req: RefreshRequest, db: Session = Depends(get_db)) -> TokenPair:
             )
 
         roles = get_user_roles(db, user.id)
+        if jti:
+            touch_session(db, jti)
+            db.commit()
         new_access = create_jwt(
             {
                 CLAIM_SUB: str(user.id),
@@ -281,6 +303,24 @@ def logout(
 @router.get("/me", response_model=UserOut, summary="Current authenticated user")
 def me(user=Depends(get_current_user), db: Session = Depends(get_db)) -> UserOut:
     """Get current authenticated user info."""
+    roles = get_user_roles(db, user.id)
+    return _user_out(user, roles)
+
+
+@router.patch("/me", response_model=UserOut, summary="Update your profile")
+def update_me(
+    payload: ProfileUpdateRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> UserOut:
+    """Update the current user's editable profile fields."""
+    user.first_name = payload.first_name.strip()
+    user.last_name = payload.last_name.strip()
+    # Normalise "cleared" to NULL rather than an empty string so the column has
+    # one representation of "no number".
+    user.phone = payload.phone.strip() or None
+    db.commit()
+    db.refresh(user)
     roles = get_user_roles(db, user.id)
     return _user_out(user, roles)
 
@@ -361,3 +401,86 @@ def reset_password(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
         )
+
+
+def current_session_id(token: str = Depends(oauth2_scheme)) -> int | None:
+    """Which signed-in device this request came from, if the token says.
+
+    Tokens issued before device tracking existed carry no sid, so this is
+    optional — those sessions simply are not flagged as "this device".
+    """
+    try:
+        return decode_jwt(token, settings.jwt_secret_key).get(CLAIM_SID)
+    except Exception:
+        return None
+
+
+@router.get("/me/devices", response_model=list[DeviceOut], summary="Signed-in devices")
+def my_devices(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    sid: int | None = Depends(current_session_id),
+) -> list[DeviceOut]:
+    """List the devices currently signed in to this account."""
+    return [
+        DeviceOut(
+            id=s.id,
+            device_type=s.device_type,
+            device_name=s.device_name,
+            browser=s.browser,
+            ip_address=s.ip_address,
+            last_seen_at=s.last_seen_at,
+            created_at=s.created_at,
+            current=(s.id == sid),
+        )
+        for s in list_sessions(db, user.id)
+    ]
+
+
+def _own_session(db: Session, user: User, device_id: int):
+    session = db.execute(
+        select(UserSession).where(
+            (UserSession.id == device_id) & (UserSession.user_id == user.id)
+        )
+    ).scalars().first()
+    if session is None or session.revoked_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Device not found"
+        )
+    return session
+
+
+@router.delete("/me/devices/{device_id}", summary="Sign a device out")
+def remove_device(
+    device_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    sid: int | None = Depends(current_session_id),
+) -> dict:
+    """Sign out one device. Refusing the current one keeps this distinct from
+    logging yourself out, which the Sign out button already does."""
+    if sid is not None and device_id == sid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Use sign out to end the session on this device",
+        )
+    revoke_session(db, _own_session(db, user, device_id))
+    db.commit()
+    return {"message": "Device signed out"}
+
+
+@router.post("/me/devices/revoke-others", summary="Sign out all other devices")
+def revoke_other_devices(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    sid: int | None = Depends(current_session_id),
+) -> dict:
+    """Sign out every device except the one making this request."""
+    revoked = 0
+    for session in list_sessions(db, user.id):
+        if sid is not None and session.id == sid:
+            continue
+        revoke_session(db, session)
+        revoked += 1
+    db.commit()
+    return {"message": "Other devices signed out", "revoked": revoked}

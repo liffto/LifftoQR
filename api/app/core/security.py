@@ -14,6 +14,7 @@ CLAIM_ACC = "acc"  # account_id
 CLAIM_ROLE = "role"  # list of roles
 CLAIM_TYP = "typ"  # token type (access/refresh/reset)
 CLAIM_JTI = "jti"  # JWT ID (for revocation)
+CLAIM_SID = "sid"  # user_sessions.id (which signed-in device issued this)
 CLAIM_EXP = "exp"  # expiration
 CLAIM_IAT = "iat"  # issued at
 

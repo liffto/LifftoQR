@@ -20,13 +20,16 @@ from app.core.security import (
     CLAIM_SUB,
     CLAIM_ACC,
     CLAIM_ROLE,
+    CLAIM_SID,
     CLAIM_TYP,
+    CLAIM_JTI,
     decode_jwt,
 )
 from app.auth.models import User
-from app.auth.models_extras import EmailVerification, TokenBlocklist
+from app.auth.models_extras import EmailVerification, TokenBlocklist, UserSession
 from app.rbac.models import Role, UserRole
 from app.tenants.models import Account
+from app.auth.user_agent import parse_user_agent, client_ip
 
 
 def verify_google_id_token(id_token: str) -> dict[str, Any]:
@@ -228,8 +231,14 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     return user
 
 
-def issue_tokens(user: User, roles: List[str]) -> Tuple[str, str]:
-    """Issue access and refresh tokens."""
+def issue_tokens(
+    user: User, roles: List[str], session_id: Optional[int] = None
+) -> Tuple[str, str]:
+    """Issue access and refresh tokens.
+
+    session_id is stamped into both tokens so a request can tell which signed-in
+    device it came from — that is what marks "This device" in the device list.
+    """
     # Access token
     access_payload = {
         CLAIM_SUB: str(user.id),
@@ -237,6 +246,8 @@ def issue_tokens(user: User, roles: List[str]) -> Tuple[str, str]:
         CLAIM_ROLE: roles,
         CLAIM_TYP: "access",
     }
+    if session_id is not None:
+        access_payload[CLAIM_SID] = session_id
     access_token = create_jwt(
         access_payload,
         settings.jwt_secret_key,
@@ -249,6 +260,8 @@ def issue_tokens(user: User, roles: List[str]) -> Tuple[str, str]:
         CLAIM_ACC: user.account_id,
         CLAIM_TYP: "refresh",
     }
+    if session_id is not None:
+        refresh_payload[CLAIM_SID] = session_id
     refresh_token = create_jwt(
         refresh_payload,
         settings.jwt_secret_key,
@@ -291,3 +304,75 @@ def is_revoked(db: Session, jti: str) -> bool:
         )
     ).scalars().first()
     return blocklist is not None
+
+
+# ── signed-in devices ────────────────────────────────────────────────────────
+
+
+def start_session(db: Session, user: User, request) -> UserSession:
+    """Record a signed-in device and return it (refresh_jti filled in later).
+
+    Flushed so the caller has an id to stamp into the tokens; the refresh jti is
+    only known once that token exists, so it is attached afterwards.
+    """
+    device_type, device_name, browser = parse_user_agent(
+        request.headers.get("user-agent") if request else None
+    )
+    session = UserSession(
+        user_id=user.id,
+        account_id=user.account_id,
+        refresh_jti="",  # replaced by attach_refresh_jti once the token exists
+        device_type=device_type,
+        device_name=device_name,
+        browser=browser,
+        ip_address=client_ip(request) if request else None,
+        expires_at=datetime.now(timezone.utc)
+        + timedelta(minutes=settings.refresh_token_expire_minutes),
+    )
+    db.add(session)
+    db.flush()
+    return session
+
+
+def attach_refresh_jti(session: UserSession, refresh_token: str) -> None:
+    """Link a session to the refresh token that represents it."""
+    data = decode_jwt(refresh_token, settings.jwt_secret_key)
+    session.refresh_jti = data.get(CLAIM_JTI) or ""
+
+
+def touch_session(db: Session, jti: str) -> None:
+    """Mark a session as still in use (called when its access token refreshes)."""
+    session = db.execute(
+        select(UserSession).where(UserSession.refresh_jti == jti)
+    ).scalars().first()
+    if session:
+        session.last_seen_at = datetime.now(timezone.utc)
+
+
+def list_sessions(db: Session, user_id: int) -> list[UserSession]:
+    """Active (unrevoked, unexpired) sessions, most recently used first."""
+    now = datetime.now(timezone.utc)
+    return list(
+        db.execute(
+            select(UserSession)
+            .where(
+                (UserSession.user_id == user_id)
+                & (UserSession.revoked_at.is_(None))
+                & (UserSession.expires_at > now)
+            )
+            .order_by(UserSession.last_seen_at.desc())
+        ).scalars()
+    )
+
+
+def revoke_session(db: Session, session: UserSession) -> None:
+    """Sign a device out: blocklist its refresh token so it cannot renew."""
+    session.revoked_at = datetime.now(timezone.utc)
+    if session.refresh_jti:
+        revoke_token(
+            db,
+            session.refresh_jti,
+            session.account_id,
+            reason="device signed out",
+            exp_ts=int(session.expires_at.timestamp()),
+        )
