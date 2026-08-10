@@ -24,9 +24,9 @@ import {
   setDraft,
   clearDraft,
   shortUrl,
+  randomSlug,
   formatDate,
   copyToClipboard,
-  duplicateQR,
   deleteQR,
 } from '../lib/store'
 import { useQrs, useDeleteQr, useSetQrStatus } from '../hooks/useQrs'
@@ -38,6 +38,25 @@ import Layout from '../components/Layout'
 import { Toggle } from '../components/ui'
 
 const normaliseType = (t) => (t === 'Statistic' ? 'Static QR' : t)
+
+// Static QRs encode their content directly into the code — there's no redirect
+// slug, so short URL / scan tracking / active-inactive status don't apply.
+const isDynamicRow = (row) =>
+  Boolean(row.dynamic) || normaliseType(row.qrType) === 'Dynamic QR'
+
+// Cloning doesn't copy the record outright — it seeds a fresh, unsaved draft
+// (new slug, reset scan count) and hands off to the design page so the user
+// can review/tweak it before it's actually created.
+const buildCloneDraft = (row) => {
+  const { id: _id, editedOn: _editedOn, ...rest } = row
+  return {
+    ...rest,
+    name: `${row.name} (Copy)`,
+    slug: randomSlug(),
+    scans: 0,
+    status: 'Active',
+  }
+}
 
 const FILTERS = ['All', 'Dynamic QR', 'Static QR']
 const BATCH = 8
@@ -207,7 +226,7 @@ function SkeletonRow() {
 }
 
 /* ─── QR Details Modal ───────────────────────────────────────────────── */
-function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
+function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
   const qrRef = useRef(null)
   const [urlCopied, setUrlCopied] = useState(false)
   const [format, setFormat] = useState('PNG')
@@ -281,6 +300,11 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
     onToggleStatus?.(row.id, next)
   }
 
+  const handleClone = () => {
+    onClone?.(row)
+    onClose()
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/40 backdrop-blur-sm animate-fade"
@@ -314,7 +338,9 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
             <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap">
               <ContentType typeKey={row.typeKey} />
               <TypeBadge type={typeLabel} />
-              <StatusIndicator status={status} className="text-[11px]" />
+              {isDynamic && (
+                <StatusIndicator status={status} className="text-[11px]" />
+              )}
             </div>
           </div>
         </div>
@@ -341,36 +367,38 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
             </div>
           </div>
 
-          {/* Short URL */}
-          <div>
-            <p className="text-[10px] font-bold text-ink-faint uppercase tracking-widest mb-1">
-              Short URL
-            </p>
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-primary font-medium">
-                {shortUrl(row.slug)}
+          {/* Short URL — Dynamic QRs only (Static QRs encode content directly) */}
+          {isDynamic && (
+            <div>
+              <p className="text-[10px] font-bold text-ink-faint uppercase tracking-widest mb-1">
+                Short URL
               </p>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className={`shrink-0 flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-[10px] border transition-all ${
-                  urlCopied
-                    ? 'border-success bg-success/10 text-success'
-                    : 'border-line text-ink-faint hover:border-primary hover:text-primary hover:bg-primary/5'
-                }`}
-              >
-                {urlCopied ? (
-                  <>
-                    <Check size={11} /> Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy size={11} /> Copy
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-primary font-medium">
+                  {shortUrl(row.slug)}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className={`shrink-0 flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-[10px] border transition-all ${
+                    urlCopied
+                      ? 'border-success bg-success/10 text-success'
+                      : 'border-line text-ink-faint hover:border-primary hover:text-primary hover:bg-primary/5'
+                  }`}
+                >
+                  {urlCopied ? (
+                    <>
+                      <Check size={11} /> Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={11} /> Copy
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Active / Inactive — Dynamic QRs only (same UI as AffinityX) */}
           {isDynamic && (
@@ -395,29 +423,33 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
             </div>
           )}
 
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-2 pt-1">
-            <div className="bg-canvas rounded-[10px] px-3 py-2.5 text-center">
-              <p className="text-[10px] font-bold text-ink-faint uppercase tracking-wide mb-1">
-                Scans
-              </p>
-              <p className="text-sm font-bold text-ink">
-                {scansLoading ? (
-                  <span className="inline-flex items-center justify-center gap-1">
-                    <span
-                      className="inline-block h-3.5 w-8 rounded shimmer"
-                      aria-hidden
-                    />
-                    <span className="font-normal text-ink-faint"> scans</span>
-                  </span>
-                ) : (
-                  <>
-                    {resolvedScans > 0 ? resolvedScans.toLocaleString() : '—'}
-                    <span className="font-normal text-ink-faint"> scans</span>
-                  </>
-                )}
-              </p>
-            </div>
+          {/* Stats row — Scans / Status are Dynamic-only (Static QRs aren't scan-tracked) */}
+          <div
+            className={`grid gap-2 pt-1 ${isDynamic ? 'grid-cols-3' : 'grid-cols-1'}`}
+          >
+            {isDynamic && (
+              <div className="bg-canvas rounded-[10px] px-3 py-2.5 text-center">
+                <p className="text-[10px] font-bold text-ink-faint uppercase tracking-wide mb-1">
+                  Scans
+                </p>
+                <p className="text-sm font-bold text-ink">
+                  {scansLoading ? (
+                    <span className="inline-flex items-center justify-center gap-1">
+                      <span
+                        className="inline-block h-3.5 w-8 rounded shimmer"
+                        aria-hidden
+                      />
+                      <span className="font-normal text-ink-faint"> scans</span>
+                    </span>
+                  ) : (
+                    <>
+                      {resolvedScans > 0 ? resolvedScans.toLocaleString() : '—'}
+                      <span className="font-normal text-ink-faint"> scans</span>
+                    </>
+                  )}
+                </p>
+              </div>
+            )}
             <div className="bg-canvas rounded-[10px] px-3 py-2.5 text-center">
               <p className="text-[10px] font-bold text-ink-faint uppercase tracking-wide mb-1">
                 Edited
@@ -426,16 +458,18 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
                 {formatDate(row.editedOn)}
               </p>
             </div>
-            <div className="bg-canvas rounded-[10px] px-3 py-2.5 text-center">
-              <p className="text-[10px] font-bold text-ink-faint uppercase tracking-wide mb-1">
-                Status
-              </p>
-              <p
-                className={`text-sm font-bold ${isActive ? 'text-success' : 'text-ink'}`}
-              >
-                {isActive ? 'Active' : 'Inactive'}
-              </p>
-            </div>
+            {isDynamic && (
+              <div className="bg-canvas rounded-[10px] px-3 py-2.5 text-center">
+                <p className="text-[10px] font-bold text-ink-faint uppercase tracking-wide mb-1">
+                  Status
+                </p>
+                <p
+                  className={`text-sm font-bold ${isActive ? 'text-success' : 'text-ink'}`}
+                >
+                  {isActive ? 'Active' : 'Inactive'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
         </div>
@@ -496,13 +530,23 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus }) {
             )}
           </div>
           <div className="flex gap-2.5 sm:flex-1">
-            <button
-              type="button"
-              onClick={onEdit}
-              className="flex-1 h-10 rounded-[10px] bg-primary text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary-600 transition-colors shadow-sm shadow-primary/25"
-            >
-              <Pencil size={14} /> Edit Design
-            </button>
+            {isDynamic ? (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="flex-1 h-10 rounded-[10px] bg-primary text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary-600 transition-colors shadow-sm shadow-primary/25"
+              >
+                <Pencil size={14} /> Edit Design
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleClone}
+                className="flex-1 h-10 rounded-[10px] bg-primary text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary-600 transition-colors shadow-sm shadow-primary/25"
+              >
+                <Copy size={14} /> Clone QR
+              </button>
+            )}
             <button
               type="button"
               onClick={handleDelete}
@@ -575,10 +619,11 @@ function ActionMenu({ row }) {
     setDraft(row)
     navigate('/create/design')
   }
-  const handleDuplicate = (e) => {
+  const handleClone = (e) => {
     e.stopPropagation()
-    duplicateQR(row.id)
     setMenuOpen(false)
+    setDraft(buildCloneDraft(row))
+    navigate('/create/design', { state: { cloneFlow: true } })
   }
   const handleDelete = (e) => {
     e.stopPropagation()
@@ -615,10 +660,10 @@ function ActionMenu({ row }) {
           </button>
           <button
             type="button"
-            onClick={handleDuplicate}
+            onClick={handleClone}
             className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas hover:text-ink"
           >
-            <Copy size={14} className="text-ink-faint" /> Duplicate
+            <Copy size={14} className="text-ink-faint" /> Clone
           </button>
           <div className="my-1 border-t border-line" />
           <button
@@ -638,13 +683,14 @@ function ActionMenu({ row }) {
 function QrRow({ row, onOpenModal }) {
   const qrRef = useRef(null)
   const typeLabel = normaliseType(row.qrType)
+  const isDynamic = isDynamicRow(row)
 
   return (
     <tr
       className="border-b border-line last:border-0 text-sm hover:bg-primary/[0.025] cursor-pointer transition-colors group"
       onClick={() => onOpenModal(row)}
     >
-      {/* Name + short URL */}
+      {/* Name + short URL (Dynamic QRs only) */}
       <td className="py-3.5 pl-4 pr-4">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-[10px] border border-line/70 bg-white p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
@@ -654,12 +700,14 @@ function QrRow({ row, onOpenModal }) {
             <div className="font-semibold text-ink truncate text-[13px]">
               {row.name}
             </div>
-            <div className="flex items-center gap-1 mt-0.5">
-              <span className="text-xs text-primary truncate">
-                {shortUrl(row.slug)}
-              </span>
-              <CopySlugButton slug={row.slug} />
-            </div>
+            {isDynamic && (
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="text-xs text-primary truncate">
+                  {shortUrl(row.slug)}
+                </span>
+                <CopySlugButton slug={row.slug} />
+              </div>
+            )}
           </div>
         </div>
       </td>
@@ -677,15 +725,23 @@ function QrRow({ row, onOpenModal }) {
         {formatDate(row.editedOn)}
       </td>
 
-      {/* Status */}
+      {/* Status — Dynamic QRs only */}
       <td className="py-3.5 pr-4">
-        <StatusIndicator status={row.status} className="text-xs" />
+        {isDynamic ? (
+          <StatusIndicator status={row.status} className="text-xs" />
+        ) : (
+          <span className="text-ink-faint">—</span>
+        )}
       </td>
 
-      {/* Scans */}
+      {/* Scans — Dynamic QRs only */}
       <td className="py-3.5 pr-4 text-sm font-bold text-ink">
-        {row.scans > 0 ? (
-          row.scans.toLocaleString()
+        {isDynamic ? (
+          row.scans > 0 ? (
+            row.scans.toLocaleString()
+          ) : (
+            <span className="text-ink-faint font-normal">—</span>
+          )
         ) : (
           <span className="text-ink-faint font-normal">—</span>
         )}
@@ -722,6 +778,7 @@ function QrRow({ row, onOpenModal }) {
 function QrCard({ row, onOpenModal }) {
   const qrRef = useRef(null)
   const typeLabel = normaliseType(row.qrType)
+  const isDynamic = isDynamicRow(row)
 
   return (
     <div
@@ -735,17 +792,20 @@ function QrCard({ row, onOpenModal }) {
         <div className="font-semibold text-ink truncate text-[13px]">
           {row.name}
         </div>
-        <div className="flex items-center gap-1 mt-0.5">
-          <span className="text-xs text-primary truncate">
-            {shortUrl(row.slug)}
-          </span>
-          <CopySlugButton slug={row.slug} />
-        </div>
+        {isDynamic && (
+          <div className="flex items-center gap-1 mt-0.5">
+            <span className="text-xs text-primary truncate">
+              {shortUrl(row.slug)}
+            </span>
+            <CopySlugButton slug={row.slug} />
+          </div>
+        )}
         <div className="flex items-center gap-2 mt-1.5 min-w-0">
           <ContentType typeKey={row.typeKey} />
           {/* Surface an inactive QR here; the row is too narrow to show both,
-              so the exceptional state takes the mode badge's slot. */}
-          {isInactiveStatus(row.status) ? (
+              so the exceptional state takes the mode badge's slot. Static QRs
+              have no active/inactive state, so always show the mode badge. */}
+          {isDynamic && isInactiveStatus(row.status) ? (
             <StatusIndicator status={row.status} className="text-[11px]" />
           ) : (
             <TypeBadge type={typeLabel} short />
@@ -771,6 +831,7 @@ function QrCard({ row, onOpenModal }) {
 function QrGridCard({ row, onOpenModal }) {
   const qrRef = useRef(null)
   const typeLabel = normaliseType(row.qrType)
+  const isDynamic = isDynamicRow(row)
 
   return (
     <div
@@ -801,29 +862,33 @@ function QrGridCard({ row, onOpenModal }) {
         </div>
       </div>
 
-      {/* Name + short URL */}
+      {/* Name + short URL (Dynamic QRs only) */}
       <div className="mt-3 text-center min-w-0">
         <div className="font-semibold text-ink truncate text-sm">
           {row.name}
         </div>
-        <div className="flex items-center justify-center gap-1 mt-1 min-w-0">
-          <span className="text-xs text-primary truncate">
-            {shortUrl(row.slug)}
-          </span>
-          <CopySlugButton slug={row.slug} />
-        </div>
+        {isDynamic && (
+          <div className="flex items-center justify-center gap-1 mt-1 min-w-0">
+            <span className="text-xs text-primary truncate">
+              {shortUrl(row.slug)}
+            </span>
+            <CopySlugButton slug={row.slug} />
+          </div>
+        )}
       </div>
 
-      {/* Meta: mode (Dynamic/Static) · status · scans */}
+      {/* Meta: mode (Dynamic/Static) · status · scans — status/scans are Dynamic-only */}
       <div className="mt-3 pt-3 border-t border-line flex items-center justify-between gap-2 text-[11px]">
         <TypeBadge type={typeLabel} />
-        <span className="inline-flex items-center gap-2 shrink-0">
-          <StatusIndicator status={row.status} />
-          <span className="font-semibold text-ink">
-            {row.scans > 0 ? row.scans.toLocaleString() : '—'}
-            <span className="font-normal text-ink-faint"> scans</span>
+        {isDynamic && (
+          <span className="inline-flex items-center gap-2 shrink-0">
+            <StatusIndicator status={row.status} />
+            <span className="font-semibold text-ink">
+              {row.scans > 0 ? row.scans.toLocaleString() : '—'}
+              <span className="font-normal text-ink-faint"> scans</span>
+            </span>
           </span>
-        </span>
+        )}
       </div>
 
       {/* Download */}
@@ -945,6 +1010,11 @@ export default function Dashboard() {
     setDraft(selectedRow)
     setSelectedRow(null)
     navigate('/create/design')
+  }
+
+  const handleCloneModal = (row) => {
+    setDraft(buildCloneDraft(row))
+    navigate('/create/design', { state: { cloneFlow: true } })
   }
 
   const handleDeleteModal = async (id) => {
@@ -1286,6 +1356,7 @@ export default function Dashboard() {
           onDelete={handleDeleteModal}
           onEdit={handleEditModal}
           onToggleStatus={handleToggleStatus}
+          onClone={handleCloneModal}
         />
       )}
     </Layout>

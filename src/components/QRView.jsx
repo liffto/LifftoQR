@@ -14,6 +14,15 @@ import { buildQRConfig } from '../lib/qr'
 // throwaway high-resolution instance instead, so the file is crisp for print.
 const DOWNLOAD_SIZE = 2048
 
+// iOS Safari (including iPadOS, which reports as "Mac" but has touch) doesn't
+// honor the <a download> trick qr-code-styling uses internally — it just opens
+// the image in place instead of saving it. Detected once at module load since
+// the UA/platform don't change during a session.
+const isIOS =
+  typeof navigator !== 'undefined' &&
+  (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+
 // Renders a live, styled QR for a record.
 // Exposes `download(format, name)` via ref for the download buttons.
 //
@@ -66,17 +75,37 @@ const QRView = forwardRef(function QRView(
   }, [config])
 
   useImperativeHandle(ref, () => ({
-    download: (format = 'PNG', name = 'qr-code') => {
+    download: async (format = 'PNG', name = 'qr-code') => {
       const extension = format.toLowerCase()
       // SVG is vector — resolution-independent, so the on-screen instance is fine.
-      if (extension === 'svg') {
-        instanceRef.current?.download({ name, extension })
-        return
-      }
-      // Raster formats: render a fresh high-resolution instance from the same
+      // Raster formats render a fresh high-resolution instance from the same
       // config so the exported image isn't limited to the preview size.
-      const hiRes = new QRCodeStyling(buildQRConfig(record, DOWNLOAD_SIZE))
-      hiRes.download({ name, extension })
+      const source =
+        extension === 'svg'
+          ? instanceRef.current
+          : new QRCodeStyling(buildQRConfig(record, DOWNLOAD_SIZE))
+
+      if (isIOS && typeof navigator.share === 'function') {
+        try {
+          const blob = await source?.getRawData(extension)
+          const file =
+            blob &&
+            new File([blob], `${name}.${extension}`, {
+              type: blob.type || `image/${extension}`,
+            })
+          if (file && navigator.canShare?.({ files: [file] })) {
+            await navigator.share({ files: [file], title: name })
+            return
+          }
+        } catch (err) {
+          // AbortError = user dismissed the share sheet — nothing to do.
+          if (err?.name === 'AbortError') return
+          // Otherwise fall through to the (broken-on-iOS) anchor download below
+          // rather than leave the user with no result at all.
+        }
+      }
+
+      source?.download({ name, extension })
     },
   }))
 

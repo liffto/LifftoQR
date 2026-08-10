@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -469,10 +469,15 @@ const BUILTIN_TEMPLATES = [
 
 export default function DesignQR() {
   const navigate = useNavigate()
+  const location = useLocation()
   const queryClient = useQueryClient()
   const { websiteId: websiteIdParam } = useParams()
   const qrId = websiteIdParam ? Number(websiteIdParam) : null
   const isApiMode = qrId != null && Number.isFinite(qrId) && qrId > 0
+  // Cloning hands off a fresh, unsaved draft here (see Dashboard's "Clone")
+  // rather than saving directly — the user reviews/tweaks it before it's
+  // actually created, so the primary action reads "Clone & Download".
+  const isCloneFlow = !isApiMode && Boolean(location.state?.cloneFlow)
   const { data: apiRecord, isLoading, isError } = useQr(isApiMode ? qrId : null)
   const { saveQr, isSaving } = useSaveQr()
 
@@ -596,6 +601,14 @@ export default function DesignQR() {
     navigate('/dashboard')
   }
 
+  const downloadLabel = isSaving
+    ? 'Saving...'
+    : isCloneFlow
+      ? 'Clone & Download'
+      : saveTemplate
+        ? 'Download & Save QR'
+        : 'Save & Download QR'
+
   const handleDownload = async () => {
     if (isSaving) return
 
@@ -605,6 +618,8 @@ export default function DesignQR() {
         await queryClient.invalidateQueries({ queryKey: qrQueryKey(qrId) })
       }
       qrRef.current?.download(format, record.name || 'qr-code')
+
+      if (isCloneFlow) toast.success('QR code cloned')
 
       if (saveTemplate) {
         setShowSaveTplModal(true)
@@ -1256,11 +1271,7 @@ export default function DesignQR() {
                 className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[10px] bg-primary font-semibold text-white hover:bg-primary-600 disabled:opacity-70"
               >
                 <Download size={18} />
-                {isSaving
-                  ? 'Saving...'
-                  : saveTemplate
-                    ? 'Download & Save QR'
-                    : 'Download QR'}
+                {downloadLabel}
               </button>
             </div>
           </div>
@@ -1314,11 +1325,7 @@ export default function DesignQR() {
           className="flex h-12 flex-1 items-center justify-center gap-2 rounded-[10px] bg-primary font-semibold text-white hover:bg-primary-600 disabled:opacity-70"
         >
           <Download size={18} />
-          {isSaving
-            ? 'Saving...'
-            : saveTemplate
-              ? 'Download & Save QR'
-              : 'Download QR'}
+          {downloadLabel}
         </button>
       </div>
 

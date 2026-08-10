@@ -13,6 +13,12 @@ engine = create_engine(
     settings.database_url,
     future=True,
     pool_pre_ping=True,
+    # Neon (serverless Postgres) can close idle connections server-side;
+    # recycling proactively avoids handing out a connection that's about to
+    # be dropped, and the connect timeout bounds how long a broken network
+    # path can hang a request instead of failing fast.
+    pool_recycle=300,
+    connect_args={"connect_timeout": 10},
     echo=settings.debug,
 )
 
