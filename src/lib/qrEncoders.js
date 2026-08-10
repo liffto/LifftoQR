@@ -6,6 +6,13 @@
 // Kept free of any React/icon imports so it can be unit-tested directly in Node.
 // The UI layer (qrTypes.js) attaches lucide icons on top of this.
 
+import {
+  digitsOnly,
+  findByDial,
+  isValidNationalNumber,
+  isValidPhone,
+} from './countries'
+
 // Country list for the vCard "Country" dropdown. "India" leads the list (and
 // is the field's default) to match the rest of the app's sample data; the
 // remainder is alphabetical.
@@ -138,6 +145,27 @@ const encodeUrl = (c) => {
     )
   if (!hasAuthority && !knownScheme) u = 'https://' + u
   return u
+}
+
+// The URL constructor alone isn't strict enough: browsers percent-encode
+// invalid characters (e.g. spaces) into the hostname instead of rejecting
+// them, so "not a url" parses "successfully" as host "not%20a%20url". Require
+// the hostname to actually look like a domain, localhost, or an IPv4 address.
+const HOSTNAME_RE =
+  /^(([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)\.)+[a-z]{2,}$|^localhost$|^(\d{1,3}\.){3}\d{1,3}$/i
+
+// Website URL field: same tolerant "bare domain gets https:// prepended"
+// rule as encodeUrl, then checked for a real hostname — so "example.com" is
+// fine but "not a url" isn't.
+export const isValidWebsiteUrl = (value) => {
+  const v = String(value ?? '').trim()
+  if (!v) return false
+  try {
+    const parsed = new URL(encodeUrl({ url: v }))
+    return HOSTNAME_RE.test(parsed.hostname)
+  } catch {
+    return false
+  }
 }
 
 const encodeText = (c) => String(c.text ?? '')
@@ -767,15 +795,13 @@ export const ENCODERS = [
       {
         key: 'phone',
         label: 'Mobile phone',
-        inputType: 'tel',
-        placeholder: '+1 555 123 4567',
+        inputType: 'phone',
         half: true,
       },
       {
         key: 'workPhone',
         label: 'Work phone',
-        inputType: 'tel',
-        placeholder: '+1 555 987 6543',
+        inputType: 'phone',
         half: true,
       },
       {
@@ -879,8 +905,7 @@ export const ENCODERS = [
       {
         key: 'number',
         label: 'Phone number',
-        inputType: 'tel',
-        placeholder: '+14155552671',
+        inputType: 'phone',
         required: true,
         half: true,
       },
@@ -906,8 +931,7 @@ export const ENCODERS = [
       {
         key: 'phone',
         label: 'Phone number',
-        inputType: 'tel',
-        placeholder: '+1 415 555 2671',
+        inputType: 'phone',
         required: true,
       },
     ],
@@ -925,16 +949,16 @@ export const ENCODERS = [
     fields: [
       {
         key: 'countryCode',
-        label: 'Country code',
-        inputType: 'tel',
-        placeholder: '1',
+        label: 'Country',
+        inputType: 'dialcode',
         required: true,
         half: true,
       },
       {
         key: 'phone',
         label: 'Phone number',
-        inputType: 'tel',
+        inputType: 'national',
+        dialFrom: 'countryCode',
         placeholder: '5551234567',
         required: true,
         half: true,
@@ -1377,6 +1401,18 @@ export const isComplete = (key, content = {}) => {
       if (f.inputType === 'linklist') {
         const arr = Array.isArray(content[f.key]) ? content[f.key] : []
         return arr.some((r) => r && String(r.url ?? '').trim() !== '')
+      }
+      if (key === 'url' && f.key === 'url') {
+        return isValidWebsiteUrl(content[f.key])
+      }
+      if (f.inputType === 'phone') {
+        return isValidPhone(content[f.key]) && digitsOnly(content[f.key]) !== ''
+      }
+      if (f.inputType === 'national') {
+        const country = findByDial(content[f.dialFrom])
+        const digits = digitsOnly(content[f.key])
+        if (digits === '') return false
+        return country ? isValidNationalNumber(country.iso, digits) : true
       }
       return String(content[f.key] ?? '').trim() !== ''
     })

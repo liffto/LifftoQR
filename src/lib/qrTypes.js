@@ -84,6 +84,7 @@ export {
   findEncoder,
   defaultContent,
   isComplete,
+  isValidWebsiteUrl,
   encodeContent,
   deriveContentName,
 } from './qrEncoders'

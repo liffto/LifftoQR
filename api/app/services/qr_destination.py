@@ -2,9 +2,16 @@
 
 from urllib.parse import urlparse
 
+from app.config.settings import settings
 from app.models.qr import QR
 
 WEBSITE_TYPE_KEY = "url"
+
+
+def landing_page_url(slug: str) -> str:
+    """Our own scan page, for QR types that have no destination to redirect to."""
+    base = settings.frontend_url.split(",")[0].strip().rstrip("/")
+    return f"{base}/s/{slug}"
 
 
 def _is_valid_http_url(value: str | None) -> bool:
