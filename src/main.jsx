@@ -5,6 +5,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 import { Toaster } from 'react-hot-toast'
 import QueryProvider from './providers/QueryProvider'
 import { AuthProvider } from './context/AuthContext'
+import { LoginModalProvider } from './context/LoginModalContext'
 import App from './App.jsx'
 import './index.css'
 
@@ -20,7 +21,9 @@ function Root() {
       <GoogleOAuthProvider clientId={googleClientId || ''}>
         <BrowserRouter>
           <AuthProvider>
-            <App />
+            <LoginModalProvider>
+              <App />
+            </LoginModalProvider>
             <Toaster
               position="top-center"
               toastOptions={{
