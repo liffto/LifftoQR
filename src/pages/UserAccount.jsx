@@ -21,6 +21,7 @@ import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { uploadAvatar, mapApiUser } from '../api/auth.api'
 import { useQrs } from '../hooks/useQrs'
+import { clearDraft } from '../lib/store'
 import { compressImageFile } from '../lib/imageCompress'
 import { getApiErrorMessage } from '../utils/errors'
 import {
@@ -371,6 +372,17 @@ export default function UserAccount() {
                 {label}
               </a>
             ))}
+            <button
+              type="button"
+              onClick={() => {
+                clearDraft()
+                logout()
+              }}
+              className="md:hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm text-danger hover:bg-red-50 transition-colors"
+            >
+              <LogOut size={16} className="text-danger" />
+              Log Out
+            </button>
           </div>
         </div>
 

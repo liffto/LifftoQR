@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from typing import Any, Optional, Tuple, List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import ssl
+import certifi
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select, join
@@ -32,7 +34,8 @@ def verify_google_id_token(id_token: str) -> dict[str, Any]:
     if not settings.google_client_id:
         raise ValueError("Google client ID is not configured")
 
-    jwk_client = PyJWKClient("https://www.googleapis.com/oauth2/v3/certs")
+    ssl_ctx = ssl.create_default_context(cafile=certifi.where())
+    jwk_client = PyJWKClient("https://www.googleapis.com/oauth2/v3/certs", ssl_context=ssl_ctx)
     signing_key = jwk_client.get_signing_key_from_jwt(id_token)
 
     payload = jwt.decode(
@@ -41,6 +44,7 @@ def verify_google_id_token(id_token: str) -> dict[str, Any]:
         algorithms=["RS256"],
         audience=settings.google_client_id,
         issuer=["accounts.google.com", "https://accounts.google.com"],
+        leeway=timedelta(seconds=30),
         options={
             "verify_signature": True,
             "verify_aud": True,
