@@ -15,7 +15,9 @@ class ScanController:
         self.service = service
         self.ws_manager = ws_manager
 
-    async def scan(self, slug: str) -> RedirectResponse:
+    async def scan(
+        self, slug: str, request_host: str | None = None
+    ) -> RedirectResponse:
         qr = self.service.get_qr_by_slug(slug)
         if qr is None:
             raise HTTPException(
@@ -34,7 +36,9 @@ class ScanController:
         # has no destination to send the scanner to, so it lands on our own
         # branded page, which renders the content and offers the native action
         # (Save Contact, Add to Calendar, …).
-        destination = self.service.resolve_destination(qr) or landing_page_url(slug)
+        destination = self.service.resolve_destination(qr) or landing_page_url(
+            slug, request_host=request_host
+        )
 
         if qr.dynamic:
             new_scans = self.service.record_scan(slug)

@@ -2,15 +2,40 @@
 
 from urllib.parse import urlparse
 
-from app.config.settings import settings
+from app.config.settings import PRODUCTION_APP_URL, settings
 from app.models.qr import QR
 
 WEBSITE_TYPE_KEY = "url"
 
+_LOCAL_HOSTNAMES = {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
 
-def landing_page_url(slug: str) -> str:
-    """Our own scan page, for QR types that have no destination to redirect to."""
+
+def _is_local_hostname(hostname: str | None) -> bool:
+    if not hostname:
+        return False
+    host = hostname.strip().lower()
+    # Strip any port, and the brackets IPv6 literals carry in a Host header.
+    if host.startswith("["):
+        host = host.partition("]")[0].lstrip("[")
+    elif ":" in host:
+        host = host.rpartition(":")[0]
+    return host in _LOCAL_HOSTNAMES
+
+
+def landing_page_url(slug: str, request_host: str | None = None) -> str:
+    """Our own scan page, for QR types that have no destination to redirect to.
+
+    This link is handed to whoever scanned the code, so it has to be reachable
+    from *their* device. If FRONTEND_URL is still pointing at localhost while
+    the scan itself arrived over a public hostname, that's a deployment
+    misconfiguration which would otherwise send every scanner to their own
+    machine — fall back to the production origin rather than emit a dead link.
+    """
     base = settings.frontend_url.split(",")[0].strip().rstrip("/")
+    if _is_local_hostname(urlparse(base).hostname) and not _is_local_hostname(
+        request_host
+    ):
+        base = PRODUCTION_APP_URL.rstrip("/")
     return f"{base}/s/{slug}"
 
 
