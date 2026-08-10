@@ -14,7 +14,8 @@ import {
   Moon,
   Zap,
 } from 'lucide-react'
-import { setPendingRedirect, defaultDesign } from '../lib/store'
+import { defaultDesign } from '../lib/store'
+import { useLoginModal } from '../context/LoginModalContext'
 import { LOGO_OPTIONS } from '../lib/qr'
 import { startDraft } from '../lib/qrDraft'
 import { getTheme, toggleTheme } from '../lib/theme'
@@ -229,6 +230,7 @@ function FaqRow({ q, a }) {
 
 export default function Landing() {
   const navigate = useNavigate()
+  const { openLogin } = useLoginModal()
   const { isAuthenticated } = useAuth()
   const [theme, setThemeVal] = useState(getTheme)
 
@@ -238,7 +240,11 @@ export default function Landing() {
   }
 
   const goToDashboard = () => {
-    navigate(isAuthenticated ? '/dashboard' : '/login')
+    if (isAuthenticated) {
+      navigate('/dashboard')
+      return
+    }
+    openLogin('/dashboard')
   }
 
   const requireAuth = (target) => {
@@ -246,8 +252,7 @@ export default function Landing() {
       navigate(target)
       return
     }
-    setPendingRedirect(target)
-    navigate('/login')
+    openLogin(target)
   }
 
   const handleStart = (
@@ -1024,7 +1029,7 @@ export default function Landing() {
                   <li>
                     <button
                       type="button"
-                      onClick={() => navigate('/login')}
+                      onClick={() => openLogin()}
                       className="text-[13px] text-ink-soft hover:text-primary transition-colors"
                     >
                       Log in

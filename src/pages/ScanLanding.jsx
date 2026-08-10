@@ -19,8 +19,9 @@ import {
   Wifi,
 } from 'lucide-react'
 import { getPublicQr, vcardFileUrl } from '../api/qrcode/publicQr'
-import { copyToClipboard, setPendingRedirect } from '../lib/store'
+import { copyToClipboard } from '../lib/store'
 import { useAuth } from '../context/AuthContext'
+import { useLoginModal } from '../context/LoginModalContext'
 
 /* The page a person lands on after scanning a dynamic QR whose content has no
    destination to redirect to — a contact card, Wi-Fi credentials, an event.
@@ -135,13 +136,13 @@ function PrimaryAction({ href, download, icon: Icon, children }) {
 function CreateYourOwnButton() {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
+  const { openLogin } = useLoginModal()
   const go = () => {
     if (isAuthenticated) {
       navigate('/create')
       return
     }
-    setPendingRedirect('/create')
-    navigate('/login')
+    openLogin('/create')
   }
   return (
     <button

@@ -70,12 +70,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     onSettled: () => {
       performLocalLogout()
       toast.success('Signed out successfully')
-      navigate('/login', { replace: true })
+      navigate('/', { replace: true })
     },
     onError: (error) => {
       performLocalLogout()
       toast.error(getApiErrorMessage(error, 'Signed out locally.'))
-      navigate('/login', { replace: true })
+      navigate('/', { replace: true })
     },
   })
 
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     setLogoutHandler(() => {
       performLocalLogout()
-      navigate('/login', { replace: true })
+      navigate('/', { replace: true })
     })
 
     return () => setLogoutHandler(null)
