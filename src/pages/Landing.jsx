@@ -192,7 +192,7 @@ const FAQS = [
   },
   {
     q: 'What does it cost?',
-    a: 'Every feature is free while we are in our launch phase — no credit card required. When pricing is introduced, early users receive founder discounts.',
+    a: 'Nothing. Every feature is free on every account — unlimited codes, dynamic QR, analytics and all download formats. There are no plans to compare and no credit card required.',
   },
 ]
 
@@ -392,7 +392,7 @@ export default function Landing() {
               <Reveal>
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/10 ring-1 ring-inset ring-white/15 px-3.5 py-1.5 text-[12px] font-semibold text-white/85 backdrop-blur">
                   <Zap size={12} className="text-[#7BE3DC]" />
-                  Free during launch — every feature unlocked
+                  Free — every feature unlocked
                 </span>
 
                 <h1 className="mt-7 text-[36px] leading-[1.05] sm:text-[48px] lg:text-[56px] lg:leading-[1.03] font-extrabold tracking-[-0.035em] text-white">
@@ -872,25 +872,22 @@ export default function Landing() {
             <div className="grid lg:grid-cols-2">
               <div className="p-8 sm:p-12">
                 <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
-                  Launch offer
+                  Pricing
                 </span>
                 <h2 className="mt-3 text-[26px] sm:text-[32px] leading-[1.12] font-extrabold tracking-[-0.02em] text-ink">
-                  Everything is free right now
+                  Everything is free
                 </h2>
                 <p className="mt-4 max-w-sm text-[15px] text-ink-muted leading-relaxed">
-                  We’re in our launch phase, so every Pro and Enterprise feature
-                  is unlocked at no cost. No credit card. Early users receive
-                  founder discounts when pricing arrives.
+                  There are no plans to compare and nothing to upgrade. Every
+                  feature is unlocked on every account — no limits, no credit
+                  card.
                 </p>
                 <div className="mt-8 flex items-end gap-3">
-                  <span className="text-ink-faint line-through text-xl font-bold">
-                    $49
-                  </span>
                   <span className="text-[56px] leading-none font-extrabold tracking-[-0.03em] text-ink">
                     $0
                   </span>
                   <span className="text-[13px] text-ink-muted mb-2">
-                    / month
+                    forever
                   </span>
                 </div>
               </div>
@@ -966,8 +963,7 @@ export default function Landing() {
                 Make your first QR code in about a minute
               </h2>
               <p className="mt-4 max-w-md text-[15px] text-white/60 leading-relaxed">
-                No credit card, no trial timer. Everything is unlocked while
-                we’re in launch.
+                No credit card, no trial timer. Every feature is unlocked, free.
               </p>
             </div>
             <div className="lg:col-span-4 flex lg:justify-end">
