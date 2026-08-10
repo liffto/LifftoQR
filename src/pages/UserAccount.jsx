@@ -19,16 +19,21 @@ import {
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
-import { uploadAvatar, mapApiUser } from '../api/auth.api'
+import { uploadAvatar, updateProfile, mapApiUser } from '../api/auth.api'
 import { useQrs } from '../hooks/useQrs'
+import {
+  useDevices,
+  useSignOutDevice,
+  useSignOutOtherDevices,
+} from '../hooks/useDevices'
 import { clearDraft } from '../lib/store'
 import { compressImageFile } from '../lib/imageCompress'
+import { isValidPhone } from '../lib/countries'
+import PhoneInput from '../components/PhoneInput'
 import { getApiErrorMessage } from '../utils/errors'
 import {
   getDisplayName,
-  getFirstName,
   getInitials,
-  getLastName,
   resolvePictureUrl,
 } from '../utils/userDisplay'
 
@@ -104,37 +109,19 @@ function DeleteAccountModal({ onConfirm, onCancel }) {
 
 const DEVICE_ICON = { desktop: Monitor, mobile: Smartphone, tablet: Tablet }
 
-const INITIAL_DEVICES = [
-  {
-    id: 1,
-    type: 'desktop',
-    name: 'MacBook Pro',
-    meta: 'Chrome · Chennai, India',
-    lastActive: 'Active now',
-    current: true,
-  },
-  {
-    id: 2,
-    type: 'mobile',
-    name: 'iPhone 15',
-    meta: 'Safari · Chennai, India',
-    lastActive: '2 hours ago',
-  },
-  {
-    id: 3,
-    type: 'tablet',
-    name: 'iPad Air',
-    meta: 'Safari · Bengaluru, India',
-    lastActive: '3 days ago',
-  },
-  {
-    id: 4,
-    type: 'desktop',
-    name: 'Windows PC',
-    meta: 'Edge · Coimbatore, India',
-    lastActive: '1 week ago',
-  },
-]
+// Coarse on purpose: "3 days ago" is all this list needs, and it avoids
+// pulling in a date library for one label.
+function timeAgo(iso) {
+  const then = new Date(iso).getTime()
+  if (Number.isNaN(then)) return 'Unknown'
+  const mins = Math.max(0, Math.round((Date.now() - then) / 60000))
+  if (mins < 1) return 'Active now'
+  if (mins < 60) return `${mins} min ago`
+  const hours = Math.round(mins / 60)
+  if (hours < 24) return `${hours} hr ago`
+  const days = Math.round(hours / 24)
+  return days === 1 ? 'Yesterday' : `${days} days ago`
+}
 
 function SectionCard({
   title,
@@ -157,7 +144,15 @@ function SectionCard({
   )
 }
 
-function Field({ label, type = 'text', defaultValue, placeholder, hint }) {
+function Field({
+  label,
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  hint,
+  readOnly = false,
+}) {
   return (
     <div>
       <label className="block text-xs font-medium text-ink-muted mb-1.5">
@@ -165,33 +160,46 @@ function Field({ label, type = 'text', defaultValue, placeholder, hint }) {
       </label>
       <input
         type={type}
-        defaultValue={defaultValue}
+        value={value ?? ''}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+        readOnly={readOnly}
         placeholder={placeholder}
-        className="w-full bg-canvas rounded-[10px] px-4 py-2.5 text-sm text-ink border border-line focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition"
+        className={`w-full rounded-[10px] px-4 py-2.5 text-sm border border-line outline-none transition ${
+          readOnly
+            ? 'bg-canvas text-ink-muted cursor-not-allowed'
+            : 'bg-canvas text-ink focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10'
+        }`}
       />
       {hint && <p className="mt-1 text-[11px] text-ink-faint">{hint}</p>}
     </div>
   )
 }
 
-function SaveButton({ label = 'Save Changes', onClick }) {
-  const [saved, setSaved] = useState(false)
-  const handle = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-    onClick?.()
-  }
+// Saved state is driven by the request actually succeeding, not a timer — the
+// previous version flashed "Saved!" unconditionally while persisting nothing.
+function SaveButton({
+  label = 'Save Changes',
+  onClick,
+  saving = false,
+  saved = false,
+  disabled = false,
+}) {
   return (
     <button
       type="button"
-      onClick={handle}
-      className={`h-10 px-5 rounded-[10px] text-sm font-semibold flex items-center gap-2 transition-all ${
+      onClick={onClick}
+      disabled={saving || disabled}
+      className={`h-10 px-5 rounded-[10px] text-sm font-semibold flex items-center gap-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
         saved
           ? 'bg-success text-white'
           : 'bg-primary text-white hover:bg-primary-600 shadow-sm shadow-primary/25'
       }`}
     >
-      {saved ? (
+      {saving ? (
+        <>
+          <Loader2 size={15} className="animate-spin" /> Saving…
+        </>
+      ) : saved ? (
         <>
           <Check size={15} /> Saved!
         </>
@@ -207,8 +215,6 @@ export default function UserAccount() {
   const fileInputRef = useRef(null)
   const displayName = getDisplayName(user)
   const initials = getInitials(user)
-  const firstName = getFirstName(user)
-  const lastName = getLastName(user)
   const email = user?.email ?? ''
   const serverPictureUrl = resolvePictureUrl(user?.picture, user?.pictureCacheKey)
   const [avatarPreview, setAvatarPreview] = useState(null)
@@ -223,10 +229,67 @@ export default function UserAccount() {
     weekly: true,
     product: false,
   })
-  const [devices, setDevices] = useState(INITIAL_DEVICES)
-  const removeDevice = (id) => setDevices((ds) => ds.filter((d) => d.id !== id))
-  const signOutOthers = () => setDevices((ds) => ds.filter((d) => d.current))
+  const {
+    data: devices = [],
+    isLoading: devicesLoading,
+    isError: devicesError,
+    refetch: refetchDevices,
+  } = useDevices()
+  const signOutDevice = useSignOutDevice()
+  const signOutOthers = useSignOutOtherDevices()
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+
+  // Profile form. Seeded from the loaded user and re-seeded if that arrives
+  // after first paint, but only while untouched so a refetch can't overwrite
+  // what someone is in the middle of typing.
+  //
+  // Seeded from the raw stored fields, NOT getFirstName/getLastName: those
+  // guess a surname by splitting the display name when last_name is empty, so
+  // a user stored as ("KAVUTHAMRAJ GS", "") would render as First="KAVUTHAMRAJ
+  // GS" / Last="GS" and saving would persist the guess back as "…GS GS".
+  const [form, setForm] = useState({
+    firstName: user?.first_name ?? '',
+    lastName: user?.last_name ?? '',
+    phone: user?.phone ?? '',
+  })
+  const [dirty, setDirty] = useState(false)
+  const [justSaved, setJustSaved] = useState(false)
+
+  useEffect(() => {
+    if (dirty) return
+    setForm({
+      firstName: user?.first_name ?? '',
+      lastName: user?.last_name ?? '',
+      phone: user?.phone ?? '',
+    })
+  }, [user, dirty])
+
+  const setField = (key) => (value) => {
+    setDirty(true)
+    setJustSaved(false)
+    setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  const profileSave = useMutation({
+    mutationFn: () =>
+      updateProfile({
+        first_name: form.firstName.trim(),
+        last_name: form.lastName.trim(),
+        phone: form.phone.trim(),
+      }),
+    onSuccess: (profile) => {
+      updateUser(mapApiUser(profile))
+      setDirty(false)
+      setJustSaved(true)
+      toast.success('Profile updated')
+    },
+    onError: (error) =>
+      toast.error(getApiErrorMessage(error, 'Could not save your profile')),
+  })
+
+  const phoneIncomplete = form.phone.trim() !== '' && !isValidPhone(form.phone)
+  const canSave =
+    dirty && form.firstName.trim() !== '' && !phoneIncomplete
   const avatarUpload = useMutation({
     mutationFn: uploadAvatar,
     onSuccess: (profile) => {
@@ -391,63 +454,129 @@ export default function UserAccount() {
           {/* Profile info */}
           <SectionCard title="Profile Information" icon={User}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-              <Field label="First Name" defaultValue={firstName} />
-              <Field label="Last Name" defaultValue={lastName} />
-              <Field label="Email Address" type="email" defaultValue={email} />
-              <Field label="Phone" type="tel" placeholder="+1 (000) 000-0000" />
+              <Field
+                label="First Name"
+                value={form.firstName}
+                onChange={setField('firstName')}
+              />
+              <Field
+                label="Last Name"
+                value={form.lastName}
+                onChange={setField('lastName')}
+              />
+              <Field
+                label="Email Address"
+                type="email"
+                value={email}
+                readOnly
+                hint="Managed by your Google account"
+              />
+              <div>
+                <label className="block text-xs font-medium text-ink-muted mb-1.5">
+                  Phone
+                </label>
+                <PhoneInput
+                  id="profile-phone"
+                  value={form.phone}
+                  onChange={setField('phone')}
+                />
+              </div>
             </div>
-            <SaveButton label="Save Changes" />
+            <SaveButton
+              label="Save Changes"
+              onClick={() => profileSave.mutate()}
+              saving={profileSave.isPending}
+              saved={justSaved}
+              disabled={!canSave}
+            />
           </SectionCard>
 
           {/* Devices */}
           <SectionCard title="Manage Devices" icon={Monitor}>
-            <div className="-my-1 divide-y divide-line">
-              {devices.map((d) => {
-                const Icon = DEVICE_ICON[d.type] || Monitor
-                return (
-                  <div
-                    key={d.id}
-                    className="flex items-center justify-between gap-4 py-3"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-[10px] bg-canvas flex items-center justify-center shrink-0 text-ink-soft">
-                        <Icon size={17} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-ink flex items-center gap-2">
-                          {d.name}
-                          {d.current && (
-                            <span className="text-[10px] font-semibold bg-success/10 text-success rounded-full px-2 py-0.5">
-                              This device
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs text-ink-muted mt-0.5 truncate">
-                          {d.meta} · {d.lastActive}
-                        </p>
-                      </div>
+            {devicesLoading ? (
+              <div className="space-y-3">
+                {[0, 1].map((i) => (
+                  <div key={i} className="flex items-center gap-3 py-1">
+                    <div className="h-9 w-9 shrink-0 rounded-[10px] shimmer" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3.5 w-32 rounded shimmer" />
+                      <div className="h-3 w-48 rounded shimmer" />
                     </div>
-                    {!d.current && (
-                      <button
-                        type="button"
-                        onClick={() => removeDevice(d.id)}
-                        className="shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-[10px] border border-line text-ink-soft text-xs font-medium hover:border-danger hover:text-danger hover:bg-red-50 transition-colors"
-                      >
-                        <LogOut size={13} /> Remove
-                      </button>
-                    )}
                   </div>
-                )
-              })}
-            </div>
-            {devices.some((d) => !d.current) && (
-              <button
-                type="button"
-                onClick={signOutOthers}
-                className="mt-4 text-xs font-semibold text-danger hover:underline"
-              >
-                Sign out all other devices
-              </button>
+                ))}
+              </div>
+            ) : devicesError ? (
+              <p className="py-2 text-sm text-ink-muted">
+                Couldn't load your devices.{' '}
+                <button
+                  type="button"
+                  onClick={() => refetchDevices()}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Try again
+                </button>
+              </p>
+            ) : devices.length === 0 ? (
+              <p className="py-2 text-sm text-ink-muted leading-relaxed">
+                No signed-in devices to show yet. Sessions started before device
+                tracking existed aren't listed — sign in again and this device
+                will appear here.
+              </p>
+            ) : (
+              <>
+                <div className="-my-1 divide-y divide-line">
+                  {devices.map((d) => {
+                    const Icon = DEVICE_ICON[d.device_type] || Monitor
+                    return (
+                      <div
+                        key={d.id}
+                        className="flex items-center justify-between gap-4 py-3"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-[10px] bg-canvas flex items-center justify-center shrink-0 text-ink-soft">
+                            <Icon size={17} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-ink flex items-center gap-2">
+                              {d.device_name}
+                              {d.current && (
+                                <span className="text-[10px] font-semibold bg-success/10 text-success rounded-full px-2 py-0.5">
+                                  This device
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-xs text-ink-muted mt-0.5 truncate">
+                              {[d.browser, d.ip_address].filter(Boolean).join(' · ')}
+                              {d.browser || d.ip_address ? ' · ' : ''}
+                              {d.current ? 'Active now' : timeAgo(d.last_seen_at)}
+                            </p>
+                          </div>
+                        </div>
+                        {!d.current && (
+                          <button
+                            type="button"
+                            onClick={() => signOutDevice.mutate(d.id)}
+                            disabled={signOutDevice.isPending}
+                            className="shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-[10px] border border-line text-ink-soft text-xs font-medium hover:border-danger hover:text-danger hover:bg-red-50 transition-colors disabled:opacity-50"
+                          >
+                            <LogOut size={13} /> Remove
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {devices.some((d) => !d.current) && (
+                  <button
+                    type="button"
+                    onClick={() => signOutOthers.mutate()}
+                    disabled={signOutOthers.isPending}
+                    className="mt-4 text-xs font-semibold text-danger hover:underline disabled:opacity-50"
+                  >
+                    Sign out all other devices
+                  </button>
+                )}
+              </>
             )}
           </SectionCard>
 

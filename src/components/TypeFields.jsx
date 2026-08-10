@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Plus, X, ChevronDown, ImagePlus, Eye, EyeOff } from 'lucide-react'
 import { compressImageFile } from '../lib/imageCompress'
 import {
@@ -7,11 +7,11 @@ import {
   findByDial,
   findCountry,
   isValidNationalNumber,
-  joinPhone,
   lengthHint,
   maxLengthFor,
-  splitPhone,
 } from '../lib/countries'
+import PhoneInput from './PhoneInput'
+import { INPUT_CLS } from './formStyles'
 
 // Pretty option labels for selects (values stay raw so encoders keep working).
 const OPTION_LABELS = {
@@ -37,8 +37,7 @@ const OPTION_LABELS = {
 const optLabel = (o) =>
   OPTION_LABELS[o] || o.charAt(0).toUpperCase() + o.slice(1)
 
-export const INPUT_CLS =
-  'h-11 w-full rounded-[10px] border border-line bg-white px-3.5 text-sm text-ink outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 placeholder:text-ink-faint'
+export { INPUT_CLS }
 
 // Repeatable list of {label, url} rows (Link Tree)
 function LinkListField({ field, value, onChange }) {
@@ -171,30 +170,7 @@ function ImageField({ field, value, onChange }) {
 // The accepted digit count comes from the selected country, so India requires
 // exactly 10 while Singapore requires 8 and Germany accepts a range.
 function PhoneField({ field, value, onChange }) {
-  const { national } = splitPhone(value)
-  const [iso, setIso] = useState(() => splitPhone(value).iso)
-  const [touched, setTouched] = useState(false)
   const id = `f-${field.key}`
-
-  // A saved record loading from the API carries its country inside the value —
-  // adopt it. Compared by dial code so countries that share one (US/Canada on
-  // +1) don't yank the dropdown away from the user's pick.
-  useEffect(() => {
-    const next = splitPhone(value)
-    if (next.national && findCountry(next.iso).dial !== findCountry(iso).dial) {
-      setIso(next.iso)
-    }
-  }, [value, iso])
-
-  const setCountry = (nextIso) => {
-    setIso(nextIso)
-    onChange(field.key, joinPhone(nextIso, national))
-  }
-  const setNumber = (raw) =>
-    onChange(field.key, joinPhone(iso, digitsOnly(raw).slice(0, maxLengthFor(iso))))
-
-  const invalid = touched && national !== '' && !isValidNationalNumber(iso, national)
-
   return (
     <div className={field.half ? 'col-span-2 sm:col-span-1' : 'col-span-2'}>
       <label
@@ -204,47 +180,11 @@ function PhoneField({ field, value, onChange }) {
         {field.label}
         {field.required && <span className="text-danger"> *</span>}
       </label>
-      <div className="flex gap-2">
-        <div className="relative shrink-0">
-          <select
-            aria-label="Country code"
-            value={iso}
-            onChange={(e) => setCountry(e.target.value)}
-            className={INPUT_CLS + ' w-[116px] appearance-none cursor-pointer pr-8'}
-          >
-            {COUNTRIES.map((c) => (
-              <option key={c.iso} value={c.iso}>
-                {c.flag} +{c.dial}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            size={14}
-            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
-          />
-        </div>
-        <input
-          id={id}
-          type="tel"
-          inputMode="numeric"
-          autoComplete="tel-national"
-          value={national}
-          onChange={(e) => setNumber(e.target.value)}
-          onBlur={() => setTouched(true)}
-          placeholder={'0'.repeat(maxLengthFor(iso))}
-          className={
-            INPUT_CLS +
-            (invalid
-              ? ' border-danger focus:border-danger focus:ring-danger/10'
-              : '')
-          }
-        />
-      </div>
-      <p className={`mt-1 text-[11px] ${invalid ? 'text-danger' : 'text-ink-faint'}`}>
-        {invalid
-          ? `${findCountry(iso).name} numbers are ${lengthHint(iso)}`
-          : lengthHint(iso)}
-      </p>
+      <PhoneInput
+        id={id}
+        value={value}
+        onChange={(next) => onChange(field.key, next)}
+      />
     </div>
   )
 }

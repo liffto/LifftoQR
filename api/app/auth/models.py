@@ -24,6 +24,7 @@ class User(PKMixin, TenantMixin, TimestampMixin, Base):
     google_id = Column(String(255), nullable=True, index=True)
     auth_provider = Column(String(50), nullable=False, default="local")
     avatar_url = Column(Text, nullable=True)
+    phone = Column(String(20), nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
 
     account = relationship("Account", back_populates="users")

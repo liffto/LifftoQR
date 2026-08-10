@@ -27,6 +27,20 @@ export async function uploadAvatar(pictureDataUrl: string): Promise<ApiUserRespo
   return data
 }
 
+export interface ProfileUpdate {
+  first_name: string
+  last_name: string
+  /** E.164, or empty string to clear. */
+  phone: string
+}
+
+export async function updateProfile(
+  payload: ProfileUpdate,
+): Promise<ApiUserResponse> {
+  const { data } = await api.patch<ApiUserResponse>('/auth/me', payload)
+  return data
+}
+
 export async function logout(): Promise<void> {
   await api.post('/auth/logout')
 }
@@ -49,5 +63,6 @@ export function mapApiUser(user: ApiUserResponse) {
     account_id: user.account_id,
     roles: user.roles,
     is_superuser: user.is_superuser,
+    phone: user.phone ?? null,
   }
 }

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import List, Optional
 
@@ -44,6 +46,33 @@ class AvatarUploadRequest(BaseModel):
     picture: str = Field(min_length=1, max_length=2_000_000)
 
 
+class ProfileUpdateRequest(BaseModel):
+    """Editable profile fields.
+
+    Email is deliberately absent: it is the identity Google sign-in matches
+    users on, so letting it be edited here would orphan the account from its
+    provider and could collide with another user's address.
+    """
+
+    first_name: str = Field(min_length=1, max_length=200)
+    last_name: str = Field(default="", max_length=200)
+    # Empty string clears the number; otherwise E.164 as the client builds it.
+    phone: str = Field(default="", max_length=20, pattern=r"^$|^\+[1-9]\d{6,14}$")
+
+
+class DeviceOut(BaseModel):
+    """A signed-in device."""
+
+    id: int
+    device_type: str
+    device_name: str
+    browser: Optional[str] = None
+    ip_address: Optional[str] = None
+    last_seen_at: datetime
+    created_at: datetime
+    current: bool = False
+
+
 class UserOut(BaseModel):
     """User response model."""
     id: int
@@ -54,6 +83,7 @@ class UserOut(BaseModel):
     roles: List[str]
     is_superuser: bool
     picture: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class VerifyEmailRequest(BaseModel):

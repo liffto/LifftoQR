@@ -10,6 +10,7 @@ export interface User {
   account_id?: number
   roles?: string[]
   is_superuser?: boolean
+  phone?: string | null
 }
 
 export interface TokenPair {
@@ -31,6 +32,7 @@ export interface ApiUserResponse {
   roles: string[]
   is_superuser: boolean
   picture?: string | null
+  phone?: string | null
 }
 
 export interface ApiResponse<T = unknown> {
