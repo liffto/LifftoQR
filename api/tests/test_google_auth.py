@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from app.auth import service as auth_service
 
 
@@ -12,13 +14,16 @@ def test_verify_google_id_token_uses_expected_claims(monkeypatch) -> None:
         def get_signing_key_from_jwt(self, _token: str) -> FakeSigningKey:
             return FakeSigningKey()
 
-    def fake_decode(token, key, algorithms, audience, issuer, options):
+    def fake_decode(token, key, algorithms, audience, issuer, leeway, options):
         assert token == "dummy-token"
         assert key == "test-key"
         assert algorithms == ["RS256"]
         assert audience == "google-client-id"
         assert issuer == ["accounts.google.com", "https://accounts.google.com"]
         assert options["verify_exp"] is True
+        # Clock-skew tolerance: without it a server clock a few seconds fast
+        # rejects otherwise-valid Google tokens as not-yet-issued/expired.
+        assert leeway == timedelta(seconds=30)
         return {"sub": "google-user-1", "email": "user@example.com", "email_verified": True}
 
     monkeypatch.setattr(auth_service, "PyJWKClient", FakeJWKClient)
