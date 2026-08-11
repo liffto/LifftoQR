@@ -12,11 +12,36 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.config.settings import settings
-from app.core.security import decode_jwt, CLAIM_SUB, CLAIM_ACC, CLAIM_ROLE, CLAIM_TYP, CLAIM_JTI
+from app.core.security import decode_jwt, CLAIM_SUB, CLAIM_ACC, CLAIM_ROLE, CLAIM_TYP, CLAIM_JTI, CLAIM_SID
 from app.auth.models import User
+from app.auth.models_extras import UserSession
 from app.auth.service import is_revoked, get_user_roles
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
+
+
+def reject_if_session_revoked(db: Session, payload: dict) -> None:
+    """Stop a signed-out device on its very next request.
+
+    Revoking a session blocklists its *refresh* token, which prevents renewal
+    but says nothing about the access token already in the device's hands —
+    that carries its own jti and would otherwise keep working until it expired.
+    Checking the session the token was issued for is what makes "sign this
+    device out" mean now.
+
+    Tokens issued before device tracking existed carry no session id; those are
+    left alone rather than being invalidated wholesale.
+    """
+    sid = payload.get(CLAIM_SID)
+    if sid is None:
+        return
+    session = db.get(UserSession, sid)
+    if session is None or session.revoked_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="This device has been signed out",
+        )
+
 
 
 @dataclass
@@ -56,6 +81,8 @@ def get_current_user(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token has been revoked",
             )
+
+        reject_if_session_revoked(db, payload)
         
         # Get user
         user = db.get(User, user_id)
@@ -116,6 +143,8 @@ def roles_required(*required_roles: str):
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Token revoked",
                 )
+
+            reject_if_session_revoked(db, payload)
             
             user = db.get(User, user_id)
             if not user or not user.is_active:

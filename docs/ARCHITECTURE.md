@@ -124,14 +124,16 @@ Static codes never reach the backend at all; their content lives in the image.
 - **Sessions are keyed on the refresh token's `jti`.** The refresh endpoint
   re-issues only the access token, so that id is stable for the life of a login
   and identifies a device. Revoking pushes it onto the token blocklist.
-- **Revocation is by `jti`, and the two token types carry different ones.**
-  Every authenticated request already checks the access token's `jti` against
-  the blocklist. Revoking a session blocklists the *refresh* token's `jti`, so
-  the device cannot renew — but the access token it is holding has its own
-  `jti`, which was never blocklisted, and stays valid until it expires. That is
-  the whole reason signing a device out is not instant. Closing the gap would
-  mean checking the session id (`sid`, carried in both tokens) rather than
-  adding a lookup: the round-trip is already being made.
+- **Signing a device out takes effect on its next request.** Two things are
+  revoked together: the session's *refresh* token goes on the blocklist so the
+  device cannot renew, and the session itself is marked revoked. Every
+  authenticated request checks both — the access token's own `jti` against the
+  blocklist, and the session id (`sid`) the token was issued for. The `sid`
+  check is what closes the gap, because the access token in a removed device's
+  hands carries a different `jti` that was never blocklisted and would
+  otherwise keep working until it expired.
+- **Tokens predating device tracking carry no `sid`** and are accepted rather
+  than invalidated wholesale, so shipping this did not sign everyone out.
 - **A top-level `ErrorBoundary`** keeps a render error in one view from blanking
   the whole app.
 
