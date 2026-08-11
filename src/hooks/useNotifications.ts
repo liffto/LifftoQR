@@ -12,8 +12,12 @@ export function useNotifications() {
     queryKey: notificationsQueryKey,
     queryFn: listNotifications,
     // Scans arrive while the tab sits open, so poll rather than leaving a
-    // stale badge until the next navigation.
+    // stale badge until the next navigation. Focus matters too: the app-wide
+    // default is not to refetch on focus, so coming back to the tab would
+    // otherwise show whatever the badge said when you left it.
+    staleTime: 0,
     refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
   })
 }
 
