@@ -27,7 +27,6 @@ import {
   randomSlug,
   formatDate,
   copyToClipboard,
-  deleteQR,
 } from '../lib/store'
 import { useQrs, useDeleteQr, useSetQrStatus } from '../hooks/useQrs'
 import { useQrScanCount } from '../hooks/useQrScanCount'
@@ -627,11 +626,7 @@ function ActionMenu({ row }) {
   }
   const handleDelete = (e) => {
     e.stopPropagation()
-    if (typeof row.id === 'number') {
-      deleteMutation.mutate(row.id)
-    } else {
-      deleteQR(row.id)
-    }
+    deleteMutation.mutate(row.id)
     setMenuOpen(false)
   }
 
@@ -1018,11 +1013,7 @@ export default function Dashboard() {
   }
 
   const handleDeleteModal = async (id) => {
-    if (typeof id === 'number') {
-      await deleteMutation.mutateAsync(id)
-    } else {
-      deleteQR(id)
-    }
+    await deleteMutation.mutateAsync(id)
   }
 
   const handleToggleStatus = (id, status) => {
