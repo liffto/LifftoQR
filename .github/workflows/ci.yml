@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Lets you re-run checks by hand without pushing an empty commit.
+  workflow_dispatch:
+
+# A newer push makes an in-flight run pointless — cancel it rather than queue.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # `npm ci` over `npm install`: it installs exactly what the lockfile
+      # pins and fails if the lockfile and package.json have drifted apart.
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      # Catches what lint and tests cannot — a broken import or a type-level
+      # mistake that only surfaces when Vite actually bundles.
+      - name: Build
+        run: npm run build
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    env:
+      # The suite runs against in-memory SQLite (see tests/conftest.py), but
+      # settings require DATABASE_URL to be present at import time. Nothing
+      # connects to this.
+      DATABASE_URL: postgresql+psycopg2://ci:ci@localhost:5432/ci
+      JWT_SECRET_KEY: ci-only-not-a-real-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: api/requirements.txt
+
+      - run: pip install -r requirements.txt
+
+      - name: Test
+        run: pytest -q
+
+  migrations:
+    name: Migrations
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    # Migrations are applied by hand on deploy, so a broken revision would
+    # otherwise only be discovered against a real database. This runs the whole
+    # chain against a throwaway Postgres on every push.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+psycopg2://ci:ci@localhost:5432/ci
+      JWT_SECRET_KEY: ci-only-not-a-real-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: api/requirements.txt
+
+      - run: pip install -r requirements.txt
+
+      - name: Apply every migration from scratch
+        run: alembic upgrade head
+
+      - name: Confirm the schema landed
+        run: |
+          python - <<'PY'
+          from sqlalchemy import create_engine, inspect, text
+          import os
+          engine = create_engine(os.environ["DATABASE_URL"])
+          insp = inspect(engine)
+          tables = set(insp.get_table_names())
+          with engine.connect() as c:
+              version = c.execute(text("select version_num from alembic_version")).scalar()
+          print(f"at revision {version} with {len(tables)} tables")
+          # A representative slice: the spine, auth, and the two newest tables.
+          required = {"qrs", "users", "templates", "user_sessions", "notifications"}
+          missing = required - tables
+          if missing:
+              raise SystemExit(f"migrations ran but these tables are missing: {sorted(missing)}")
+          print("schema looks right")
+          PY
