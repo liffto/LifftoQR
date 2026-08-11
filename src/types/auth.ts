@@ -11,6 +11,9 @@ export interface User {
   roles?: string[]
   is_superuser?: boolean
   phone?: string | null
+  notify_scans?: boolean
+  notify_weekly?: boolean
+  notify_product?: boolean
 }
 
 export interface TokenPair {
@@ -33,6 +36,9 @@ export interface ApiUserResponse {
   is_superuser: boolean
   picture?: string | null
   phone?: string | null
+  notify_scans?: boolean
+  notify_weekly?: boolean
+  notify_product?: boolean
 }
 
 export interface ApiResponse<T = unknown> {

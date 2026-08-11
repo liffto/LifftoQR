@@ -42,6 +42,7 @@ class ScanController:
 
         if qr.dynamic:
             new_scans = self.service.record_scan(slug)
+            self.service.notify_owner(qr)
             if new_scans is not None:
                 await self.ws_manager.broadcast(
                     slug,

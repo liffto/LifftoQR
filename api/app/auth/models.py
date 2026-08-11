@@ -25,6 +25,11 @@ class User(PKMixin, TenantMixin, TimestampMixin, Base):
     auth_provider = Column(String(50), nullable=False, default="local")
     avatar_url = Column(Text, nullable=True)
     phone = Column(String(20), nullable=True)
+    # Notification preferences. Scans drive in-app alerts today; the other two
+    # are stored but inert until email delivery exists.
+    notify_scans = Column(Boolean, nullable=False, default=True)
+    notify_weekly = Column(Boolean, nullable=False, default=True)
+    notify_product = Column(Boolean, nullable=False, default=False)
     email_verified = Column(Boolean, nullable=False, default=False)
 
     account = relationship("Account", back_populates="users")

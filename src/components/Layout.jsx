@@ -17,6 +17,12 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from '../hooks/useNotifications'
+import { timeAgo, dayBucket } from '../lib/timeAgo'
 import { clearDraft } from '../lib/store'
 import {
   getDisplayName,
@@ -165,83 +171,21 @@ const NAV_ITEMS = [
 ]
 
 /* ── Notifications ───────────────────────────────────────────────── */
-const INIT_NOTIFS = [
-  {
-    id: 1,
-    icon: QrCode,
-    bg: 'bg-primary/10',
-    fg: 'text-primary',
-    title: 'QR Code Scanned',
-    body: '"www.cyberdine.in" was scanned 12 times today.',
-    time: '2 min ago',
-    day: 'Today',
-    read: false,
-  },
-  {
-    id: 2,
-    icon: QrCode,
-    bg: 'bg-primary/10',
-    fg: 'text-primary',
-    title: 'First Scan!',
-    body: '"liffto-qr.vercel.app/m7c0YZ" received its very first scan!',
-    time: '1 hr ago',
-    day: 'Today',
-    read: false,
-  },
-  {
-    id: 3,
-    icon: CreditCard,
-    bg: 'bg-amber-50',
-    fg: 'text-amber-500',
-    title: 'Everything is unlocked',
-    body: 'Unlimited codes, analytics and every download format — all free.',
-    time: '3 hr ago',
-    day: 'Today',
-    read: false,
-  },
-  {
-    id: 4,
-    icon: Info,
-    bg: 'bg-violet-50',
-    fg: 'text-violet-500',
-    title: 'New Feature: Frames',
-    body: 'Add custom frames and call-to-action labels to your QRs.',
-    time: 'Yesterday',
-    day: 'Yesterday',
-    read: true,
-  },
-  {
-    id: 5,
-    icon: TrendingUp,
-    bg: 'bg-success/10',
-    fg: 'text-success',
-    title: 'Weekly Summary',
-    body: 'Your QR codes received 340 scans — up 18% from last week.',
-    time: '2 days ago',
-    day: 'Earlier',
-    read: true,
-  },
-  {
-    id: 6,
-    icon: Info,
-    bg: 'bg-violet-50',
-    fg: 'text-violet-500',
-    title: 'Welcome to Liffto!',
-    body: 'Get started by creating your first QR code in 30 seconds.',
-    time: '3 days ago',
-    day: 'Earlier',
-    read: true,
-  },
-]
+
+const DAY_LABELS = { today: 'Today', yesterday: 'Yesterday', earlier: 'Earlier' }
 
 function NotificationDropdown({ onClose }) {
-  const [items, setItems] = useState(INIT_NOTIFS)
+  const { data: items = [] } = useNotifications()
+  const markAllRead = useMarkAllNotificationsRead()
+  const markOneRead = useMarkNotificationRead()
   const unread = items.filter((n) => !n.read).length
-  const markAll = () => setItems((p) => p.map((n) => ({ ...n, read: true })))
-  const markOne = (id) =>
-    setItems((p) => p.map((n) => (n.id === id ? { ...n, read: true } : n)))
-  const groups = ['Today', 'Yesterday', 'Earlier']
-    .map((day) => ({ day, items: items.filter((n) => n.day === day) }))
+  const markAll = () => markAllRead.mutate()
+  const markOne = (id) => markOneRead.mutate(id)
+  const groups = ['today', 'yesterday', 'earlier']
+    .map((day) => ({
+      day: DAY_LABELS[day],
+      items: items.filter((n) => dayBucket(n.updated_at) === day),
+    }))
     .filter((g) => g.items.length)
 
   return (
@@ -281,7 +225,6 @@ function NotificationDropdown({ onClose }) {
               </p>
             </div>
             {gItems.map((n) => {
-              const Icon = n.icon
               return (
                 <button
                   key={n.id}
@@ -289,10 +232,8 @@ function NotificationDropdown({ onClose }) {
                   onClick={() => markOne(n.id)}
                   className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-canvas/60 transition-colors border-b border-line/50 last:border-0 ${!n.read ? 'bg-primary/[0.02]' : ''}`}
                 >
-                  <div
-                    className={`w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0 mt-0.5 ${n.bg} ${n.fg}`}
-                  >
-                    <Icon size={15} />
+                  <div className="w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0 mt-0.5 bg-primary/10 text-primary">
+                    <QrCode size={15} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline justify-between gap-2">
@@ -302,7 +243,7 @@ function NotificationDropdown({ onClose }) {
                         {n.title}
                       </p>
                       <span className="text-[10px] text-ink-faint shrink-0 tabular-nums">
-                        {n.time}
+                        {timeAgo(n.updated_at)}
                       </span>
                     </div>
                     <p className="text-[11px] text-ink-muted mt-0.5 leading-relaxed">
@@ -317,13 +258,16 @@ function NotificationDropdown({ onClose }) {
             })}
           </div>
         ))}
-        {unread === 0 && items.every((n) => n.read) && (
+        {items.length === 0 && (
           <div className="py-10 flex flex-col items-center gap-2 text-center">
             <div className="w-10 h-10 rounded-[10px] bg-success/10 flex items-center justify-center">
               <Check size={18} className="text-success" />
             </div>
             <p className="text-sm font-medium text-ink-soft">
               You're all caught up!
+            </p>
+            <p className="px-6 text-center text-[11px] text-ink-faint">
+              Scan alerts land here when someone scans a dynamic QR code.
             </p>
           </div>
         )}
@@ -343,7 +287,8 @@ export default function Layout({ children, breadcrumb }) {
   const displayName = getDisplayName(user)
   const initials = getInitials(user)
   const pictureUrl = resolvePictureUrl(user?.picture, user?.pictureCacheKey)
-  const unreadCount = INIT_NOTIFS.filter((n) => !n.read).length
+  const { data: notifItems = [] } = useNotifications()
+  const unreadCount = notifItems.filter((n) => !n.read).length
 
   const handleCreate = () => {
     clearDraft()
