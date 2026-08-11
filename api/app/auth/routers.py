@@ -23,9 +23,11 @@ from app.core.security import (
     hash_password,
 )
 from app.auth.models import User
-from app.auth.models_extras import EmailVerification, UserSession
+from app.auth.models_extras import EmailVerification, Notification, UserSession
 from app.auth.schemas import (
     DeviceOut,
+    NotificationOut,
+    NotificationPreferences,
     RegisterRequest,
     VerifyEmailRequest,
     LoginRequest,
@@ -55,6 +57,12 @@ from app.auth.service import (
     revoke_session,
 )
 from app.auth.avatar import save_user_avatar_data_url
+from app.services.notification_service import (
+    describe,
+    list_notifications,
+    mark_all_read,
+    mark_read,
+)
 from app.auth.dependencies import get_current_user, roles_required, oauth2_scheme
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -71,6 +79,9 @@ def _user_out(user: User, roles: list[str]) -> UserOut:
         is_superuser=user.is_superuser,
         picture=user.avatar_url,
         phone=user.phone,
+        notify_scans=user.notify_scans,
+        notify_weekly=user.notify_weekly,
+        notify_product=user.notify_product,
     )
 
 
@@ -498,3 +509,79 @@ def revoke_other_devices(
         revoked += 1
     db.commit()
     return {"message": "Other devices signed out", "revoked": revoked}
+
+
+# ── notifications ────────────────────────────────────────────────────────────
+
+
+@router.patch(
+    "/me/notification-preferences",
+    response_model=UserOut,
+    summary="Update notification preferences",
+)
+def update_notification_preferences(
+    payload: NotificationPreferences,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> UserOut:
+    """Save which alerts this user wants."""
+    user.notify_scans = payload.notify_scans
+    user.notify_weekly = payload.notify_weekly
+    user.notify_product = payload.notify_product
+    db.commit()
+    db.refresh(user)
+    return _user_out(user, get_user_roles(db, user.id))
+
+
+@router.get(
+    "/me/notifications",
+    response_model=list[NotificationOut],
+    summary="Your notifications",
+)
+def my_notifications(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[NotificationOut]:
+    """Most recent notifications, newest activity first."""
+    out = []
+    for n in list_notifications(db, user.id):
+        title, body = describe(n)
+        out.append(
+            NotificationOut(
+                id=n.id,
+                kind=n.kind,
+                title=title,
+                body=body,
+                qr_id=n.qr_id,
+                read=n.read_at is not None,
+                created_at=n.created_at,
+                updated_at=n.updated_at,
+            )
+        )
+    return out
+
+
+@router.post("/me/notifications/{notification_id}/read", summary="Mark one as read")
+def read_notification(
+    notification_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Mark a single notification read."""
+    if not mark_read(db, user.id, notification_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found"
+        )
+    db.commit()
+    return {"message": "Marked read"}
+
+
+@router.post("/me/notifications/read-all", summary="Mark all as read")
+def read_all_notifications(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Mark every unread notification read."""
+    count = mark_all_read(db, user.id)
+    db.commit()
+    return {"message": "Marked read", "count": count}

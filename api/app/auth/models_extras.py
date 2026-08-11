@@ -3,9 +3,47 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DateTime, Date, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base, PKMixin, TenantMixin
+
+
+class Notification(PKMixin, TenantMixin, Base):
+    """An in-app notification.
+
+    Scan alerts are bucketed per QR per day: the first scan of a code gets its
+    own notification, and later scans that day bump a counter on one row rather
+    than adding an entry each time, so a popular code cannot flood the list.
+    """
+
+    __tablename__ = "notifications"
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    kind = Column(String(30), nullable=False)  # scan_first | scan_daily | info
+    qr_id = Column(
+        Integer, ForeignKey("qrs.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    # Snapshot so a renamed or deleted QR does not rewrite history.
+    qr_name = Column(String(255), nullable=True)
+    scan_count = Column(Integer, nullable=False, default=1)
+    day = Column(Date, nullable=True, index=True)
+    read_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
 
 class UserSession(PKMixin, TenantMixin, Base):

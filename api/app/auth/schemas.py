@@ -60,6 +60,27 @@ class ProfileUpdateRequest(BaseModel):
     phone: str = Field(default="", max_length=20, pattern=r"^$|^\+[1-9]\d{6,14}$")
 
 
+class NotificationPreferences(BaseModel):
+    """Which alerts a user wants."""
+
+    notify_scans: bool = True
+    notify_weekly: bool = True
+    notify_product: bool = False
+
+
+class NotificationOut(BaseModel):
+    """One in-app notification."""
+
+    id: int
+    kind: str
+    title: str
+    body: str
+    qr_id: Optional[int] = None
+    read: bool
+    created_at: datetime
+    updated_at: datetime
+
+
 class DeviceOut(BaseModel):
     """A signed-in device."""
 
@@ -84,6 +105,9 @@ class UserOut(BaseModel):
     is_superuser: bool
     picture: Optional[str] = None
     phone: Optional[str] = None
+    notify_scans: bool = True
+    notify_weekly: bool = True
+    notify_product: bool = False
 
 
 class VerifyEmailRequest(BaseModel):

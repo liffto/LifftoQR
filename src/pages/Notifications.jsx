@@ -1,89 +1,12 @@
-import { useState } from 'react'
-import {
-  Bell,
-  QrCode,
-  CreditCard,
-  Info,
-  CheckCheck,
-  TrendingUp,
-  Check,
-} from 'lucide-react'
+import { Bell, QrCode, CheckCheck, Check } from 'lucide-react'
 import Layout from '../components/Layout'
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from '../hooks/useNotifications'
+import { timeAgo, dayBucket } from '../lib/timeAgo'
 
-const INITIAL = [
-  {
-    id: 1,
-    type: 'scan',
-    icon: QrCode,
-    bg: 'bg-primary/10',
-    fg: 'text-primary',
-    title: 'QR Code Scanned',
-    body: 'Your QR code "www.cyberdine.in" was scanned 12 times today.',
-    time: '2 min ago',
-    day: 'today',
-    read: false,
-  },
-  {
-    id: 2,
-    type: 'scan',
-    icon: QrCode,
-    bg: 'bg-primary/10',
-    fg: 'text-primary',
-    title: 'First Scan!',
-    body: '"liffto-qr.vercel.app/m7c0YZ" received its very first scan — congratulations!',
-    time: '1 hr ago',
-    day: 'today',
-    read: false,
-  },
-  {
-    id: 3,
-    type: 'billing',
-    icon: CreditCard,
-    bg: 'bg-amber-50',
-    fg: 'text-amber-500',
-    title: 'Everything is unlocked',
-    body: 'Unlimited codes, analytics and every download format — all free.',
-    time: '3 hr ago',
-    day: 'today',
-    read: false,
-  },
-  {
-    id: 4,
-    type: 'info',
-    icon: Info,
-    bg: 'bg-violet-50',
-    fg: 'text-violet-500',
-    title: 'New Feature: Frames',
-    body: 'You can now add custom frames and call-to-action labels to your QR codes.',
-    time: 'Yesterday',
-    day: 'yesterday',
-    read: true,
-  },
-  {
-    id: 5,
-    type: 'trend',
-    icon: TrendingUp,
-    bg: 'bg-success/10',
-    fg: 'text-success',
-    title: 'Weekly Summary',
-    body: 'Your QR codes received 340 scans this week — up 18% from last week.',
-    time: '2 days ago',
-    day: 'earlier',
-    read: true,
-  },
-  {
-    id: 6,
-    type: 'info',
-    icon: Info,
-    bg: 'bg-violet-50',
-    fg: 'text-violet-500',
-    title: 'Welcome to Liffto!',
-    body: 'Get started by creating your first QR code. It only takes 30 seconds.',
-    time: '3 days ago',
-    day: 'earlier',
-    read: true,
-  },
-]
 
 const GROUP_LABELS = {
   today: 'Today',
@@ -92,17 +15,14 @@ const GROUP_LABELS = {
 }
 
 function NotifItem({ n, onRead }) {
-  const Icon = n.icon
   return (
     <button
       type="button"
       onClick={() => onRead(n.id)}
       className={`w-full flex items-start gap-4 px-6 py-4 text-left transition-colors hover:bg-canvas/70 ${!n.read ? 'bg-primary/[0.02]' : ''}`}
     >
-      <div
-        className={`w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 mt-0.5 ${n.bg} ${n.fg}`}
-      >
-        <Icon size={17} />
+      <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 mt-0.5 bg-primary/10 text-primary">
+        <QrCode size={17} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline justify-between gap-3">
@@ -112,7 +32,7 @@ function NotifItem({ n, onRead }) {
             {n.title}
           </p>
           <span className="text-[11px] text-ink-faint shrink-0 tabular-nums">
-            {n.time}
+            {timeAgo(n.updated_at)}
           </span>
         </div>
         <p className="text-xs text-ink-muted mt-0.5 leading-relaxed pr-4">
@@ -129,21 +49,19 @@ function NotifItem({ n, onRead }) {
 }
 
 export default function Notifications() {
-  const [items, setItems] = useState(INITIAL)
-  const unreadCount = items.filter((n) => !n.read).length
+  const { data: items = [], isLoading } = useNotifications()
+  const markOne = useMarkNotificationRead()
+  const markAll = useMarkAllNotificationsRead()
 
-  const markAllRead = () =>
-    setItems((prev) => prev.map((n) => ({ ...n, read: true })))
-  const markRead = (id) =>
-    setItems((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    )
+  const unreadCount = items.filter((n) => !n.read).length
+  const markAllRead = () => markAll.mutate()
+  const markRead = (id) => markOne.mutate(id)
 
   const groups = ['today', 'yesterday', 'earlier']
     .map((day) => ({
       day,
       label: GROUP_LABELS[day],
-      items: items.filter((n) => n.day === day),
+      items: items.filter((n) => dayBucket(n.updated_at) === day),
     }))
     .filter((g) => g.items.length > 0)
 
@@ -180,7 +98,19 @@ export default function Notifications() {
           </div>
 
           {/* Grouped list */}
-          {groups.length > 0 ? (
+          {isLoading ? (
+            <div className="divide-y divide-line/60">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-start gap-4 px-6 py-4">
+                  <div className="h-9 w-9 shrink-0 rounded-[10px] shimmer" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 w-40 rounded shimmer" />
+                    <div className="h-3 w-64 rounded shimmer" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : groups.length > 0 ? (
             <div>
               {groups.map(({ day, label, items: groupItems }) => (
                 <div key={day}>
@@ -204,7 +134,8 @@ export default function Notifications() {
               </div>
               <p className="font-semibold text-ink">You're all caught up!</p>
               <p className="text-sm text-ink-muted">
-                No new notifications right now.
+                Scan alerts appear here when someone scans one of your dynamic
+                QR codes.
               </p>
             </div>
           )}

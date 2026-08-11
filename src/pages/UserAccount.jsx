@@ -20,6 +20,7 @@ import {
 import Layout from '../components/Layout'
 import { useAuth } from '../context/AuthContext'
 import { uploadAvatar, updateProfile, mapApiUser } from '../api/auth.api'
+import { updateNotificationPrefs } from '../api/notifications.api'
 import { useQrs } from '../hooks/useQrs'
 import {
   useDevices,
@@ -224,11 +225,39 @@ export default function UserAccount() {
   useEffect(() => {
     setAvatarImageError(false)
   }, [displayAvatarUrl])
+  // Seeded from the saved user and written straight through on toggle — a
+  // switch that needs a separate Save is a switch people think already saved.
   const [notifs, setNotifs] = useState({
-    scans: true,
-    weekly: true,
-    product: false,
+    notify_scans: user?.notify_scans ?? true,
+    notify_weekly: user?.notify_weekly ?? true,
+    notify_product: user?.notify_product ?? false,
   })
+
+  useEffect(() => {
+    if (!user) return
+    setNotifs({
+      notify_scans: user.notify_scans ?? true,
+      notify_weekly: user.notify_weekly ?? true,
+      notify_product: user.notify_product ?? false,
+    })
+  }, [user])
+
+  const prefsSave = useMutation({
+    mutationFn: updateNotificationPrefs,
+    onSuccess: (profile) => updateUser(mapApiUser(profile)),
+    onError: (error, _vars, context) => {
+      if (context?.previous) setNotifs(context.previous)
+      toast.error(getApiErrorMessage(error, 'Could not save that preference'))
+    },
+    onMutate: (next) => {
+      const previous = notifs
+      setNotifs(next)
+      return { previous }
+    },
+  })
+
+  const toggleNotif = (key) =>
+    prefsSave.mutate({ ...notifs, [key]: !notifs[key] })
   const {
     data: devices = [],
     isLoading: devicesLoading,
@@ -585,34 +614,43 @@ export default function UserAccount() {
             <div className="space-y-4">
               {[
                 {
-                  key: 'scans',
+                  key: 'notify_scans',
                   label: 'QR Scan Alerts',
                   desc: 'Get notified when your QR code is scanned',
                 },
                 {
-                  key: 'weekly',
+                  key: 'notify_weekly',
                   label: 'Weekly Summary',
                   desc: 'Weekly report of your QR code performance',
+                  soon: true,
                 },
                 {
-                  key: 'product',
+                  key: 'notify_product',
                   label: 'Product Updates',
                   desc: 'New features and updates from Liffto',
+                  soon: true,
                 },
-              ].map(({ key, label, desc }) => (
+              ].map(({ key, label, desc, soon }) => (
                 <div
                   key={key}
                   className="flex items-start justify-between gap-4"
                 >
                   <div>
-                    <p className="text-sm font-medium text-ink">{label}</p>
+                    <p className="text-sm font-medium text-ink flex items-center gap-2">
+                      {label}
+                      {soon && (
+                        <span className="text-[10px] font-semibold bg-canvas text-ink-muted rounded-full px-2 py-0.5">
+                          Email coming soon
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-ink-muted mt-0.5 leading-relaxed">
                       {desc}
                     </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setNotifs((n) => ({ ...n, [key]: !n[key] }))}
+                    onClick={() => toggleNotif(key)}
                     className={`shrink-0 w-10 h-6 rounded-full transition-colors relative ${notifs[key] ? 'bg-primary' : 'bg-gray-200'}`}
                     aria-pressed={notifs[key]}
                   >

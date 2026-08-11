@@ -64,5 +64,8 @@ export function mapApiUser(user: ApiUserResponse) {
     roles: user.roles,
     is_superuser: user.is_superuser,
     phone: user.phone ?? null,
+    notify_scans: user.notify_scans,
+    notify_weekly: user.notify_weekly,
+    notify_product: user.notify_product,
   }
 }
