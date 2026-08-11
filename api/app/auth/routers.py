@@ -288,6 +288,20 @@ def logout(
             reason="logout",
             exp_ts=payload.get("exp"),
         )
+
+        # End the session too, not just this access token. Without it the
+        # device stays listed under Manage Devices as signed in — and keeps a
+        # usable refresh token — until the session expires days later.
+        sid = payload.get(CLAIM_SID)
+        if sid is not None:
+            session = db.execute(
+                select(UserSession).where(
+                    (UserSession.id == sid) & (UserSession.revoked_at.is_(None))
+                )
+            ).scalars().first()
+            if session is not None:
+                revoke_session(db, session)
+
         db.commit()
         return {"message": "Logged out"}
     except HTTPException:
