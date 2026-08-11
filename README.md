@@ -201,7 +201,7 @@ Two things Vercel will not do for you:
 
 ## ⚠️ Known limitations
 
-- **Signing a device out isn't instant.** Access tokens are stateless and aren't checked against the revocation list, so a removed device keeps working until its token expires (up to `ACCESS_TOKEN_EXPIRE_MINUTES`). Its refresh is rejected immediately, so it cannot renew.
+- **Signing a device out isn't instant.** Revoking a session blocklists its *refresh* token, so the device cannot renew — but the access token it already holds carries a different `jti` and stays valid until it expires (up to `ACCESS_TOKEN_EXPIRE_MINUTES`). Requests already check the blocklist, so closing this gap is cheap: check the session id (`sid`) the access token carries.
 - **Weekly Summary and Product Updates don't send anything.** Both need email, and no provider is wired up. The preferences persist and the UI labels them accordingly.
 - **Device names are approximate.** They come from the User-Agent, so two identical laptops are indistinguishable apart from IP and last-seen time. No IP geolocation, so no city is shown.
 

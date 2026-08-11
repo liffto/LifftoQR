@@ -4,53 +4,145 @@ A high-level map of how Liffto QR is put together.
 
 ## Overview
 
-Liffto QR is a **client-only single-page application**. There is no backend in
-the prototype — all state lives in the browser via `localStorage`. Swapping the
-data layer for a real API is the primary path to production (see Roadmap).
+Liffto QR is a React single-page app talking to a FastAPI service backed by
+PostgreSQL. Both deploy to Vercel as separate projects from this repository.
+
+The API does double duty: it serves the authenticated app **and** the public
+short links that QR codes point at, which is why scanning is a first-class
+concern rather than an endpoint tacked on the side.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                          App.jsx                             │
-│   Routes + auth guard + top-level <ErrorBoundary>            │
-└───────┬───────────────┬───────────────┬─────────────────────┘
-        │               │               │
-   /login          /dashboard      /create → /create/design
-   Login.jsx       Dashboard.jsx   CreateUrl.jsx   DesignQR.jsx
-        │               │               │               │
-        └───────────────┴───────┬───────┴───────────────┘
-                                 │
-                 ┌───────────────┴───────────────┐
-                 │           src/lib              │
-                 │  store.js  → localStorage CRUD │
-                 │  qr.js     → design → QR config│
-                 └───────────────┬───────────────┘
-                                 │
-                       components/QRView.jsx
-                  (wraps qr-code-styling, live render)
+   Browser (React SPA)                     Phone camera
+          │                                     │
+          │ JSON + JWT                          │ scans a code
+          ▼                                     ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │                      FastAPI (api/)                       │
+ │                                                           │
+ │   /api/v1/*           authenticated app + public reads    │
+ │   /{slug}             short-link scan → redirect          │
+ │   /ws/qr/{slug}       live scan counts                    │
+ └───────────────────────────┬───────────────────────────────┘
+                             │
+                             ▼
+                       PostgreSQL
 ```
 
-## Layers
+## Backend layering
 
-| Path               | Responsibility                                                                                                                                |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/pages/`       | Route-level screens. Own their page state and orchestrate components.                                                                         |
-| `src/components/`  | Reusable, mostly-presentational UI. `QRView` is the one stateful piece (it bridges React and the imperative `qr-code-styling` library).       |
-| `src/lib/store.js` | The data layer: QR records, auth flag, and the in-progress "draft", all persisted to `localStorage`. The seam to replace with a real backend. |
-| `src/lib/qr.js`    | Maps a `design` object to `qr-code-styling` options and exposes the option metadata (patterns, corners, frames, logos) the UI renders from.   |
+Each resource follows the same chain, wired together by FastAPI's dependency
+injection in `app/dependencies/dependencies.py`:
+
+```
+route  →  controller  →  service  →  repository  →  model
+```
+
+| Layer          | Path                 | Responsibility                                                       |
+| -------------- | -------------------- | -------------------------------------------------------------------- |
+| Route          | `app/routes/`        | Path, method, auth dependency. No logic.                             |
+| Controller     | `app/controllers/`   | Translates between HTTP and the service; owns status codes.          |
+| Service        | `app/services/`      | Business rules — scan handling, notifications, vCard generation.     |
+| Repository     | `app/repositories/`  | All database access. Nothing above this layer writes SQL.            |
+| Model / Schema | `app/models/`, `app/schemas/` | SQLAlchemy tables and the Pydantic request/response contract. |
+
+A single factory wires one chain, so swapping an implementation touches one line:
+
+```python
+def get_website_controller(db: Session = Depends(get_db)) -> WebsiteController:
+    return WebsiteController(WebsiteService(WebsiteRepository(db)))
+```
+
+`app/auth/` sits slightly apart — it owns Google sign-in, JWT issuing, sessions
+and the profile, and keeps its own models, schemas and router.
+
+## The QR data model
+
+One `qrs` row is the spine of every code: name, slug, type, dynamic flag, scan
+count. Its type-specific payload lives in a **separate table per type**
+(`websites`, `vcards`, `wifi`, `events`, …), joined one-to-one, alongside a
+`templates` row holding the visual design.
+
+That is why `QrRepository` eager-loads every content relationship at once: a
+listing has no idea which type each row will turn out to be, and lazy loading
+would mean a query per code.
+
+## How a scan resolves
+
+Scanning is the one path where a stranger, not a signed-in user, drives the
+system — so it has to stay fast and must never fail closed.
+
+1. The camera opens `https://<short-domain>/<slug>`, hitting `scan_routes`
+2. Inactive or unknown slugs stop here
+3. Dynamic codes increment their scan count and broadcast it over the
+   WebSocket, so an open dashboard updates live
+4. An in-app notification is recorded for the owner, if they have scan alerts
+   on. **Best-effort**: a failure here is swallowed, because whoever scanned is
+   waiting on a redirect and should not see an error from a feature that is not
+   theirs
+5. If the code resolves to a destination, redirect to it
+6. Otherwise redirect to `/s/<slug>` on the frontend — the public landing page
+   that renders contact cards, Wi-Fi credentials, events, and so on
+
+Static codes never reach the backend at all; their content lives in the image.
+
+## Frontend layering
+
+| Path              | Responsibility                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| `src/pages/`      | Route-level screens. Own page state, orchestrate components.                                                 |
+| `src/components/` | Reusable UI. `QRView` is the one stateful piece — it bridges React and the imperative `qr-code-styling` API.  |
+| `src/hooks/`      | TanStack Query hooks. Server state lives here, not in component state.                                       |
+| `src/api/`        | Typed clients per resource, over a shared axios instance that attaches the JWT and refreshes it on a 401.     |
+| `src/context/`    | Auth session and the login dialog, both app-wide.                                                            |
+| `src/lib/`        | Pure logic: QR encoders per type, `qr.js` design → render options, country dial codes and validation.        |
+| `src/middleware/` | Route guards.                                                                                                |
+
+### Where state lives
+
+- **Server state** — QR codes, devices, notifications, profile — is owned by
+  TanStack Query and refetched, never mirrored into component state
+- **Session** — tokens and the cached user — is in `localStorage` under
+  `liffto.session`, read through `src/services/session.ts`
+- **`localStorage` otherwise holds only** the in-progress create draft, saved
+  design templates, and the post-login redirect. It used to hold the QR records
+  themselves; it no longer does
 
 ## Key decisions
 
-- **`QRView` uses a referentially-stable holder element.** `qr-code-styling`
-  injects an `<svg>` via direct DOM manipulation. To keep React's reconciler
-  away from that subtree, the holder element is memoized and never remounted —
-  preventing `removeChild`/`insertBefore` crashes when the frame wrapper changes.
-- **A top-level `ErrorBoundary`** ensures a render error in one view degrades
-  gracefully instead of blanking the whole app.
-- **Margins scale with QR size** so small dashboard thumbnails don't collapse to
-  a zero-size module grid.
+- **`QRView` keeps a referentially-stable holder element.** `qr-code-styling`
+  injects an `<svg>` by direct DOM manipulation. Memoizing the holder so it is
+  never remounted keeps React's reconciler out of that subtree and avoids
+  `removeChild`/`insertBefore` crashes when the frame wrapper changes.
+- **Raster downloads render a throwaway high-resolution instance.** The
+  on-screen QR can be a 36px thumbnail; exporting it directly would produce a
+  pixelated file.
+- **iOS gets contact cards through the Share Sheet.** Safari ignores the
+  `<a download>` trick for blob URLs, so downloads route through the Web Share
+  API there, and the `.vcf` is served from a real URL with
+  `Content-Type: text/vcard` — the combination iOS actually follows into
+  Contacts.
+- **Sessions are keyed on the refresh token's `jti`.** The refresh endpoint
+  re-issues only the access token, so that id is stable for the life of a login
+  and identifies a device. Revoking pushes it onto the token blocklist.
+- **Revocation is by `jti`, and the two token types carry different ones.**
+  Every authenticated request already checks the access token's `jti` against
+  the blocklist. Revoking a session blocklists the *refresh* token's `jti`, so
+  the device cannot renew — but the access token it is holding has its own
+  `jti`, which was never blocklisted, and stays valid until it expires. That is
+  the whole reason signing a device out is not instant. Closing the gap would
+  mean checking the session id (`sid`, carried in both tokens) rather than
+  adding a lookup: the round-trip is already being made.
+- **A top-level `ErrorBoundary`** keeps a render error in one view from blanking
+  the whole app.
 
-## Replacing the data layer
+## Migrations
 
-Every read/write goes through `src/lib/store.js`. To add a backend, reimplement
-those functions (`getQRs`, `saveQR`, `getDraft`, etc.) against your API while
-keeping their signatures stable — no page or component changes required.
+Schema changes are Alembic revisions in `api/migrations/versions/`. Nothing runs
+them automatically — **Vercel does not** — so they have to be applied against
+the target database by hand:
+
+```bash
+cd api && source venv/bin/activate
+alembic revision -m "describe change"
+alembic upgrade head
+```
