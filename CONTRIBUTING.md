@@ -5,10 +5,19 @@ Thanks for your interest in contributing! 🎉
 ## Getting started
 
 ```bash
-git clone https://github.com/<your-username>/liffto-qr.git
-cd liffto-qr
+git clone https://github.com/liffto/LifftoQR.git
+cd LifftoQR
+
+# frontend
 npm install
 npm run dev
+
+# backend (separate shell)
+cd api
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload --port 8000
 ```
 
 ## Workflow

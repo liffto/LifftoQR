@@ -2,12 +2,13 @@
 
 # Liffto QR
 
-**Design, customize, and manage dynamic & static QR codes — with logos, gradients, frames, custom patterns, and a full management dashboard.**
+**Design, customize, and manage dynamic & static QR codes — with logos, gradients, frames, custom patterns, scan tracking, and a full management dashboard.**
 
-[![CI](https://github.com/<your-username>/liffto-qr/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-username>/liffto-qr/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![React](https://img.shields.io/badge/React-18-61dafb.svg)
 ![Vite](https://img.shields.io/badge/Vite-5-646cff.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169e1.svg)
 
 </div>
 
@@ -15,123 +16,194 @@
 
 ## 📖 Overview
 
-Liffto QR is a client-side web app for creating richly styled QR codes through a guided, two-step flow, then managing them from a searchable dashboard. It supports **dynamic QR codes** (editable destination + scan statistics) and **static QR codes**, live-previewing every design change in real time.
+Liffto QR is a React single-page app backed by a FastAPI service and PostgreSQL. You create a QR code through a guided flow, style it live, and manage it from a searchable dashboard.
 
-> Replace this section with your own product positioning, target users, and the problem it solves.
+Everything is free — there are no plans or paid tiers.
 
 ## ✨ Features
 
-- **Two-step create flow** — enter a URL, then design the code.
-- **Live styling** — body patterns, corner styles, gradient colors, embedded logos (brand presets or your own upload), and frames.
-- **Dynamic vs. static QR** — short links with editability + statistics, or fixed-destination codes.
-- **Management dashboard** — search, filter, infinite scroll with shimmer loading, duplicate/delete, and copy-link.
-- **Multi-format export** — download as PNG, JPEG, SVG, or WEBP.
-- **Auth flow** — Google sign-in screen + email/password (mocked for the prototype).
+**Creating**
 
-## 🎬 Demo
+- Twenty QR types — website, contact card, Wi-Fi, event, location, PDF, video, link tree, coupon and more
+- Live styling: body patterns, corner styles, gradients, embedded logos (brand presets or your own upload) and frames
+- Saved design templates
+- Clone any existing code into a new draft
+- Download as PNG, JPEG, SVG or WEBP
 
-> Add a screenshot or GIF here (e.g. `docs/images/dashboard.png`).
+**Dynamic vs static**
+
+- **Dynamic** codes point at a short link you own, so the destination stays editable after printing and every scan is counted
+- **Static** codes encode their content directly — nothing to track, nothing that can break
+
+**Scanning**
+
+- Types with a destination (website, PDF, video) redirect straight through
+- Types without one (contact card, Wi-Fi, event, text, location) open a branded public landing page
+- Contact cards offer one-tap **Save Contact**, served as a real `text/vcard` download so iOS adds it to Contacts
+
+**Account**
+
+- Google sign-in, presented as a dialog over the current page
+- Editable profile with country-aware phone validation
+- **Manage Devices** — every signed-in session, with the ability to sign any of them out
+- **Notifications** — in-app scan alerts, aggregated per code per day
 
 ## 🧰 Tech Stack
 
-| Layer         | Choice                                                                                          |
-| ------------- | ----------------------------------------------------------------------------------------------- |
-| UI library    | [React 18](https://react.dev/)                                                                  |
-| Build tool    | [Vite 5](https://vitejs.dev/)                                                                   |
-| Styling       | [Tailwind CSS 3](https://tailwindcss.com/)                                                      |
-| Routing       | [React Router 6](https://reactrouter.com/)                                                      |
-| QR engine     | [qr-code-styling](https://github.com/kozakdenys/qr-code-styling)                                |
-| Icons         | [lucide-react](https://lucide.dev/) · [react-icons](https://react-icons.github.io/react-icons/) |
-| Lint / format | ESLint 9 · Prettier 3                                                                           |
-| Tests         | Vitest · Testing Library                                                                        |
+| Layer          | Choice                                                                                          |
+| -------------- | ----------------------------------------------------------------------------------------------- |
+| UI library     | [React 18](https://react.dev/)                                                                  |
+| Build tool     | [Vite 5](https://vitejs.dev/)                                                                   |
+| Styling        | [Tailwind CSS 3](https://tailwindcss.com/)                                                      |
+| Routing        | [React Router 6](https://reactrouter.com/)                                                      |
+| Server state   | [TanStack Query 5](https://tanstack.com/query)                                                  |
+| QR engine      | [qr-code-styling](https://github.com/kozakdenys/qr-code-styling)                                |
+| Icons          | [lucide-react](https://lucide.dev/) · [react-icons](https://react-icons.github.io/react-icons/) |
+| API            | [FastAPI](https://fastapi.tiangolo.com/) · [SQLAlchemy 2](https://www.sqlalchemy.org/)          |
+| Database       | PostgreSQL (hosted on [Neon](https://neon.tech/)) · [Alembic](https://alembic.sqlalchemy.org/)  |
+| Auth           | Google OAuth ID tokens → JWT access/refresh pair                                                |
+| Lint / format  | ESLint 9 · Prettier 3                                                                           |
+| Tests          | Vitest · Testing Library · pytest                                                               |
 
 ## ✅ Prerequisites
 
-- **Node.js ≥ 18** and npm (or pnpm/yarn)
+- **Node.js 20.x** and npm
+- **Python 3.10+**
+- A **PostgreSQL** database (a free Neon project works well)
+- A **Google OAuth client ID and secret** for sign-in
 
 ## 🚀 Installation
 
 ```bash
-# 1. Clone
-git clone https://github.com/<your-username>/liffto-qr.git
-cd liffto-qr
+git clone https://github.com/liffto/LifftoQR.git
+cd LifftoQR
+```
 
-# 2. Install dependencies
+**Frontend**
+
+```bash
 npm install
-
-# 3. Start the dev server
 npm run dev          # → http://localhost:5173
 ```
 
-## ⚙️ Configuration
-
-This is a fully client-side app, so configuration is optional. Copy the example file if you want to override defaults:
+**Backend**
 
 ```bash
-cp .env.example .env
+cd api
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+alembic upgrade head                                    # apply migrations
+uvicorn app.main:app --reload --port 8000               # → http://localhost:8000
 ```
 
-| Variable                | Default         | Description                           |
-| ----------------------- | --------------- | ------------------------------------- |
-| `VITE_APP_NAME`         | `Liffto QR`  | App name shown in the UI              |
-| `VITE_SHORT_URL_DOMAIN` | `liffto-qr.vercel.app` | Domain used for generated short links |
+API docs are served at `http://localhost:8000/docs`.
 
-> ⚠️ **Vite exposes any `VITE_`-prefixed variable to the browser bundle.** Never put real secrets or API keys in client-side env vars — they ship to every visitor.
+## ⚙️ Configuration
+
+**Frontend** — copy `.env.development` to `.env` and adjust:
+
+| Variable                | Example                  | Description                                  |
+| ----------------------- | ------------------------ | -------------------------------------------- |
+| `VITE_APP_NAME`         | `Liffto QR`              | App name shown in the UI                     |
+| `VITE_SHORT_URL_DOMAIN` | `liffto-qr.vercel.app`   | Domain used for generated short links        |
+| `VITE_BACKEND_API_URL`  | `http://localhost:8000`  | Backend origin                               |
+| `VITE_WS_BASE_URL`      | `ws://localhost:8000`    | WebSocket origin for live scan counts        |
+| `VITE_CLIENT_ID`        | `…apps.googleusercontent.com` | Google OAuth client ID (public)         |
+
+> ⚠️ Vite ships **every** `VITE_`-prefixed variable to the browser bundle. Never put secrets here.
+
+**Backend** — create `api/.env`:
+
+| Variable                      | Description                                                     |
+| ----------------------------- | --------------------------------------------------------------- |
+| `DATABASE_URL`                | PostgreSQL connection string (required — no default)             |
+| `CLIENT_ID` / `CLIENT_SECRET` | Google OAuth credentials                                         |
+| `JWT_SECRET_KEY`              | Signing key for access/refresh tokens                            |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime (default 30)                               |
+| `FRONTEND_URL`                | Public origin of the web app — CORS **and** scan landing links   |
+
+> `FRONTEND_URL` is not only a CORS entry. Scan redirects for codes without their own destination are built from it, and that link is handed to whoever scanned the code — so pointing it at localhost in production sends every scanner to their own machine.
 
 ## ▶️ Usage
 
 ```bash
-npm run dev          # local dev with HMR
+npm run dev          # dev server with HMR
 npm run build        # production build → dist/
-npm run preview      # preview the production build locally
-npm run lint         # lint with ESLint
-npm run format       # auto-format with Prettier
-npm run test         # run unit tests with Vitest
+npm run preview      # preview the production build
+npm run lint         # ESLint
+npm run format       # Prettier
+npm run test         # Vitest
 ```
 
-**Typical flow:** sign in → **Create QR** → enter a URL & toggle Dynamic → **Design** (logo, pattern, corners, colors, frame) → **Download & Save** → manage it on the dashboard.
+```bash
+cd api && source venv/bin/activate
+pytest -q                                # backend tests
+alembic revision -m "describe change"    # new migration
+alembic upgrade head                     # apply migrations
+```
+
+**Typical flow:** sign in → **Create QR** → pick a type and enter its details → **Design** (logo, pattern, corners, colours, frame) → **Save & Download** → manage it on the dashboard.
+
+## 🔀 How scanning works
+
+A dynamic code encodes `https://<short-domain>/<slug>`, which hits the backend. From there:
+
+1. The scan is counted and broadcast over WebSocket, so an open dashboard updates live
+2. An in-app notification is created for the owner, if they have scan alerts on
+3. If the code has a destination (a URL, PDF, video…) the backend redirects to it
+4. Otherwise it redirects to `/s/<slug>` on the frontend — the public landing page that renders contact cards, Wi-Fi credentials, events and so on
+
+Static codes never touch the backend; the content lives in the image itself.
 
 ## 🗂️ Project Structure
 
 ```text
-liffto-qr/
-├── public/              # static assets served as-is (favicon, etc.)
-├── src/
-│   ├── assets/          # imported images & static assets
-│   ├── components/      # reusable UI (QRView, Logo, ui primitives, ErrorBoundary)
-│   ├── pages/           # route-level screens (Login, Dashboard, CreateUrl, DesignQR)
-│   ├── lib/             # core logic & data layer (qr.js engine, store.js persistence)
-│   ├── hooks/           # custom React hooks
-│   ├── App.jsx          # routes + auth guard
-│   ├── main.jsx         # app entrypoint
-│   └── index.css        # Tailwind directives + global styles
-├── tests/               # Vitest unit/component tests
-├── docs/                # documentation (architecture, etc.)
-├── .github/workflows/   # CI pipeline
-└── <root configs>       # vite, tailwind, eslint, prettier, etc.
+LifftoQR/
+├── api/                     # FastAPI backend
+│   ├── app/
+│   │   ├── auth/            # Google sign-in, JWTs, sessions, profile
+│   │   ├── controllers/     # request handling per resource
+│   │   ├── services/        # business logic (scans, notifications, vCard)
+│   │   ├── repositories/    # database access
+│   │   ├── models/          # SQLAlchemy tables
+│   │   ├── schemas/         # Pydantic request/response models
+│   │   └── routes/          # route registration
+│   ├── migrations/          # Alembic versions
+│   └── tests/               # pytest
+├── src/                     # React frontend
+│   ├── api/                 # typed API clients
+│   ├── components/          # reusable UI (QRView, PhoneInput, Layout…)
+│   ├── context/             # auth + login-dialog providers
+│   ├── hooks/               # TanStack Query hooks
+│   ├── lib/                 # QR encoders, country data, helpers
+│   ├── pages/               # route-level screens
+│   └── middleware/          # route guards
+├── tests/                   # Vitest
+└── docs/                    # additional documentation
 ```
 
 ## 🧪 Testing
 
 ```bash
-npm run test         # single run
-npm run test:watch   # watch mode
+npm run test              # frontend, single run
+npm run test:watch        # frontend, watch mode
+cd api && pytest -q       # backend
 ```
 
 ## 📦 Deployment
 
-The build output in `dist/` is fully static — deploy it to any static host (Vercel, Netlify, GitHub Pages, S3/CloudFront, Cloudflare Pages):
+Frontend and backend deploy as **two separate Vercel projects** from this one repository — the web app, and the API (which also serves the short links that QR codes point at).
 
-```bash
-npm run build        # outputs to dist/
-```
+Two things Vercel will not do for you:
 
-## 🗺️ Roadmap
+1. **Migrations don't run on deploy.** After any schema change, run `alembic upgrade head` against the production database yourself. Deploying code that expects a column you haven't added will break at runtime, not at build time.
+2. **Environment variables aren't inherited from this repo.** Set them on each project, `FRONTEND_URL` in particular.
 
-- [ ] Real backend + persistence (replace localStorage)
-- [ ] Real OAuth (Google) sign-in
-- [ ] Scan analytics for dynamic codes
-- [ ] TypeScript migration
+## ⚠️ Known limitations
+
+- **Signing a device out isn't instant.** Access tokens are stateless and aren't checked against the revocation list, so a removed device keeps working until its token expires (up to `ACCESS_TOKEN_EXPIRE_MINUTES`). Its refresh is rejected immediately, so it cannot renew.
+- **Weekly Summary and Product Updates don't send anything.** Both need email, and no provider is wired up. The preferences persist and the UI labels them accordingly.
+- **Device names are approximate.** They come from the User-Agent, so two identical laptops are indistinguishable apart from IP and last-seen time. No IP geolocation, so no city is shown.
 
 ## 🤝 Contributing
 
