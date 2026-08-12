@@ -129,6 +129,83 @@ function PrimaryAction({ href, download, icon: Icon, children }) {
   )
 }
 
+const isAndroid =
+  typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
+
+/**
+ * Save Contact, which has to work differently per platform.
+ *
+ * No web API writes to the address book, and Android will not let a page open
+ * the contacts screen either — that activity does not declare BROWSABLE, so an
+ * insert intent is refused. Both platforms therefore end at a confirm step.
+ *
+ * iOS: Safari renders a text/vcard response as its own Add Contact sheet, so a
+ * plain link is already the native path.
+ *
+ * Android: the same link lands the file in Downloads and leaves the person to
+ * find it. Handing it to the share sheet instead keeps them on the page and
+ * puts Contacts in the list — assuming the device offers it, which varies. If
+ * sharing is unavailable the download still happens, so this can only match or
+ * beat the old behaviour.
+ */
+function SaveContactButton({ slug, name }) {
+  const [busy, setBusy] = useState(false)
+  const url = vcardFileUrl(slug)
+
+  if (!isAndroid) {
+    return (
+      <PrimaryAction href={url} download icon={Download}>
+        Save Contact
+      </PrimaryAction>
+    )
+  }
+
+  const downloadInstead = () => {
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${name || 'contact'}.vcf`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  }
+
+  const save = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`vCard request failed: ${res.status}`)
+      // text/x-vcard is the type Android's contact importer has long
+      // registered for; text/vcard alone is matched less consistently.
+      const file = new File([await res.blob()], `${name || 'contact'}.vcf`, {
+        type: 'text/x-vcard',
+      })
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: name || 'Contact' })
+        return
+      }
+      downloadInstead()
+    } catch (err) {
+      // Dismissing the sheet is a decision, not a failure — starting a
+      // download they just backed out of would be the wrong response.
+      if (err?.name !== 'AbortError') downloadInstead()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={save}
+      disabled={busy}
+      className={PRIMARY_ACTION_CLS}
+    >
+      <Download size={18} /> {busy ? 'Preparing…' : 'Save Contact'}
+    </button>
+  )
+}
+
 // Whoever scanned this card is a stranger to us, not the owner — so the CTA
 // routes through login when needed and lands them on the create flow after,
 // rather than dumping them on a sign-in wall with no way back.
@@ -233,9 +310,7 @@ function ContactCard({ c, slug }) {
       </Card>
 
       <div className="mt-4 space-y-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <PrimaryAction href={vcardFileUrl(slug)} download icon={Download}>
-          Save Contact
-        </PrimaryAction>
+        <SaveContactButton slug={slug} name={name} />
         <p className="text-center text-[11px] text-ink-faint">
           Adds {name} to your phone's contacts
         </p>
