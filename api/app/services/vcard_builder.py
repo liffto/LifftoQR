@@ -4,28 +4,18 @@ Served as a real `text/vcard` response rather than generated in the browser:
 iOS Safari only reliably hands a contact to the Contacts app when it arrives
 as a genuine file download with the right MIME type, so a JS Blob/data-URL
 "Save Contact" silently does nothing there.
+
+The uploaded photo is deliberately not embedded. Base64-encoding it made up
+96% of the file (40KB of 42KB), and Android's importer renders that payload as
+visible text in the contact preview rather than as a picture — so the photo
+cost a slow download on mobile data and showed up as a wall of characters.
+The card still displays it on the landing page; only the saved contact goes
+without.
 """
 
 from __future__ import annotations
 
-import base64
-import binascii
 import re
-
-# Data URLs the browser produced for the photo/logo uploads.
-_DATA_URL_RE = re.compile(
-    r"^data:image/(?P<subtype>png|jpe?g|gif|webp);base64,(?P<data>[A-Za-z0-9+/=\s]+)$",
-    re.IGNORECASE,
-)
-
-# vCard 3.0 image type tokens keyed by the data-URL subtype.
-_IMAGE_TYPES = {
-    "png": "PNG",
-    "jpg": "JPEG",
-    "jpeg": "JPEG",
-    "gif": "GIF",
-    "webp": "WEBP",
-}
 
 
 def _escape(value: str | None) -> str:
@@ -53,24 +43,6 @@ def _fold(line: str) -> str:
         chunks.append(" " + rest[:74])
         rest = rest[74:]
     return "\r\n".join(chunks)
-
-
-def _photo_line(data_url: str | None) -> str | None:
-    """Embed an uploaded photo so the saved contact keeps its picture."""
-    if not data_url:
-        return None
-    match = _DATA_URL_RE.match(data_url.strip())
-    if not match:
-        return None
-    subtype = match.group("subtype").lower()
-    payload = re.sub(r"\s+", "", match.group("data"))
-    try:
-        # Round-trip so a corrupt upload can't emit a broken .vcf.
-        base64.b64decode(payload, validate=True)
-    except (binascii.Error, ValueError):
-        return None
-    image_type = _IMAGE_TYPES.get(subtype, "JPEG")
-    return _fold(f"PHOTO;ENCODING=b;TYPE={image_type}:{payload}")
 
 
 def build_vcard(vcard) -> str:
@@ -109,9 +81,6 @@ def build_vcard(vcard) -> str:
             f"{_escape(vcard.country)}"
         )
 
-    photo = _photo_line(vcard.photo)
-    if photo:
-        lines.append(photo)
 
     if vcard.note:
         lines.append(f"NOTE:{_escape(vcard.note)}")
