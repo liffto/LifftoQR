@@ -118,15 +118,87 @@ function CopyRow({ label, value }) {
   )
 }
 
+const PRIMARY_ACTION_CLS =
+  'flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-primary text-[15px] font-bold text-white shadow-sm shadow-primary/25 active:bg-primary-600 disabled:opacity-70'
+
 function PrimaryAction({ href, download, icon: Icon, children }) {
   return (
-    <a
-      href={href}
-      download={download}
-      className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-primary text-[15px] font-bold text-white shadow-sm shadow-primary/25 active:bg-primary-600"
-    >
+    <a href={href} download={download} className={PRIMARY_ACTION_CLS}>
       <Icon size={18} /> {children}
     </a>
+  )
+}
+
+const isAndroid =
+  typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
+
+/**
+ * Saving a contact needs a different route per platform.
+ *
+ * iOS Safari follows a text/vcard response straight into the Add Contact
+ * sheet, so there a plain link is the best thing available.
+ *
+ * Android Chrome does not: Content-Disposition: attachment means the file
+ * lands in Downloads and the person has to go find it. Handing the same file
+ * to the share sheet puts Contacts in front of them instead. If sharing is
+ * unavailable or dismissed, the download link still works.
+ */
+function SaveContactButton({ slug, name }) {
+  const [busy, setBusy] = useState(false)
+  const url = vcardFileUrl(slug)
+
+  const download = () => {
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${name || 'contact'}.vcf`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  }
+
+  if (!isAndroid) {
+    return (
+      <PrimaryAction href={url} download icon={Download}>
+        Save Contact
+      </PrimaryAction>
+    )
+  }
+
+  const share = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const res = await fetch(url)
+      if (!res.ok) throw new Error(`vCard request failed: ${res.status}`)
+      const blob = await res.blob()
+      // text/x-vcard is the type Android's contact importer has always
+      // registered for; text/vcard alone is matched less reliably.
+      const file = new File([blob], `${name || 'contact'}.vcf`, {
+        type: 'text/x-vcard',
+      })
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: name || 'Contact' })
+        return
+      }
+      download()
+    } catch (err) {
+      // Dismissing the share sheet is not a failure — don't fall back to a
+      // download the person just declined.
+      if (err?.name !== 'AbortError') download()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={share}
+      disabled={busy}
+      className={PRIMARY_ACTION_CLS}
+    >
+      <Download size={18} /> {busy ? 'Preparing…' : 'Save Contact'}
+    </button>
   )
 }
 
@@ -234,9 +306,7 @@ function ContactCard({ c, slug }) {
       </Card>
 
       <div className="mt-4 space-y-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <PrimaryAction href={vcardFileUrl(slug)} download icon={Download}>
-          Save Contact
-        </PrimaryAction>
+        <SaveContactButton slug={slug} name={name} />
         <p className="text-center text-[11px] text-ink-faint">
           Adds {name} to your phone's contacts
         </p>
