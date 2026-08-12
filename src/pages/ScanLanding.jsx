@@ -163,7 +163,11 @@ function androidContactIntent(c, fallbackUrl) {
   return [
     'intent:#Intent',
     'action=android.intent.action.INSERT',
-    'type=vnd.android.cursor.dir/contact',
+    // ContactsContract.RawContacts.CONTENT_TYPE. Must be raw_contact, not
+    // .../contact: with the latter no activity matches, Chrome silently uses
+    // browser_fallback_url, and the person gets the file download this is
+    // meant to replace.
+    'type=vnd.android.cursor.dir/raw_contact',
     ...parts,
     `S.browser_fallback_url=${encodeURIComponent(fallbackUrl)}`,
     'end',
