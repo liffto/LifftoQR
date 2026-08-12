@@ -1,0 +1,70 @@
+#!/bin/sh
+#
+# Runs the same checks as .github/workflows/ci.yml before anything leaves the
+# machine. Required status checks aren't available on this repo's plan, so
+# nothing on GitHub can stop a red commit from landing on main — this hook is
+# what stands in for that.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+# Bypass in a pinch:      git push --no-verify
+#
+# CI's migrations job is deliberately not duplicated here: it needs a live
+# Postgres, which is too much to ask of every push. CI still covers it.
+
+set -e
+
+cd "$(git rev-parse --show-toplevel)"
+
+# A pure deletion push (git push --delete) has no commits to check.
+only_deletes=yes
+while read -r _local_ref local_sha _remote_ref _remote_sha; do
+    case "$local_sha" in
+        *[!0]*) only_deletes=no ;;
+    esac
+done
+if [ "$only_deletes" = yes ]; then
+    exit 0
+fi
+
+trap 'status=$?; [ $status -eq 0 ] || printf "\n\033[31m✗ pre-push checks failed — nothing was pushed.\033[0m\n  Fix the above, or bypass with: git push --no-verify\n"; exit $status' EXIT
+
+step() {
+    printf '\n\033[1m→ %s\033[0m\n' "$1"
+}
+
+# Prefer the venv CONTRIBUTING.md tells everyone to create; fall back to
+# whatever python3 is on PATH.
+if [ -x api/venv/bin/python ]; then
+    PY="$PWD/api/venv/bin/python"
+elif command -v python3 >/dev/null 2>&1; then
+    PY=python3
+else
+    printf '\033[31mNo python3 found, so the backend tests cannot run.\033[0m\n'
+    printf 'Set up the venv (see CONTRIBUTING.md) rather than pushing untested.\n'
+    exit 1
+fi
+
+# Skipping the backend tests when the venv is half-built would hand back
+# exactly the false confidence this hook exists to remove. Fail instead, and
+# say how to fix it.
+if ! "$PY" -c 'import pytest' >/dev/null 2>&1; then
+    printf '\033[31mpytest is not installed for %s.\033[0m\n' "$PY"
+    printf 'Run:  cd api && python3 -m venv venv && venv/bin/pip install -r requirements.txt\n'
+    exit 1
+fi
+
+step 'Lint'
+npm run lint
+
+step 'Frontend tests'
+npm run test
+
+step 'Backend tests'
+(cd api && "$PY" -m pytest -q)
+
+# Last because it is the slowest, and because a broken import usually trips
+# one of the checks above first.
+step 'Build'
+npm run build
+
+printf '\n\033[32m✓ All checks passed.\033[0m\n'

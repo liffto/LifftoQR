@@ -8,6 +8,9 @@ Thanks for your interest in contributing! 🎉
 git clone https://github.com/liffto/LifftoQR.git
 cd LifftoQR
 
+# point git at the version-controlled hooks (once per clone)
+git config core.hooksPath .githooks
+
 # frontend
 npm install
 npm run dev
@@ -24,13 +27,11 @@ uvicorn app.main:app --reload --port 8000
 
 1. Create a feature branch from `main`: `git checkout -b feat/your-feature`
 2. Make your changes.
-3. Run the checks locally before committing:
-   ```bash
-   npm run lint
-   npm run format
-   npm run test
-   npm run build
-   ```
+3. Run `npm run format` before committing. The rest — lint, both test suites, and
+   the build — run automatically on `git push` via `.githooks/pre-push`, which
+   mirrors CI so a failure shows up here instead of in Actions ten minutes later.
+   The push is aborted if anything fails; `git push --no-verify` skips the hook
+   when you genuinely need it to.
 4. Commit using [Conventional Commits](https://www.conventionalcommits.org/) (e.g. `feat: add SVG export`, `fix: correct gradient toggle`).
 5. Push and open a Pull Request against `main`.
 
