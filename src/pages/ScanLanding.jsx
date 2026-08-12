@@ -129,75 +129,6 @@ function PrimaryAction({ href, download, icon: Icon, children }) {
   )
 }
 
-const isAndroid =
-  typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
-
-/**
- * Android's "add contact" screen, prefilled, via an intent URI.
- *
- * No web API can write to the contact store, so the closest thing to saving is
- * handing the OS a prefilled contact for the person to confirm. On Android
- * that is ACTION_INSERT, which opens the native create-contact screen with the
- * fields already populated — one tap from saved.
- *
- * browser_fallback_url is honoured by Chrome when nothing handles the intent,
- * so a browser without intent support still gets the vCard.
- */
-function androidContactIntent(c, fallbackUrl) {
-  const extras = {
-    name: [c.firstName, c.lastName].filter(Boolean).join(' '),
-    phone: c.phone,
-    secondary_phone: c.workPhone,
-    email: c.email,
-    company: c.org,
-    job_title: c.title,
-    postal: [c.street, c.city, c.state, c.zip, c.country]
-      .filter(Boolean)
-      .join(', '),
-    notes: c.note,
-  }
-  const parts = Object.entries(extras)
-    .filter(([, v]) => v && String(v).trim())
-    .map(([k, v]) => `S.${k}=${encodeURIComponent(v)}`)
-
-  return [
-    'intent:#Intent',
-    'action=android.intent.action.INSERT',
-    // ContactsContract.RawContacts.CONTENT_TYPE. Must be raw_contact, not
-    // .../contact: with the latter no activity matches, Chrome silently uses
-    // browser_fallback_url, and the person gets the file download this is
-    // meant to replace.
-    'type=vnd.android.cursor.dir/raw_contact',
-    ...parts,
-    `S.browser_fallback_url=${encodeURIComponent(fallbackUrl)}`,
-    'end',
-  ].join(';')
-}
-
-/**
- * Saving a contact takes a different route per platform, because neither lets
- * a web page write to the address book directly.
- *
- * iOS Safari follows a text/vcard response into its own Add Contact sheet, so
- * the plain link is already the native flow there.
- *
- * Android Chrome instead honours Content-Disposition and files it away in
- * Downloads, leaving the person to find and open it. The intent opens the
- * create-contact screen directly instead.
- *
- * Everywhere else — desktop — downloading the .vcf is the sensible outcome.
- */
-function SaveContactButton({ slug, content }) {
-  const url = vcardFileUrl(slug)
-  const href = isAndroid ? androidContactIntent(content, url) : url
-
-  return (
-    <PrimaryAction href={href} download={!isAndroid} icon={Download}>
-      Save Contact
-    </PrimaryAction>
-  )
-}
-
 // Whoever scanned this card is a stranger to us, not the owner — so the CTA
 // routes through login when needed and lands them on the create flow after,
 // rather than dumping them on a sign-in wall with no way back.
@@ -302,7 +233,9 @@ function ContactCard({ c, slug }) {
       </Card>
 
       <div className="mt-4 space-y-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <SaveContactButton slug={slug} content={c} />
+        <PrimaryAction href={vcardFileUrl(slug)} download icon={Download}>
+          Save Contact
+        </PrimaryAction>
         <p className="text-center text-[11px] text-ink-faint">
           Adds {name} to your phone's contacts
         </p>
