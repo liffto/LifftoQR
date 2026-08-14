@@ -1297,7 +1297,7 @@ export const ENCODERS = [
         key: 'description',
         label: 'Details (optional)',
         inputType: 'textarea',
-        placeholder: 'Valid on orders over $50. One use per customer.',
+        placeholder: 'Valid on orders over ₹50. One use per customer.',
       },
       {
         key: 'url',

@@ -884,7 +884,7 @@ export default function Landing() {
                 </p>
                 <div className="mt-8 flex items-end gap-3">
                   <span className="text-[56px] leading-none font-extrabold tracking-[-0.03em] text-ink">
-                    $0
+                    ₹0
                   </span>
                   <span className="text-[13px] text-ink-muted mb-2">
                     forever
