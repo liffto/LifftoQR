@@ -28,6 +28,7 @@ import {
   useSignOutOtherDevices,
 } from '../hooks/useDevices'
 import { clearDraft } from '../lib/store'
+import { advanceOnEnter } from '../lib/enterToAdvance'
 import { compressImageFile } from '../lib/imageCompress'
 import { isValidPhone } from '../lib/countries'
 import PhoneInput from '../components/PhoneInput'
@@ -482,7 +483,14 @@ export default function UserAccount() {
         <div className="flex flex-col gap-4">
           {/* Profile info */}
           <SectionCard title="Profile Information" icon={User}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <div
+              onKeyDown={(e) =>
+                advanceOnEnter(e, {
+                  onLast: () => canSave && profileSave.mutate(),
+                })
+              }
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5"
+            >
               <Field
                 label="First Name"
                 value={form.firstName}
