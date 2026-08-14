@@ -12,6 +12,7 @@ import {
 } from '../lib/countries'
 import PhoneInput from './PhoneInput'
 import { INPUT_CLS } from './formStyles'
+import { advanceOnEnter } from '../lib/enterToAdvance'
 
 // Pretty option labels for selects (values stay raw so encoders keep working).
 const OPTION_LABELS = {
@@ -386,14 +387,19 @@ function Field({ field, value, onChange, typeKey, content }) {
 
 // Renders all of a type's input fields in a 2-col grid.
 // onChange(fieldKey, value) is called per field.
+// onComplete, if given, runs when Enter is pressed in the last field.
 export default function TypeFields({
   type,
   content = {},
   onChange,
+  onComplete,
   className = '',
 }) {
   return (
-    <div className={`grid grid-cols-2 gap-x-3 gap-y-4 ${className}`}>
+    <div
+      onKeyDown={(e) => advanceOnEnter(e, { onLast: onComplete })}
+      className={`grid grid-cols-2 gap-x-3 gap-y-4 ${className}`}
+    >
       {type.fields.map((f) => (
         <Field
           key={f.key}

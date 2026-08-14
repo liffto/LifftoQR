@@ -124,6 +124,7 @@ export default function CreateDetails() {
               type={type}
               content={record.content || {}}
               onChange={setField}
+              onComplete={handleContinue}
               className="mt-5"
             />
 
