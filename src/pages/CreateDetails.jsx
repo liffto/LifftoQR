@@ -68,7 +68,7 @@ export default function CreateDetails() {
     <div className="min-h-screen bg-canvas">
       {/* HEADER */}
       <header className="sticky top-0 z-20 bg-white border-b border-line h-[68px] flex items-center px-4 sm:px-6 gap-3 sm:gap-5">
-        <Logo variant="create" />
+        <Logo />
         <div className="h-7 w-px bg-line" />
         <button
           type="button"

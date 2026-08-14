@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import LifftoMark from './LifftoMark'
 import {
   useNotifications,
   useMarkNotificationRead,
@@ -31,73 +32,6 @@ import {
 } from '../utils/userDisplay'
 
 /* ── Brand mark (white, for dark sidebar) ───────────────────────── */
-function LogoMark() {
-  return (
-    <svg
-      width="30"
-      height="30"
-      viewBox="0 0 36 36"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect
-        x="0"
-        y="0"
-        width="15"
-        height="15"
-        rx="3.5"
-        fill="white"
-        opacity="0.95"
-      />
-      <rect
-        x="21"
-        y="0"
-        width="15"
-        height="15"
-        rx="3.5"
-        fill="white"
-        opacity="0.95"
-      />
-      <rect
-        x="0"
-        y="21"
-        width="15"
-        height="15"
-        rx="3.5"
-        fill="white"
-        opacity="0.95"
-      />
-      <rect
-        x="21"
-        y="21"
-        width="6"
-        height="6"
-        rx="1.5"
-        fill="white"
-        opacity="0.95"
-      />
-      <rect
-        x="30"
-        y="21"
-        width="6"
-        height="6"
-        rx="1.5"
-        fill="white"
-        opacity="0.95"
-      />
-      <rect
-        x="21"
-        y="30"
-        width="6"
-        height="6"
-        rx="1.5"
-        fill="white"
-        opacity="0.95"
-      />
-    </svg>
-  )
-}
-
 /* ── Sidebar nav item with tooltip ──────────────────────────────── */
 function SideItem({ icon: Icon, label, active, danger, onClick }) {
   return (
@@ -341,7 +275,7 @@ export default function Layout({ children, breadcrumb }) {
           className="w-10 h-10 rounded-[10px] flex items-center justify-center hover:bg-white/8 transition-colors mb-2"
           aria-label="Home"
         >
-          <LogoMark />
+          <LifftoMark size={26} className="text-white" />
         </button>
 
         {/* Top divider */}

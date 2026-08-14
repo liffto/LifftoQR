@@ -668,7 +668,7 @@ export default function DesignQR() {
     <div className="min-h-screen bg-canvas">
       {/* HEADER */}
       <header className="sticky top-0 z-30 flex h-[68px] items-center gap-3 sm:gap-5 border-b border-line bg-white px-4 sm:px-6">
-        <Logo variant="create" />
+        <Logo />
         <div className="h-7 w-px bg-line" />
         <button
           type="button"
