@@ -302,7 +302,7 @@ export default function Landing() {
             onClick={scrollTo('top')}
             aria-label="Liffto"
           >
-            <Logo variant="create" white={!solidNav} />
+            <Logo white={!solidNav} />
           </button>
 
           <nav className="hidden lg:flex flex-1 items-center justify-center gap-1">
@@ -984,7 +984,7 @@ export default function Landing() {
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-12">
           <div className="flex flex-col gap-10 sm:flex-row sm:justify-between">
             <div className="max-w-xs">
-              <Logo variant="create" />
+              <Logo />
               <p className="mt-4 text-[13px] text-ink-muted leading-relaxed">
                 Design, publish and manage branded QR codes — dynamic or static
                 — from one place.
