@@ -282,7 +282,7 @@ function WifiPage({ c }) {
 function EventPage({ c }) {
   const when = (c.start || '').replace('T', ' · ')
   return (
-    <div className="flex h-full flex-col px-5 pb-5 pt-2">
+    <div className="flex h-full flex-col px-5 pb-5">
       <div className="flex-1">
         <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-amber-50 text-amber-600">
           <Calendar size={26} />
@@ -341,7 +341,7 @@ function LinkTreePage({ c }) {
     (l) => l && (l.url || l.label),
   )
   return (
-    <div className="min-h-full px-5 pb-6 pt-3 text-center">
+    <div className="min-h-full px-5 pb-6 text-center">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[#7c3aed] text-xl font-bold text-white">
         {initials(c.title || 'Links')}
       </div>
@@ -454,7 +454,7 @@ function SimplePage({
   footer,
 }) {
   return (
-    <div className="flex h-full flex-col px-5 pb-5 pt-2">
+    <div className="flex h-full flex-col px-5 pb-5">
       <div className="flex-1">
         <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-primary/10 text-primary">
           {icon}
@@ -708,7 +708,10 @@ export default function ScanPreview({ record }) {
         ) : (
           <div className="h-9 shrink-0" />
         )}
-        <div className="flex-1">{bodyFor(record)}</div>
+        {/* One top gap for every type, rather than each page carrying its own
+            — they had drifted to pt-2, pt-3 and nothing at all, so the content
+            sat flush under the address bar on most of them. */}
+        <div className="flex-1 pt-4">{bodyFor(record)}</div>
       </div>
     </PhoneFrame>
   )
