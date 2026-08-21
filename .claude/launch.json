@@ -10,6 +10,16 @@
       ],
       "port": 5173,
       "autoPort": false
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd api && venv/bin/uvicorn app.main:app --reload --port 8000"
+      ],
+      "port": 8000,
+      "autoPort": false
     }
   ]
 }
