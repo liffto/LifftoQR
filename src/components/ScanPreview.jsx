@@ -4,6 +4,7 @@ import {
   MessageSquare,
   Phone,
   Calendar,
+  CalendarPlus,
   MapPin,
   FileText,
   Video,
@@ -300,7 +301,10 @@ function EventPage({ c }) {
           </p>
         )}
       </div>
-      <Btn icon={Calendar}>Add to Calendar</Btn>
+      {/* Wording and icon match the real button on the scan page — a mockup
+          that promises something slightly different is a mockup you cannot
+          trust. */}
+      <Btn icon={CalendarPlus}>Add to Google Calendar</Btn>
     </div>
   )
 }
