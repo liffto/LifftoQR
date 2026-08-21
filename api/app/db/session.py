@@ -19,6 +19,22 @@ engine = create_engine(
     # path can hang a request instead of failing fast.
     pool_recycle=300,
     connect_args={"connect_timeout": 10},
+    # Sized for how this actually runs, which is not one server. The API
+    # deploys to Vercel as a serverless function, so every warm instance
+    # holds its own pool and the real connection count is this ceiling times
+    # however many instances are live. SQLAlchemy's defaults (5 + 10) let a
+    # single instance reach fifteen, which multiplies badly.
+    #
+    # DATABASE_URL points at Neon's -pooler endpoint, so PgBouncer is already
+    # multiplexing on the far side; a large client-side pool buys nothing and
+    # only makes the multiplication worse.
+    pool_size=5,
+    max_overflow=5,
+    # The default is 30s, which turns a momentarily exhausted pool into
+    # requests that appear hung rather than failing. Ten seconds is long
+    # enough to ride out a brief spike and short enough that the caller gets
+    # an error it can act on.
+    pool_timeout=10,
     echo=settings.debug,
 )
 
