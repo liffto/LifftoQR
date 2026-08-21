@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Building2,
   Calendar,
+  CalendarPlus,
   Check,
   Clock,
   Copy,
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react'
 import { getPublicQr, vcardFileUrl } from '../api/qrcode/publicQr'
 import { copyToClipboard } from '../lib/store'
+import { googleCalendarUrl } from '../lib/qrTypes'
 import { useAuth } from '../context/AuthContext'
 import { useLoginModal } from '../context/LoginModalContext'
 
@@ -342,24 +344,45 @@ function WifiCard({ c }) {
 
 function EventCard({ c }) {
   const when = String(c.start || '').replace('T', ' · ')
+  // Null when there is no usable start date — no point offering a link that
+  // opens an empty calendar form.
+  const calendarUrl = googleCalendarUrl(c)
   return (
-    <Card className="p-5">
-      <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-amber-50 text-amber-600">
-        <Calendar size={26} />
-      </div>
-      <h1 className="mt-4 text-lg font-bold leading-tight text-ink">
-        {c.title || 'Event'}
-      </h1>
-      <div className="mt-2">
-        <Row icon={Clock} label="When" value={when} />
-        <Row icon={MapPin} label="Where" value={c.location} wrap />
-      </div>
-      {c.description && (
-        <p className="mt-3 rounded-[10px] bg-canvas p-3.5 text-[13px] leading-relaxed text-ink-soft">
-          {c.description}
-        </p>
+    <>
+      <Card className="p-5">
+        <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-amber-50 text-amber-600">
+          <Calendar size={26} />
+        </div>
+        <h1 className="mt-4 text-lg font-bold leading-tight text-ink">
+          {c.title || 'Event'}
+        </h1>
+        <div className="mt-2">
+          <Row icon={Clock} label="When" value={when} />
+          <Row icon={MapPin} label="Where" value={c.location} wrap />
+        </div>
+        {c.description && (
+          <p className="mt-3 rounded-[10px] bg-canvas p-3.5 text-[13px] leading-relaxed text-ink-soft">
+            {c.description}
+          </p>
+        )}
+      </Card>
+
+      {calendarUrl && (
+        <div className="mt-4 space-y-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          <a
+            href={calendarUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={PRIMARY_ACTION_CLS}
+          >
+            <CalendarPlus size={18} /> Add to Google Calendar
+          </a>
+          <p className="text-center text-[11px] text-ink-faint">
+            Opens Google Calendar with the details filled in
+          </p>
+        </div>
       )}
-    </Card>
+    </>
   )
 }
 

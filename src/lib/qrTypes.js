@@ -87,4 +87,5 @@ export {
   isValidWebsiteUrl,
   encodeContent,
   deriveContentName,
+  googleCalendarUrl,
 } from './qrEncoders'

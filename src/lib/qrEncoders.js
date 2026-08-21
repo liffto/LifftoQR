@@ -257,6 +257,90 @@ const encodeWhatsapp = (c) => {
   return url
 }
 
+// Event date helpers, shared by the .ics the QR encodes and the Google
+// Calendar link the scan page offers. Both must read a date the same way or a
+// scanner would get two different events out of one code.
+const pad2 = (n) => String(n).padStart(2, '0')
+
+const stampFromDate = (d) =>
+  d.getUTCFullYear() +
+  pad2(d.getUTCMonth() + 1) +
+  pad2(d.getUTCDate()) +
+  'T' +
+  pad2(d.getUTCHours()) +
+  pad2(d.getUTCMinutes()) +
+  pad2(d.getUTCSeconds()) +
+  'Z'
+
+// datetime-local value ("2026-07-15T09:00") is local wall time → UTC stamp
+const eventStamp = (local) => {
+  if (!local) return ''
+  const d = new Date(local)
+  if (isNaN(d.getTime())) return ''
+  return stampFromDate(d)
+}
+
+const eventDate = (local) =>
+  String(local || '')
+    .slice(0, 10)
+    .replace(/-/g, '')
+
+// All-day ranges are end-exclusive in both iCalendar and Google Calendar, so
+// a one-day event ends on the following date.
+const eventNextDay = (local) => {
+  const base = String(local || '').slice(0, 10)
+  const d = new Date(base + 'T00:00:00Z')
+  if (isNaN(d.getTime())) return eventDate(local)
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.getUTCFullYear() + pad2(d.getUTCMonth() + 1) + pad2(d.getUTCDate())
+}
+
+export const isAllDayEvent = (c) => c.allDay === 'Yes' || c.allDay === true
+
+/**
+ * "Add to Google Calendar" link for an event's content.
+ *
+ * Google's template URL wants one `dates=START/END` range: UTC stamps for a
+ * timed event, bare dates for an all-day one. Both ends are required — a range
+ * with a blank half opens a form with nothing filled in — so a missing end is
+ * filled in rather than passed through empty.
+ *
+ * Returns null when there is no usable start, so callers can hide the button
+ * instead of offering a link to an empty calendar form.
+ */
+export const googleCalendarUrl = (c = {}) => {
+  const allDay = isAllDayEvent(c)
+  let start, end
+
+  if (allDay) {
+    start = eventDate(c.start)
+    if (!start) return null
+    // End-exclusive, and a missing end means the event is that single day.
+    end = c.end ? eventNextDay(c.end) : eventNextDay(c.start)
+  } else {
+    start = eventStamp(c.start)
+    if (!start) return null
+    end = eventStamp(c.end)
+    if (!end) {
+      // No end given: an hour is the least surprising default, and matches
+      // what Google itself assumes for a bare start time.
+      const d = new Date(c.start)
+      d.setHours(d.getHours() + 1)
+      end = stampFromDate(d)
+    }
+  }
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: String(c.title || 'Event'),
+    dates: `${start}/${end}`,
+  })
+  if (c.description) params.set('details', String(c.description))
+  if (c.location) params.set('location', String(c.location))
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
 const encodeEvent = (c) => {
   const esc = (s) =>
     String(s == null ? '' : s)
@@ -264,35 +348,10 @@ const encodeEvent = (c) => {
       .replace(/\r\n|\n|\r/g, '\\n')
       .replace(/,/g, '\\,')
       .replace(/;/g, '\\;')
-  const pad = (n) => String(n).padStart(2, '0')
-  // datetime-local value ("2026-07-15T09:00") is local wall time → UTC stamp
-  const stampOf = (local) => {
-    if (!local) return ''
-    const d = new Date(local)
-    if (isNaN(d.getTime())) return ''
-    return (
-      d.getUTCFullYear() +
-      pad(d.getUTCMonth() + 1) +
-      pad(d.getUTCDate()) +
-      'T' +
-      pad(d.getUTCHours()) +
-      pad(d.getUTCMinutes()) +
-      pad(d.getUTCSeconds()) +
-      'Z'
-    )
-  }
-  const toDate = (local) =>
-    String(local || '')
-      .slice(0, 10)
-      .replace(/-/g, '')
-  const nextDay = (local) => {
-    const base = String(local || '').slice(0, 10)
-    const d = new Date(base + 'T00:00:00Z')
-    if (isNaN(d.getTime())) return toDate(local)
-    d.setUTCDate(d.getUTCDate() + 1)
-    return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate())
-  }
-  const allDay = c.allDay === 'Yes' || c.allDay === true
+  const stampOf = eventStamp
+  const toDate = eventDate
+  const nextDay = eventNextDay
+  const allDay = isAllDayEvent(c)
   const slug =
     String(c.title || 'event')
       .toLowerCase()
