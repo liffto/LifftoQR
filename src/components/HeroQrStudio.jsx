@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowRight, Check } from 'lucide-react'
 import { defaultDesign } from '../lib/store'
+import { defaultContent, findType } from '../lib/qrTypes'
 import { Toggle } from './ui'
 import QRView from './QRView'
+import QrTypePicker from './QrTypePicker'
 import DynamicQRInfo from './DynamicQRInfo'
 
 // The hero's live preview. Paste a link and the plain, default code renders
@@ -122,6 +124,19 @@ export default function HeroQrStudio({ onStart }) {
     }
   }, [value, activeStyle])
 
+  // URL is what the hero already does inline, so choosing it just returns the
+  // visitor to the field. Every other type needs fields the hero has no room
+  // for, so it hands off to the guided form — through sign-in when needed,
+  // which is what onStart already arranges.
+  const pickType = (key) => {
+    if (key === 'url') {
+      inputRef.current?.focus()
+      return
+    }
+    const t = findType(key)
+    onStart(key, defaultContent(key), t.dynamicCapable, '/create/details')
+  }
+
   const start = () => {
     // The primary action is never disabled — an empty field asks for the link
     // instead of presenting a dead button.
@@ -159,10 +174,27 @@ export default function HeroQrStudio({ onStart }) {
       </div>
 
       <div className="p-6">
+        {/* Type first: the hero's job is partly to show this is not just a
+            link shortener. Picking anything other than a URL hands straight
+            off to that type's guided form. */}
+        <p
+          id="hero-type-label"
+          className="block text-[11px] font-bold uppercase tracking-[0.12em] text-ink-faint"
+        >
+          QR code type
+        </p>
+        <div className="mt-2">
+          <QrTypePicker
+            value="url"
+            labelId="hero-type-label"
+            onSelect={pickType}
+          />
+        </div>
+
         {/* The visitor's link comes first */}
         <label
           htmlFor="hero-url"
-          className="block text-[11px] font-bold uppercase tracking-[0.12em] text-ink-faint"
+          className="mt-6 block text-[11px] font-bold uppercase tracking-[0.12em] text-ink-faint"
         >
           Paste URL
         </label>
