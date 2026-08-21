@@ -38,6 +38,10 @@ uvicorn app.main:app --reload --port 8000
 ## Code style
 
 - ESLint + Prettier are the source of truth. Run `npm run format` before pushing.
+- `npm run lint` fails above **34 warnings**. There is no significance to that
+  number beyond it being where the count stood when the ceiling went in — it
+  exists so the count cannot quietly grow. If lint fails, fix the warning you
+  added rather than raising the ceiling; lower it when you clear some out.
 - Keep components small and colocate logic in `src/lib` where it isn't UI-specific.
 - Match the conventions of the surrounding code.
 
