@@ -71,7 +71,6 @@ const QRView = forwardRef(function QRView(
     } else {
       instanceRef.current.update(config)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config])
 
   useImperativeHandle(ref, () => ({
