@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { getPublicQr, vcardFileUrl } from '../api/qrcode/publicQr'
 import { copyToClipboard } from '../lib/store'
-import { googleCalendarUrl } from '../lib/qrTypes'
+import { googleCalendarUrl, formatEventWhen } from '../lib/qrTypes'
 import { useAuth } from '../context/AuthContext'
 import { useLoginModal } from '../context/LoginModalContext'
 
@@ -343,7 +343,7 @@ function WifiCard({ c }) {
 }
 
 function EventCard({ c }) {
-  const when = String(c.start || '').replace('T', ' · ')
+  const when = formatEventWhen(c)
   // Null when there is no usable start date — no point offering a link that
   // opens an empty calendar form.
   const calendarUrl = googleCalendarUrl(c)
@@ -539,6 +539,23 @@ export default function ScanLanding() {
     enabled: Boolean(slug),
     retry: false,
   })
+
+  // Whoever scanned this is looking at one person's card or one event, but the
+  // tab kept saying "Create QR" — the wrong thing to have sitting in a history
+  // list or a row of open tabs.
+  useEffect(() => {
+    if (!qr) return undefined
+    const c = qr.content || {}
+    const subject =
+      [c.firstName, c.lastName].filter(Boolean).join(' ') ||
+      c.title ||
+      qr.name ||
+      'Scanned code'
+    document.title = `${subject} — Liffto`
+    return () => {
+      document.title = 'LIFFTO — Create QR'
+    }
+  }, [qr])
 
   if (isLoading) {
     return (

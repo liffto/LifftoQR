@@ -29,7 +29,10 @@ export default function LoginPanel({ compact = false }) {
       <h1
         className={`font-bold text-ink tracking-tight ${compact ? 'text-[20px]' : 'text-[26px]'}`}
       >
-        Welcome back
+        {/* Not "Welcome back": there is no way to tell a returning user from
+            someone arriving for the first time, and most people who reach this
+            dialog got here by making their first code. */}
+        Sign in to Liffto
       </h1>
       <p
         className={`mt-1.5 text-sm text-ink-muted ${compact ? 'mb-5' : 'mb-7'}`}
@@ -57,10 +60,28 @@ export default function LoginPanel({ compact = false }) {
         Secure sign-in — no passwords to remember
       </div>
 
+      {/* Opened in a new tab on purpose: this panel is usually a dialog over a
+          half-finished code, and navigating away would abandon it. */}
       <p className="mt-6 text-center text-[11px] text-ink-faint leading-relaxed">
         By continuing you agree to Liffto's{' '}
-        <a className="underline cursor-pointer">Terms of Service</a> &{' '}
-        <a className="underline cursor-pointer">Privacy Policy</a>.
+        <a
+          href="/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-ink-soft"
+        >
+          Terms of Service
+        </a>{' '}
+        &{' '}
+        <a
+          href="/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-ink-soft"
+        >
+          Privacy Policy
+        </a>
+        .
       </p>
     </div>
   )

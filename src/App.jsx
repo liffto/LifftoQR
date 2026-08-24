@@ -14,6 +14,7 @@ import FAQ from './pages/FAQ'
 import UserAccount from './pages/UserAccount'
 import Notifications from './pages/Notifications'
 import ScanLanding from './pages/ScanLanding'
+import { Terms, Privacy } from './pages/Legal'
 
 export default function App() {
   return (
@@ -23,6 +24,10 @@ export default function App() {
         {/* Public scan landing page — reached by whoever scans a dynamic QR
             whose content has no destination to redirect to. Never gated. */}
         <Route path="/s/:slug" element={<ScanLanding />} />
+        {/* Linked from the sign-in dialog and the footer. Public: the dialog
+            asks people to agree to them before they have an account. */}
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route
           path="/login"
           element={

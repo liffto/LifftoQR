@@ -13,11 +13,13 @@ import {
   Sun,
   Moon,
   Zap,
+  Menu,
+  X,
 } from 'lucide-react'
-import { defaultDesign } from '../lib/store'
+import { defaultDesign, getDraft } from '../lib/store'
 import { useLoginModal } from '../context/LoginModalContext'
 import { LOGO_OPTIONS } from '../lib/qr'
-import { startDraft } from '../lib/qrDraft'
+import { startDraft, draftHasContent } from '../lib/qrDraft'
 import { getTheme, toggleTheme } from '../lib/theme'
 import { findType } from '../lib/qrTypes'
 import { useAuth } from '../context/AuthContext'
@@ -256,6 +258,9 @@ export default function Landing() {
     openLogin(target)
   }
 
+  // Every way of starting a code funnels through here — the hero's own URL
+  // button, its type picker, and the type grid further down — so this is the
+  // one place that can notice a draft about to be thrown away.
   const handleStart = (
     typeKey,
     content,
@@ -263,6 +268,21 @@ export default function Landing() {
     target,
     designOverride,
   ) => {
+    const existing = getDraft()
+    // Only when switching to a different type, and only when the outgoing
+    // draft holds something the visitor actually entered. Starting the same
+    // type again, or replacing an untouched one, is not a loss worth stopping
+    // for.
+    if (
+      existing &&
+      existing.typeKey !== typeKey &&
+      draftHasContent(existing) &&
+      !window.confirm(
+        `Your unfinished ${findType(existing.typeKey).label} code will be discarded if you start a ${findType(typeKey).label} code instead.\n\nDiscard it and continue?`,
+      )
+    ) {
+      return
+    }
     startDraft(typeKey, content, dynamicPref, designOverride)
     requireAuth(target)
   }
@@ -285,6 +305,18 @@ export default function Landing() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  // The section links are desktop-only, which left a phone with no way to
+  // reach Pricing or the FAQ short of scrolling the whole page.
+  const [menuOpen, setMenuOpen] = useState(false)
+  useEffect(() => {
+    if (!menuOpen) return undefined
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [menuOpen])
 
   return (
     <div className="min-h-screen bg-surface">
@@ -349,10 +381,46 @@ export default function Landing() {
                   : 'bg-white text-[#0B0F1A] hover:bg-white/90'
               }`}
             >
-              Go to dashboard
+              {/* A signed-out visitor does not have a dashboard to go to, and
+                  this is the only button in the header. */}
+              {isAuthenticated ? 'Go to dashboard' : 'Sign in'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-nav"
+              className={`flex h-9 w-9 items-center justify-center rounded-[10px] transition-colors lg:hidden ${
+                solidNav
+                  ? 'text-ink-muted hover:bg-canvas hover:text-ink'
+                  : 'text-white/70 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              {menuOpen ? <X size={19} /> : <Menu size={19} />}
             </button>
           </div>
         </div>
+
+        {menuOpen && (
+          <div
+            id="mobile-nav"
+            className="border-t border-line bg-surface px-5 py-2 shadow-panel lg:hidden"
+          >
+            <nav className="flex flex-col">
+              {NAV_LINKS.map((l) => (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-[10px] px-2 py-3 text-[15px] font-medium text-ink-soft transition-colors hover:bg-canvas hover:text-ink"
+                >
+                  {l.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* ══ HERO ══════════════════════════════════════════════════════ */}
@@ -1054,10 +1122,16 @@ export default function Landing() {
               © {new Date().getFullYear()} Liffto. All rights reserved.
             </p>
             <div className="flex items-center gap-5 text-[12px] text-ink-faint">
-              <a className="hover:text-ink-soft cursor-pointer transition-colors">
+              <a
+                href="/terms"
+                className="hover:text-ink-soft transition-colors"
+              >
                 Terms of Service
               </a>
-              <a className="hover:text-ink-soft cursor-pointer transition-colors">
+              <a
+                href="/privacy"
+                className="hover:text-ink-soft transition-colors"
+              >
                 Privacy Policy
               </a>
             </div>
