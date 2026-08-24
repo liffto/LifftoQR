@@ -88,4 +88,5 @@ export {
   encodeContent,
   deriveContentName,
   googleCalendarUrl,
+  formatEventWhen,
 } from './qrEncoders'

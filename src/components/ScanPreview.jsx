@@ -38,7 +38,7 @@ import {
   FaGithub,
   FaTelegram,
 } from 'react-icons/fa6'
-import { findType } from '../lib/qrTypes'
+import { findType, formatEventWhen } from '../lib/qrTypes'
 import { shortUrl } from '../lib/store'
 import QRView from './QRView'
 
@@ -281,7 +281,7 @@ function WifiPage({ c }) {
 }
 
 function EventPage({ c }) {
-  const when = (c.start || '').replace('T', ' · ')
+  const when = formatEventWhen(c)
   return (
     <div className="flex h-full flex-col px-5 pb-5">
       <div className="flex-1">

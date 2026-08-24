@@ -297,6 +297,62 @@ const eventNextDay = (local) => {
 
 export const isAllDayEvent = (c) => c.allDay === 'Yes' || c.allDay === true
 
+const MONTHS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+]
+
+// Read the parts straight out of the datetime-local string rather than through
+// Date. The stored value is the wall time whoever made the code typed in, with
+// no zone attached — parsing it into a Date and formatting it back would shift
+// it by the *reader's* offset and show a scanner the wrong hour.
+const eventParts = (local) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(
+    String(local || ''),
+  )
+  if (!m) return null
+  return {
+    y: m[1],
+    mo: +m[2],
+    d: +m[3],
+    time: m[4] ? `${m[4]}:${m[5]}` : '',
+    day: `${+m[3]} ${MONTHS[+m[2] - 1]} ${m[1]}`,
+  }
+}
+
+/**
+ * The "When" line for an event, for humans rather than for a calendar app.
+ *
+ * Shares isAllDayEvent with googleCalendarUrl deliberately: the page and the
+ * Add-to-Calendar button beneath it describe the same event, and reading the
+ * all-day flag in only one of them is exactly how they came to disagree — the
+ * page was printing a clock time for an event the button treated as all-day.
+ *
+ * Returns '' when there is no usable date, so callers can hide the row.
+ */
+export const formatEventWhen = (c = {}) => {
+  const start = eventParts(c.start)
+  if (!start) return ''
+  const end = eventParts(c.end)
+
+  if (isAllDayEvent(c)) {
+    // An all-day event has no meaningful hour to show. The stored end is the
+    // last day itself — the exclusive end is a calendar-format detail that
+    // belongs in the link, not on the page.
+    if (end && end.day !== start.day) {
+      return `${start.day} – ${end.day} · All day`
+    }
+    return `${start.day} · All day`
+  }
+
+  if (!start.time) return start.day
+  if (!end || !end.time) return `${start.day} · ${start.time}`
+  if (end.day === start.day) {
+    return `${start.day} · ${start.time} – ${end.time}`
+  }
+  return `${start.day} · ${start.time} – ${end.day} · ${end.time}`
+}
+
 /**
  * "Add to Google Calendar" link for an event's content.
  *

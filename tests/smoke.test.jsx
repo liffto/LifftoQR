@@ -40,13 +40,34 @@ function renderApp() {
 describe('Sign-in dialog', () => {
   it('stays closed until something asks for it', () => {
     renderApp()
+    expect(screen.queryByText(/sign in to liffto/i)).not.toBeInTheDocument()
+  })
+
+  it('renders its heading once opened', () => {
+    renderApp()
+    fireEvent.click(screen.getByText('trigger'))
+    expect(screen.getByText(/sign in to liffto/i)).toBeInTheDocument()
+  })
+
+  it('does not greet a first-time visitor as a returning one', () => {
+    // There is no way to tell the two apart at this point, and most people
+    // reaching this dialog got here by making their first code.
+    renderApp()
+    fireEvent.click(screen.getByText('trigger'))
     expect(screen.queryByText(/welcome back/i)).not.toBeInTheDocument()
   })
 
-  it('renders the welcome heading once opened', () => {
+  it('links the terms it asks people to agree to', () => {
     renderApp()
     fireEvent.click(screen.getByText('trigger'))
-    expect(screen.getByText(/welcome back/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /terms of service/i })).toHaveAttribute(
+      'href',
+      '/terms',
+    )
+    expect(screen.getByRole('link', { name: /privacy policy/i })).toHaveAttribute(
+      'href',
+      '/privacy',
+    )
   })
 
   it('offers Google sign-in', () => {
