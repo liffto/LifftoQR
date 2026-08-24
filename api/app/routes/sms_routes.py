@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_sms(
+def create_sms(
     payload: SmsCreate,
     request: Request,
     controller: SmsController = Depends(get_sms_controller),
 ) -> JSONResponse:
-    return await controller.create_sms(payload, request.state.user)
+    return controller.create_sms(payload, request.state.user)
 
 
 @router.get("")
-async def list_sms(
+def list_sms(
     controller: SmsController = Depends(get_sms_controller),
 ) -> JSONResponse:
-    return await controller.list_sms()
+    return controller.list_sms()
 
 
 @router.get("/{sms_id}")
-async def get_sms(
+def get_sms(
     sms_id: int,
     controller: SmsController = Depends(get_sms_controller),
 ) -> JSONResponse:
-    return await controller.get_sms(sms_id)
+    return controller.get_sms(sms_id)
 
 
 @router.put("/{sms_id}")
-async def update_sms(
+def update_sms(
     sms_id: int,
     payload: SmsUpdate,
     request: Request,
     controller: SmsController = Depends(get_sms_controller),
 ) -> JSONResponse:
-    return await controller.update_sms(sms_id, payload, request.state.user)
+    return controller.update_sms(sms_id, payload, request.state.user)
 
 
 @router.delete("/{sms_id}")
-async def delete_sms(
+def delete_sms(
     sms_id: int,
     controller: SmsController = Depends(get_sms_controller),
 ) -> JSONResponse:
-    return await controller.delete_sms(sms_id)
+    return controller.delete_sms(sms_id)

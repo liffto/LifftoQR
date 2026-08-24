@@ -11,7 +11,7 @@ class AppController:
     def __init__(self, service: AppService) -> None:
         self.service = service
 
-    async def create_app(self, payload: AppCreate, user: User) -> JSONResponse:
+    def create_app(self, payload: AppCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         item = self.service.create_app(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class AppController:
             content=success_response(item.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_app(self, app_id: int) -> JSONResponse:
+    def get_app(self, app_id: int) -> JSONResponse:
         item = self.service.get_app(app_id)
         if item is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class AppController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def list_apps(self) -> JSONResponse:
+    def list_apps(self) -> JSONResponse:
         items = self.service.list_apps()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class AppController:
             )
         )
 
-    async def update_app(
+    def update_app(
         self, app_id: int, payload: AppUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class AppController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def delete_app(self, app_id: int) -> JSONResponse:
+    def delete_app(self, app_id: int) -> JSONResponse:
         deleted = self.service.delete_app(app_id)
         if not deleted:
             raise HTTPException(

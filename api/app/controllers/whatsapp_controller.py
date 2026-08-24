@@ -11,7 +11,7 @@ class WhatsappController:
     def __init__(self, service: WhatsappService) -> None:
         self.service = service
 
-    async def create_whatsapp(self, payload: WhatsappCreate, user: User) -> JSONResponse:
+    def create_whatsapp(self, payload: WhatsappCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         whatsapp = self.service.create_whatsapp(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class WhatsappController:
             content=success_response(whatsapp.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_whatsapp(self, whatsapp_id: int) -> JSONResponse:
+    def get_whatsapp(self, whatsapp_id: int) -> JSONResponse:
         whatsapp = self.service.get_whatsapp(whatsapp_id)
         if whatsapp is None:
             raise HTTPException(
@@ -30,7 +30,7 @@ class WhatsappController:
             content=success_response(whatsapp.model_dump(mode="json", by_alias=True))
         )
 
-    async def list_whatsapp(self) -> JSONResponse:
+    def list_whatsapp(self) -> JSONResponse:
         whatsapp_list = self.service.list_whatsapp()
         return JSONResponse(
             content=success_response(
@@ -38,7 +38,7 @@ class WhatsappController:
             )
         )
 
-    async def update_whatsapp(
+    def update_whatsapp(
         self, whatsapp_id: int, payload: WhatsappUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -52,7 +52,7 @@ class WhatsappController:
             content=success_response(whatsapp.model_dump(mode="json", by_alias=True))
         )
 
-    async def delete_whatsapp(self, whatsapp_id: int) -> JSONResponse:
+    def delete_whatsapp(self, whatsapp_id: int) -> JSONResponse:
         deleted = self.service.delete_whatsapp(whatsapp_id)
         if not deleted:
             raise HTTPException(

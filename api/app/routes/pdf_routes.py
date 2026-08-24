@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_pdf(
+def create_pdf(
     payload: PdfCreate,
     request: Request,
     controller: PdfController = Depends(get_pdf_controller),
 ) -> JSONResponse:
-    return await controller.create_pdf(payload, request.state.user)
+    return controller.create_pdf(payload, request.state.user)
 
 
 @router.get("")
-async def list_pdfs(
+def list_pdfs(
     controller: PdfController = Depends(get_pdf_controller),
 ) -> JSONResponse:
-    return await controller.list_pdfs()
+    return controller.list_pdfs()
 
 
 @router.get("/{pdf_id}")
-async def get_pdf(
+def get_pdf(
     pdf_id: int,
     controller: PdfController = Depends(get_pdf_controller),
 ) -> JSONResponse:
-    return await controller.get_pdf(pdf_id)
+    return controller.get_pdf(pdf_id)
 
 
 @router.put("/{pdf_id}")
-async def update_pdf(
+def update_pdf(
     pdf_id: int,
     payload: PdfUpdate,
     request: Request,
     controller: PdfController = Depends(get_pdf_controller),
 ) -> JSONResponse:
-    return await controller.update_pdf(pdf_id, payload, request.state.user)
+    return controller.update_pdf(pdf_id, payload, request.state.user)
 
 
 @router.delete("/{pdf_id}")
-async def delete_pdf(
+def delete_pdf(
     pdf_id: int,
     controller: PdfController = Depends(get_pdf_controller),
 ) -> JSONResponse:
-    return await controller.delete_pdf(pdf_id)
+    return controller.delete_pdf(pdf_id)

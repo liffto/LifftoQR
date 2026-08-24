@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_wifi(
+def create_wifi(
     payload: WifiCreate,
     request: Request,
     controller: WifiController = Depends(get_wifi_controller),
 ) -> JSONResponse:
-    return await controller.create_wifi(payload, request.state.user)
+    return controller.create_wifi(payload, request.state.user)
 
 
 @router.get("")
-async def list_wifis(
+def list_wifis(
     controller: WifiController = Depends(get_wifi_controller),
 ) -> JSONResponse:
-    return await controller.list_wifis()
+    return controller.list_wifis()
 
 
 @router.get("/{wifi_id}")
-async def get_wifi(
+def get_wifi(
     wifi_id: int,
     controller: WifiController = Depends(get_wifi_controller),
 ) -> JSONResponse:
-    return await controller.get_wifi(wifi_id)
+    return controller.get_wifi(wifi_id)
 
 
 @router.put("/{wifi_id}")
-async def update_wifi(
+def update_wifi(
     wifi_id: int,
     payload: WifiUpdate,
     request: Request,
     controller: WifiController = Depends(get_wifi_controller),
 ) -> JSONResponse:
-    return await controller.update_wifi(wifi_id, payload, request.state.user)
+    return controller.update_wifi(wifi_id, payload, request.state.user)
 
 
 @router.delete("/{wifi_id}")
-async def delete_wifi(
+def delete_wifi(
     wifi_id: int,
     controller: WifiController = Depends(get_wifi_controller),
 ) -> JSONResponse:
-    return await controller.delete_wifi(wifi_id)
+    return controller.delete_wifi(wifi_id)

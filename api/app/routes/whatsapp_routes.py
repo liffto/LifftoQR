@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_whatsapp(
+def create_whatsapp(
     payload: WhatsappCreate,
     request: Request,
     controller: WhatsappController = Depends(get_whatsapp_controller),
 ) -> JSONResponse:
-    return await controller.create_whatsapp(payload, request.state.user)
+    return controller.create_whatsapp(payload, request.state.user)
 
 
 @router.get("")
-async def list_whatsapp(
+def list_whatsapp(
     controller: WhatsappController = Depends(get_whatsapp_controller),
 ) -> JSONResponse:
-    return await controller.list_whatsapp()
+    return controller.list_whatsapp()
 
 
 @router.get("/{whatsapp_id}")
-async def get_whatsapp(
+def get_whatsapp(
     whatsapp_id: int,
     controller: WhatsappController = Depends(get_whatsapp_controller),
 ) -> JSONResponse:
-    return await controller.get_whatsapp(whatsapp_id)
+    return controller.get_whatsapp(whatsapp_id)
 
 
 @router.put("/{whatsapp_id}")
-async def update_whatsapp(
+def update_whatsapp(
     whatsapp_id: int,
     payload: WhatsappUpdate,
     request: Request,
     controller: WhatsappController = Depends(get_whatsapp_controller),
 ) -> JSONResponse:
-    return await controller.update_whatsapp(whatsapp_id, payload, request.state.user)
+    return controller.update_whatsapp(whatsapp_id, payload, request.state.user)
 
 
 @router.delete("/{whatsapp_id}")
-async def delete_whatsapp(
+def delete_whatsapp(
     whatsapp_id: int,
     controller: WhatsappController = Depends(get_whatsapp_controller),
 ) -> JSONResponse:
-    return await controller.delete_whatsapp(whatsapp_id)
+    return controller.delete_whatsapp(whatsapp_id)

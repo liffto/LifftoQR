@@ -11,7 +11,7 @@ class AudioController:
     def __init__(self, service: AudioService) -> None:
         self.service = service
 
-    async def create_audio(self, payload: AudioCreate, user: User) -> JSONResponse:
+    def create_audio(self, payload: AudioCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         item = self.service.create_audio(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class AudioController:
             content=success_response(item.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_audio(self, audio_id: int) -> JSONResponse:
+    def get_audio(self, audio_id: int) -> JSONResponse:
         item = self.service.get_audio(audio_id)
         if item is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class AudioController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def list_audios(self) -> JSONResponse:
+    def list_audios(self) -> JSONResponse:
         items = self.service.list_audios()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class AudioController:
             )
         )
 
-    async def update_audio(
+    def update_audio(
         self, audio_id: int, payload: AudioUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class AudioController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def delete_audio(self, audio_id: int) -> JSONResponse:
+    def delete_audio(self, audio_id: int) -> JSONResponse:
         deleted = self.service.delete_audio(audio_id)
         if not deleted:
             raise HTTPException(

@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_video(
+def create_video(
     payload: VideoCreate,
     request: Request,
     controller: VideoController = Depends(get_video_controller),
 ) -> JSONResponse:
-    return await controller.create_video(payload, request.state.user)
+    return controller.create_video(payload, request.state.user)
 
 
 @router.get("")
-async def list_videos(
+def list_videos(
     controller: VideoController = Depends(get_video_controller),
 ) -> JSONResponse:
-    return await controller.list_videos()
+    return controller.list_videos()
 
 
 @router.get("/{video_id}")
-async def get_video(
+def get_video(
     video_id: int,
     controller: VideoController = Depends(get_video_controller),
 ) -> JSONResponse:
-    return await controller.get_video(video_id)
+    return controller.get_video(video_id)
 
 
 @router.put("/{video_id}")
-async def update_video(
+def update_video(
     video_id: int,
     payload: VideoUpdate,
     request: Request,
     controller: VideoController = Depends(get_video_controller),
 ) -> JSONResponse:
-    return await controller.update_video(video_id, payload, request.state.user)
+    return controller.update_video(video_id, payload, request.state.user)
 
 
 @router.delete("/{video_id}")
-async def delete_video(
+def delete_video(
     video_id: int,
     controller: VideoController = Depends(get_video_controller),
 ) -> JSONResponse:
-    return await controller.delete_video(video_id)
+    return controller.delete_video(video_id)

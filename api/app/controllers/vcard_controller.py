@@ -11,7 +11,7 @@ class VcardController:
     def __init__(self, service: VcardService) -> None:
         self.service = service
 
-    async def create_vcard(self, payload: VcardCreate, user: User) -> JSONResponse:
+    def create_vcard(self, payload: VcardCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         vcard = self.service.create_vcard(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class VcardController:
             content=success_response(vcard.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_vcard(self, vcard_id: int) -> JSONResponse:
+    def get_vcard(self, vcard_id: int) -> JSONResponse:
         vcard = self.service.get_vcard(vcard_id)
         if vcard is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class VcardController:
             )
         return JSONResponse(content=success_response(vcard.model_dump(mode="json", by_alias=True)))
 
-    async def list_vcards(self) -> JSONResponse:
+    def list_vcards(self) -> JSONResponse:
         vcards = self.service.list_vcards()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class VcardController:
             )
         )
 
-    async def update_vcard(
+    def update_vcard(
         self, vcard_id: int, payload: VcardUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class VcardController:
             )
         return JSONResponse(content=success_response(vcard.model_dump(mode="json", by_alias=True)))
 
-    async def delete_vcard(self, vcard_id: int) -> JSONResponse:
+    def delete_vcard(self, vcard_id: int) -> JSONResponse:
         deleted = self.service.delete_vcard(vcard_id)
         if not deleted:
             raise HTTPException(

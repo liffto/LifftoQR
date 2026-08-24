@@ -11,7 +11,7 @@ class CouponController:
     def __init__(self, service: CouponService) -> None:
         self.service = service
 
-    async def create_coupon(self, payload: CouponCreate, user: User) -> JSONResponse:
+    def create_coupon(self, payload: CouponCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         item = self.service.create_coupon(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class CouponController:
             content=success_response(item.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_coupon(self, coupon_id: int) -> JSONResponse:
+    def get_coupon(self, coupon_id: int) -> JSONResponse:
         item = self.service.get_coupon(coupon_id)
         if item is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class CouponController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def list_coupons(self) -> JSONResponse:
+    def list_coupons(self) -> JSONResponse:
         items = self.service.list_coupons()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class CouponController:
             )
         )
 
-    async def update_coupon(
+    def update_coupon(
         self, coupon_id: int, payload: CouponUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class CouponController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def delete_coupon(self, coupon_id: int) -> JSONResponse:
+    def delete_coupon(self, coupon_id: int) -> JSONResponse:
         deleted = self.service.delete_coupon(coupon_id)
         if not deleted:
             raise HTTPException(

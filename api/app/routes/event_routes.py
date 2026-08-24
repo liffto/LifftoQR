@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_event(
+def create_event(
     payload: EventCreate,
     request: Request,
     controller: EventController = Depends(get_event_controller),
 ) -> JSONResponse:
-    return await controller.create_event(payload, request.state.user)
+    return controller.create_event(payload, request.state.user)
 
 
 @router.get("")
-async def list_events(
+def list_events(
     controller: EventController = Depends(get_event_controller),
 ) -> JSONResponse:
-    return await controller.list_events()
+    return controller.list_events()
 
 
 @router.get("/{event_id}")
-async def get_event(
+def get_event(
     event_id: int,
     controller: EventController = Depends(get_event_controller),
 ) -> JSONResponse:
-    return await controller.get_event(event_id)
+    return controller.get_event(event_id)
 
 
 @router.put("/{event_id}")
-async def update_event(
+def update_event(
     event_id: int,
     payload: EventUpdate,
     request: Request,
     controller: EventController = Depends(get_event_controller),
 ) -> JSONResponse:
-    return await controller.update_event(event_id, payload, request.state.user)
+    return controller.update_event(event_id, payload, request.state.user)
 
 
 @router.delete("/{event_id}")
-async def delete_event(
+def delete_event(
     event_id: int,
     controller: EventController = Depends(get_event_controller),
 ) -> JSONResponse:
-    return await controller.delete_event(event_id)
+    return controller.delete_event(event_id)

@@ -11,7 +11,7 @@ class PdfController:
     def __init__(self, service: PdfService) -> None:
         self.service = service
 
-    async def create_pdf(self, payload: PdfCreate, user: User) -> JSONResponse:
+    def create_pdf(self, payload: PdfCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         item = self.service.create_pdf(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class PdfController:
             content=success_response(item.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_pdf(self, pdf_id: int) -> JSONResponse:
+    def get_pdf(self, pdf_id: int) -> JSONResponse:
         item = self.service.get_pdf(pdf_id)
         if item is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class PdfController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def list_pdfs(self) -> JSONResponse:
+    def list_pdfs(self) -> JSONResponse:
         items = self.service.list_pdfs()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class PdfController:
             )
         )
 
-    async def update_pdf(
+    def update_pdf(
         self, pdf_id: int, payload: PdfUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class PdfController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def delete_pdf(self, pdf_id: int) -> JSONResponse:
+    def delete_pdf(self, pdf_id: int) -> JSONResponse:
         deleted = self.service.delete_pdf(pdf_id)
         if not deleted:
             raise HTTPException(

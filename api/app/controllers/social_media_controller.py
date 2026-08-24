@@ -11,7 +11,7 @@ class SocialMediaController:
     def __init__(self, service: SocialMediaService) -> None:
         self.service = service
 
-    async def create_social_media(self, payload: SocialMediaCreate, user: User) -> JSONResponse:
+    def create_social_media(self, payload: SocialMediaCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         item = self.service.create_social_media(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class SocialMediaController:
             content=success_response(item.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_social_media(self, social_media_id: int) -> JSONResponse:
+    def get_social_media(self, social_media_id: int) -> JSONResponse:
         item = self.service.get_social_media(social_media_id)
         if item is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class SocialMediaController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def list_social_media(self) -> JSONResponse:
+    def list_social_media(self) -> JSONResponse:
         items = self.service.list_social_media()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class SocialMediaController:
             )
         )
 
-    async def update_social_media(
+    def update_social_media(
         self, social_media_id: int, payload: SocialMediaUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class SocialMediaController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def delete_social_media(self, social_media_id: int) -> JSONResponse:
+    def delete_social_media(self, social_media_id: int) -> JSONResponse:
         deleted = self.service.delete_social_media(social_media_id)
         if not deleted:
             raise HTTPException(

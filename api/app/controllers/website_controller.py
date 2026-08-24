@@ -11,7 +11,7 @@ class WebsiteController:
     def __init__(self, service: WebsiteService) -> None:
         self.service = service
 
-    async def create_website(self, payload: WebsiteCreate, user: User) -> JSONResponse:
+    def create_website(self, payload: WebsiteCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         website = self.service.create_website(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class WebsiteController:
             content=success_response(website.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_website(self, website_id: int) -> JSONResponse:
+    def get_website(self, website_id: int) -> JSONResponse:
         website = self.service.get_website(website_id)
         if website is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class WebsiteController:
             )
         return JSONResponse(content=success_response(website.model_dump(mode="json", by_alias=True)))
 
-    async def list_websites(self) -> JSONResponse:
+    def list_websites(self) -> JSONResponse:
         websites = self.service.list_websites()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class WebsiteController:
             )
         )
 
-    async def update_website(
+    def update_website(
         self, website_id: int, payload: WebsiteUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class WebsiteController:
             )
         return JSONResponse(content=success_response(website.model_dump(mode="json", by_alias=True)))
 
-    async def delete_website(self, website_id: int) -> JSONResponse:
+    def delete_website(self, website_id: int) -> JSONResponse:
         deleted = self.service.delete_website(website_id)
         if not deleted:
             raise HTTPException(

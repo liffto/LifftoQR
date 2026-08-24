@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_phone(
+def create_phone(
     payload: PhoneCreate,
     request: Request,
     controller: PhoneController = Depends(get_phone_controller),
 ) -> JSONResponse:
-    return await controller.create_phone(payload, request.state.user)
+    return controller.create_phone(payload, request.state.user)
 
 
 @router.get("")
-async def list_phones(
+def list_phones(
     controller: PhoneController = Depends(get_phone_controller),
 ) -> JSONResponse:
-    return await controller.list_phones()
+    return controller.list_phones()
 
 
 @router.get("/{phone_id}")
-async def get_phone(
+def get_phone(
     phone_id: int,
     controller: PhoneController = Depends(get_phone_controller),
 ) -> JSONResponse:
-    return await controller.get_phone(phone_id)
+    return controller.get_phone(phone_id)
 
 
 @router.put("/{phone_id}")
-async def update_phone(
+def update_phone(
     phone_id: int,
     payload: PhoneUpdate,
     request: Request,
     controller: PhoneController = Depends(get_phone_controller),
 ) -> JSONResponse:
-    return await controller.update_phone(phone_id, payload, request.state.user)
+    return controller.update_phone(phone_id, payload, request.state.user)
 
 
 @router.delete("/{phone_id}")
-async def delete_phone(
+def delete_phone(
     phone_id: int,
     controller: PhoneController = Depends(get_phone_controller),
 ) -> JSONResponse:
-    return await controller.delete_phone(phone_id)
+    return controller.delete_phone(phone_id)

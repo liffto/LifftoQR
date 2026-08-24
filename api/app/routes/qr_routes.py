@@ -15,26 +15,26 @@ router = APIRouter(
 
 
 @router.get("")
-async def list_qrs(
+def list_qrs(
     user: User = Depends(get_current_user),
     controller: QrController = Depends(get_qr_controller),
 ) -> JSONResponse:
-    return await controller.list_qrs(user)
+    return controller.list_qrs(user)
 
 
 @router.get("/{qr_id}")
-async def get_qr(
+def get_qr(
     qr_id: int,
     user: User = Depends(get_current_user),
     controller: QrController = Depends(get_qr_controller),
 ) -> JSONResponse:
-    return await controller.get_qr(qr_id, user)
+    return controller.get_qr(qr_id, user)
 
 
 @router.delete("/{qr_id}")
-async def delete_qr(
+def delete_qr(
     qr_id: int,
     user: User = Depends(get_current_user),
     controller: QrController = Depends(get_qr_controller),
 ) -> JSONResponse:
-    return await controller.delete_qr(qr_id, user)
+    return controller.delete_qr(qr_id, user)

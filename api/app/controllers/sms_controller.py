@@ -11,7 +11,7 @@ class SmsController:
     def __init__(self, service: SmsService) -> None:
         self.service = service
 
-    async def create_sms(self, payload: SmsCreate, user: User) -> JSONResponse:
+    def create_sms(self, payload: SmsCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         sms = self.service.create_sms(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class SmsController:
             content=success_response(sms.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_sms(self, sms_id: int) -> JSONResponse:
+    def get_sms(self, sms_id: int) -> JSONResponse:
         sms = self.service.get_sms(sms_id)
         if sms is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class SmsController:
             )
         return JSONResponse(content=success_response(sms.model_dump(mode="json", by_alias=True)))
 
-    async def list_sms(self) -> JSONResponse:
+    def list_sms(self) -> JSONResponse:
         sms_list = self.service.list_sms()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class SmsController:
             )
         )
 
-    async def update_sms(
+    def update_sms(
         self, sms_id: int, payload: SmsUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class SmsController:
             )
         return JSONResponse(content=success_response(sms.model_dump(mode="json", by_alias=True)))
 
-    async def delete_sms(self, sms_id: int) -> JSONResponse:
+    def delete_sms(self, sms_id: int) -> JSONResponse:
         deleted = self.service.delete_sms(sms_id)
         if not deleted:
             raise HTTPException(
