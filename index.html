@@ -19,10 +19,25 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- media="print" makes Chrome fetch this without blocking the first
+         paint on it; the onload flips it to "all" once it lands. &display=swap
+         in the URL already tells the browser to show fallback text and swap
+         Poppins in later — but that behavior only helps if the stylesheet
+         itself isn't blocking render in the first place, which (confirmed via
+         performance.getEntriesByType('resource')[…].renderBlockingStatus) it
+         was. <noscript> covers the no-JS case, where the swap trick can't run. -->
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <!-- Inline on purpose. The stylesheet and the app bundle both arrive over
          the network, and until they do the page has no background of its own
          and #root is empty — so the first thing a visitor sees is the
