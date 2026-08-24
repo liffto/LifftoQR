@@ -6,9 +6,16 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { useAuth } from './AuthContext'
-import { setPendingRedirect } from '../lib/store'
+import {
+  getDraft,
+  setDraft,
+  setPendingRedirect,
+  takePendingRedirect,
+} from '../lib/store'
+import { findType } from '../lib/qrTypes'
 import LoginPanel from '../components/LoginPanel'
 import Logo from '../components/Logo'
 
@@ -22,7 +29,7 @@ export function useLoginModal() {
   return ctx
 }
 
-function LoginModal({ open, onClose }) {
+function LoginModal({ open, onClose, onContinueAsGuest }) {
   useEffect(() => {
     if (!open) return undefined
     const onKey = (e) => {
@@ -62,7 +69,7 @@ function LoginModal({ open, onClose }) {
           </button>
         </div>
         <div className="px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5">
-          <LoginPanel compact />
+          <LoginPanel compact onContinueAsGuest={onContinueAsGuest} />
         </div>
       </div>
     </div>
@@ -72,6 +79,27 @@ function LoginModal({ open, onClose }) {
 export function LoginModalProvider({ children }) {
   const [open, setOpen] = useState(false)
   const { isAuthenticated } = useAuth()
+  const navigate = useNavigate()
+
+  // The dialog is only ever in the way of one thing: a code that wanted to be
+  // dynamic. Downgrading it to static finishes the job without an account,
+  // because a static code is built and downloaded in the browser.
+  //
+  // Not offered for the four types that cannot be static — a contact card,
+  // coupon, app link or link tree is a page we host, so there is nothing to
+  // hand over without a record to host it against. Offering it there would be
+  // a button that cannot do what it says.
+  const draft = open ? getDraft() : null
+  const guestPath =
+    draft && !findType(draft.typeKey).requiresDynamic ? draft : null
+
+  const continueAsGuest = useCallback(() => {
+    const current = getDraft()
+    if (!current) return
+    setDraft({ ...current, dynamic: false, qrType: 'Static QR' })
+    setOpen(false)
+    navigate(takePendingRedirect() || '/create/design')
+  }, [navigate])
 
   const openLogin = useCallback((redirectTo) => {
     // Stashed rather than held in state so it survives the Google popup round
@@ -96,7 +124,11 @@ export function LoginModalProvider({ children }) {
   return (
     <LoginModalContext.Provider value={value}>
       {children}
-      <LoginModal open={open} onClose={closeLogin} />
+      <LoginModal
+        open={open}
+        onClose={closeLogin}
+        onContinueAsGuest={guestPath ? continueAsGuest : undefined}
+      />
     </LoginModalContext.Provider>
   )
 }

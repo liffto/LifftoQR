@@ -10,8 +10,12 @@
   --c-primary-50: 238 243 255;
   --c-ink: 31 36 48;
   --c-ink-soft: 58 63 75;
-  --c-ink-muted: 107 114 128;
-  --c-ink-faint: 156 163 175;
+  --c-ink-muted: 106 113 127;
+  /* Not a text colour by accident: at 156 163 175 this measured 2.54:1 on
+     white and 2.33:1 on canvas, well under the 4.5:1 AA needs, and it was
+     carrying form labels in 97 places. Reserve it for borders and disabled
+     glyphs; anything meant to be read starts at --c-ink-muted. */
+  --c-ink-faint: 99 106 120;
   --c-line: 230 232 236;
   --c-canvas: 244 245 247;
   --c-surface: 255 255 255;
@@ -27,7 +31,7 @@
   --c-ink: 234 236 239;
   --c-ink-soft: 196 201 208;
   --c-ink-muted: 154 161 171;
-  --c-ink-faint: 107 114 124;
+  --c-ink-faint: 127 134 144;
   --c-line: 42 47 55;
   --c-canvas: 15 18 22;
   --c-surface: 26 30 36;

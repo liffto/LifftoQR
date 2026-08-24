@@ -183,7 +183,7 @@ const FAQS = [
   },
   {
     q: 'Do I need an account to create a QR code?',
-    a: 'You can start right on this page — pick a type and enter your content. We ask you to sign in with Google when you continue, so your codes are saved to your account and your dynamic codes stay editable.',
+    a: 'Not for a static code. Design it here, download it, and it is yours — no sign-in at any point. An account is only needed for a dynamic code, because that one routes through a short link we host so you can change where it points and see how often it is scanned.',
   },
   {
     q: 'Will my QR codes keep working?',
@@ -283,8 +283,19 @@ export default function Landing() {
     ) {
       return
     }
-    startDraft(typeKey, content, dynamicPref, designOverride)
-    requireAuth(target)
+    // Only a dynamic code needs an account: it resolves through a short link
+    // we host, which we cannot create for someone who has none. A static code
+    // is drawn and downloaded entirely in the browser, so gating it bought
+    // nothing and cost every first-time visitor their momentum.
+    //
+    // startDraft returns the built record rather than echoing dynamicPref,
+    // because some types force dynamic regardless of the toggle.
+    const record = startDraft(typeKey, content, dynamicPref, designOverride)
+    if (record.dynamic) {
+      requireAuth(target)
+      return
+    }
+    navigate(target)
   }
 
   const scrollTo = (id) => () => {
@@ -320,6 +331,15 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-surface">
+      {/* Ten sections sit below the header, so a keyboard user was tabbing the
+          whole nav on every load to reach any of them. Off-screen until
+          focused, then the first thing Tab lands on. */}
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-[10px] focus:bg-primary focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        Skip to content
+      </a>
       {/* ══ NAV ═══════════════════════════════════════════════════════ */}
       {/* Rides transparently over the dark hero, then becomes a solid bar. */}
       <header
@@ -364,7 +384,7 @@ export default function Landing() {
                   : 'Switch to dark mode'
               }
               title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-              className={`w-9 h-9 rounded-[10px] flex items-center justify-center transition-colors ${
+              className={`w-11 h-11 rounded-[10px] flex items-center justify-center transition-colors ${
                 solidNav
                   ? 'text-ink-muted hover:bg-canvas hover:text-ink'
                   : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -391,7 +411,7 @@ export default function Landing() {
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={menuOpen}
               aria-controls="mobile-nav"
-              className={`flex h-9 w-9 items-center justify-center rounded-[10px] transition-colors lg:hidden ${
+              className={`flex h-11 w-11 items-center justify-center rounded-[10px] transition-colors lg:hidden ${
                 solidNav
                   ? 'text-ink-muted hover:bg-canvas hover:text-ink'
                   : 'text-white/70 hover:bg-white/10 hover:text-white'
@@ -423,7 +443,8 @@ export default function Landing() {
         )}
       </header>
 
-      {/* ══ HERO ══════════════════════════════════════════════════════ */}
+      <main id="main">
+        {/* ══ HERO ══════════════════════════════════════════════════════ */}
       {/* A dark slab in both themes: our codes are black-and-blue on white, so
           they read like product photography against it. */}
       <section
@@ -1051,6 +1072,8 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      </main>
 
       {/* ══ FOOTER ════════════════════════════════════════════════════ */}
       <footer className="border-t border-line">

@@ -51,6 +51,8 @@ import {
 import { findType, encodeContent, deriveContentName } from '../lib/qrTypes'
 import { compressImageFile } from '../lib/imageCompress'
 import { useSaveQr } from '../hooks/useSaveQr'
+import { useAuth } from '../context/AuthContext'
+import { useLoginModal } from '../context/LoginModalContext'
 import { useQr, qrQueryKey } from '../hooks/useQr'
 import {
   connectionStatusLabel,
@@ -480,6 +482,8 @@ export default function DesignQR() {
   const isCloneFlow = !isApiMode && Boolean(location.state?.cloneFlow)
   const { data: apiRecord, isLoading, isError } = useQr(isApiMode ? qrId : null)
   const { saveQr, isSaving } = useSaveQr()
+  const { isAuthenticated } = useAuth()
+  const { openLogin } = useLoginModal()
 
   const qrRef = useRef(null)
   const fileRef = useRef(null)
@@ -495,6 +499,15 @@ export default function DesignQR() {
   useEffect(() => {
     hydratedQrIdRef.current = null
   }, [qrId])
+
+  // A dynamic code cannot be finished without an account — it resolves through
+  // a short link we host. Ask here rather than letting someone design one and
+  // only discover the wall when they press Download.
+  useEffect(() => {
+    if (isApiMode || isAuthenticated) return
+    const draft = getDraft()
+    if (draft?.dynamic) openLogin('/create/design')
+  }, [isApiMode, isAuthenticated, openLogin])
 
   useEffect(() => {
     if (!isApiMode) {
@@ -601,16 +614,32 @@ export default function DesignQR() {
     navigate('/dashboard')
   }
 
+  // A signed-out visitor is here with a static draft: the code is rendered in
+  // the browser and the file is produced from it, so there is nothing to save
+  // and nobody to save it for. Downloading is the whole job.
+  const isGuest = !isAuthenticated && !isApiMode
+
   const downloadLabel = isSaving
     ? 'Saving...'
-    : isCloneFlow
-      ? 'Clone & Download'
-      : saveTemplate
-        ? 'Download & Save QR'
-        : 'Save & Download QR'
+    : isGuest
+      ? 'Download QR'
+      : isCloneFlow
+        ? 'Clone & Download'
+        : saveTemplate
+          ? 'Download & Save QR'
+          : 'Save & Download QR'
 
   const handleDownload = async () => {
     if (isSaving) return
+
+    if (isGuest) {
+      // No API round trip at all — the save is what needs an account, not the
+      // file. Staying on the page matters too: a guest has no dashboard to be
+      // sent to, and their draft is still the thing they are working on.
+      qrRef.current?.download(format, record.name || 'qr-code')
+      toast.success('Downloaded. Sign in to save it and edit it later.')
+      return
+    }
 
     try {
       await saveQrToApi(record)

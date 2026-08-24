@@ -1508,30 +1508,43 @@ export const defaultContent = (key) => {
 }
 
 // All required fields present (trimmed). A linklist needs ≥1 row with a URL.
-export const isComplete = (key, content = {}) => {
-  const t = findEncoder(key)
-  return t.fields
-    .filter((f) => f.required)
-    .every((f) => {
-      if (f.inputType === 'linklist') {
-        const arr = Array.isArray(content[f.key]) ? content[f.key] : []
-        return arr.some((r) => r && String(r.url ?? '').trim() !== '')
-      }
-      if (key === 'url' && f.key === 'url') {
-        return isValidWebsiteUrl(content[f.key])
-      }
-      if (f.inputType === 'phone') {
-        return isValidPhone(content[f.key]) && digitsOnly(content[f.key]) !== ''
-      }
-      if (f.inputType === 'national') {
-        const country = findByDial(content[f.dialFrom])
-        const digits = digitsOnly(content[f.key])
-        if (digits === '') return false
-        return country ? isValidNationalNumber(country.iso, digits) : true
-      }
-      return String(content[f.key] ?? '').trim() !== ''
-    })
+const isFieldSatisfied = (key, field, content) => {
+  if (field.inputType === 'linklist') {
+    const arr = Array.isArray(content[field.key]) ? content[field.key] : []
+    return arr.some((r) => r && String(r.url ?? '').trim() !== '')
+  }
+  if (key === 'url' && field.key === 'url') {
+    return isValidWebsiteUrl(content[field.key])
+  }
+  if (field.inputType === 'phone') {
+    return (
+      isValidPhone(content[field.key]) && digitsOnly(content[field.key]) !== ''
+    )
+  }
+  if (field.inputType === 'national') {
+    const country = findByDial(content[field.dialFrom])
+    const digits = digitsOnly(content[field.key])
+    if (digits === '') return false
+    return country ? isValidNationalNumber(country.iso, digits) : true
+  }
+  return String(content[field.key] ?? '').trim() !== ''
 }
+
+/**
+ * Which required fields are still not satisfied.
+ *
+ * isComplete answers "can this be submitted"; the form also needs to answer
+ * "which box is the person missing", so it can point at one instead of
+ * greying out the button and leaving them to hunt. Both read the same
+ * per-field rule so they cannot drift apart.
+ */
+export const incompleteFields = (key, content = {}) =>
+  findEncoder(key)
+    .fields.filter((f) => f.required && !isFieldSatisfied(key, f, content))
+    .map((f) => f.key)
+
+export const isComplete = (key, content = {}) =>
+  incompleteFields(key, content).length === 0
 
 export const encodeContent = (key, content = {}) =>
   findEncoder(key).encode(content || {})

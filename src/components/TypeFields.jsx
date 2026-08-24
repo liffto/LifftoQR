@@ -40,6 +40,17 @@ const optLabel = (o) =>
 
 export { INPUT_CLS }
 
+// Swap the neutral border for the danger one rather than appending it.
+// Tailwind decides between two competing border utilities by their order in
+// the generated stylesheet, not their order in the class string, so
+// `... border-line ... border-danger` silently keeps the grey — confirmed in
+// the browser before this was written.
+const asInvalid = (cls) =>
+  cls
+    .replace('border-line', 'border-danger')
+    .replace('focus:border-primary', 'focus:border-danger')
+    .replace('focus:ring-primary/10', 'focus:ring-danger/10')
+
 // Repeatable list of {label, url} rows (Link Tree)
 function LinkListField({ field, value, onChange }) {
   const rows = Array.isArray(value) ? value : []
@@ -263,10 +274,7 @@ function NationalNumberField({ field, value, onChange, content }) {
         }
         onBlur={() => setTouched(true)}
         placeholder={country ? '0'.repeat(maxLengthFor(country.iso)) : field.placeholder}
-        className={
-          INPUT_CLS +
-          (invalid ? ' border-danger focus:border-danger focus:ring-danger/10' : '')
-        }
+        className={invalid ? asInvalid(INPUT_CLS) : INPUT_CLS}
       />
       {country && (
         <p
@@ -288,17 +296,22 @@ function isWebsiteUrlField(typeKey, field) {
   return typeKey === 'url' && field.key === 'url'
 }
 
-function Field({ field, value, onChange, typeKey, content }) {
+function Field({ field, value, onChange, typeKey, content, isMissing = false }) {
   const { key, label, inputType, placeholder, required, options } = field
   const id = `f-${key}`
   const lowercaseOnType = isWebsiteUrlField(typeKey, field)
   const [passwordVisible, setPasswordVisible] = useState(false)
+  // data-incomplete is what the page's "what's missing" handler looks for to
+  // scroll to and focus the first one, so it goes on the control itself.
   const common = {
     id,
     value: value ?? '',
+    'data-incomplete': isMissing ? 'true' : undefined,
+    'aria-invalid': isMissing || undefined,
     onChange: (e) =>
       onChange(key, lowercaseOnType ? e.target.value.toLowerCase() : e.target.value),
   }
+  const mark = (cls) => (isMissing ? asInvalid(cls) : cls)
 
   if (inputType === 'linklist')
     return <LinkListField field={field} value={value} onChange={onChange} />
@@ -333,7 +346,7 @@ function Field({ field, value, onChange, typeKey, content }) {
           rows={3}
           placeholder={placeholder}
           className={
-            INPUT_CLS.replace('h-11', 'min-h-[76px] py-2.5') +
+            mark(INPUT_CLS.replace('h-11', 'min-h-[76px] py-2.5')) +
             ' resize-y leading-relaxed'
           }
         />
@@ -341,7 +354,9 @@ function Field({ field, value, onChange, typeKey, content }) {
         <div className="relative">
           <select
             {...common}
-            className={INPUT_CLS + ' appearance-none cursor-pointer pr-10'}
+            className={
+              mark(INPUT_CLS) + ' appearance-none cursor-pointer pr-10'
+            }
           >
             {options.map((o) => (
               <option key={o} value={o}>
@@ -360,7 +375,7 @@ function Field({ field, value, onChange, typeKey, content }) {
             {...common}
             type={passwordVisible ? 'text' : 'password'}
             placeholder={placeholder}
-            className={INPUT_CLS + ' pr-10'}
+            className={mark(INPUT_CLS) + ' pr-10'}
           />
           <button
             type="button"
@@ -378,7 +393,7 @@ function Field({ field, value, onChange, typeKey, content }) {
           placeholder={placeholder}
           autoCapitalize={lowercaseOnType ? 'none' : undefined}
           spellCheck={lowercaseOnType ? false : undefined}
-          className={INPUT_CLS}
+          className={mark(INPUT_CLS)}
         />
       )}
     </div>
@@ -388,11 +403,14 @@ function Field({ field, value, onChange, typeKey, content }) {
 // Renders all of a type's input fields in a 2-col grid.
 // onChange(fieldKey, value) is called per field.
 // onComplete, if given, runs when Enter is pressed in the last field.
+// missing lists the required field keys still to fill — the host passes it
+// only after someone has tried to submit, so an untouched form is never red.
 export default function TypeFields({
   type,
   content = {},
   onChange,
   onComplete,
+  missing = [],
   className = '',
 }) {
   return (
@@ -408,6 +426,7 @@ export default function TypeFields({
           onChange={onChange}
           typeKey={type.key}
           content={content}
+          isMissing={missing.includes(f.key)}
         />
       ))}
     </div>

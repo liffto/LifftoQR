@@ -304,8 +304,12 @@ export default function HeroQrStudio({ onStart }) {
         >
           Customise &amp; download <ArrowRight size={18} />
         </button>
-        <p className="mt-3 text-center text-[11px] text-ink-faint leading-relaxed">
-          Sign in with Google to save it — free, no card needed.
+        {/* Says which of the two things is about to happen, before the press,
+            because the toggle above silently decides it. */}
+        <p className="mt-3 text-center text-[11px] text-ink-muted leading-relaxed">
+          {dynamic
+            ? 'Editable codes need a free account — sign in with Google, no card.'
+            : 'Downloads straight away. No account needed.'}
         </p>
       </div>
     </div>
