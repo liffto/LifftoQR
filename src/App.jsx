@@ -44,32 +44,19 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/create"
-          element={
-            <ProtectedRoute>
-              <CreateUrl />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/create/details"
-          element={
-            <ProtectedRoute>
-              <CreateDetails />
-            </ProtectedRoute>
-          }
-        />
+        {/* The draft create flow is open. Making a static code needs nothing
+            from the server — it is drawn and downloaded in the browser — so
+            requiring an account here only cost first-time visitors their
+            momentum. The account is still required for a dynamic code, which
+            genuinely needs a short link we host; that gate now lives with the
+            dynamic choice itself rather than on the route. */}
+        <Route path="/create" element={<CreateUrl />} />
+        <Route path="/create/details" element={<CreateDetails />} />
+        <Route path="/create/design" element={<DesignQR />} />
+        {/* Editing an already-saved code is a different thing: it loads that
+            record from the API by id, so it stays behind the gate. */}
         <Route
           path="/create/design/:websiteId"
-          element={
-            <ProtectedRoute>
-              <DesignQR />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/create/design"
           element={
             <ProtectedRoute>
               <DesignQR />

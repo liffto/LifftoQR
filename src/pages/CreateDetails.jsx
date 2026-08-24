@@ -5,9 +5,12 @@ import { getDraft, setDraft, SHORT_HOST } from '../lib/store'
 import {
   findType,
   isComplete,
+  incompleteFields,
   deriveContentName,
   encodeContent,
 } from '../lib/qrTypes'
+import { useAuth } from '../context/AuthContext'
+import { useLoginModal } from '../context/LoginModalContext'
 import Logo from '../components/Logo'
 import TypeFields from '../components/TypeFields'
 import ScanPreview, { previewsAsQR } from '../components/ScanPreview'
@@ -16,17 +19,39 @@ import DynamicQRInfo from '../components/DynamicQRInfo'
 
 export default function CreateDetails() {
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
+  const { openLogin } = useLoginModal()
   const [record, setRecord] = useState(() => getDraft())
+  // Only after a press: marking fields red before anyone has tried to submit
+  // scolds people for not having filled in a form they just opened.
+  const [showMissing, setShowMissing] = useState(false)
+  const [missedPresses, setMissedPresses] = useState(0)
 
   useEffect(() => {
     if (!getDraft()) navigate('/create', { replace: true })
   }, [navigate])
+
+  // Runs after the render that adds data-incomplete, not during the click that
+  // sets it — querying in the handler finds nothing, because React has not
+  // committed yet. Counting presses rather than watching a boolean so a second
+  // press re-focuses instead of doing nothing.
+  useEffect(() => {
+    if (!missedPresses) return
+    const field = document.querySelector('[data-incomplete="true"]')
+    field?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    field?.focus?.({ preventScroll: true })
+  }, [missedPresses])
 
   if (!record) return null
 
   const type = findType(record.typeKey)
   const TypeIcon = type.Icon
   const complete = isComplete(record.typeKey, record.content || {})
+  const missing = incompleteFields(record.typeKey, record.content || {})
+  // Their own labels, not field keys — "Event Title", not "title".
+  const missingLabels = missing.map(
+    (key) => type.fields.find((f) => f.key === key)?.label || key,
+  )
   const asQR = previewsAsQR(record.typeKey)
 
   const setField = (k, v) =>
@@ -59,8 +84,21 @@ export default function CreateDetails() {
     })
 
   const handleContinue = () => {
-    if (!complete) return
+    if (!complete) {
+      // Not a dead button: say what is missing and put the cursor there. The
+      // hero already works this way; a greyed-out control on a ten-field form
+      // leaves people hunting for the blank one.
+      setShowMissing(true)
+      setMissedPresses((n) => n + 1)
+      return
+    }
     setDraft(record)
+    // Only a dynamic code needs the account — it routes through a short link
+    // we host. A static one is finished entirely in the browser.
+    if (record.dynamic && !isAuthenticated) {
+      openLogin('/create/design')
+      return
+    }
     navigate('/create/design')
   }
 
@@ -120,11 +158,23 @@ export default function CreateDetails() {
               </div>
             )}
 
+            {showMissing && !complete && (
+              <p
+                role="alert"
+                className="mt-3 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2.5 text-[13px] font-medium text-red-700"
+              >
+                {missing.length === 1
+                  ? `${missingLabels[0]} is needed before we can build your code.`
+                  : `${missing.length} details are still needed: ${missingLabels.join(', ')}.`}
+              </p>
+            )}
+
             <TypeFields
               type={type}
               content={record.content || {}}
               onChange={setField}
               onComplete={handleContinue}
+              missing={showMissing ? missing : []}
               className="mt-5"
             />
 
@@ -167,11 +217,11 @@ export default function CreateDetails() {
                 </span>
               )}
 
+              {/* Deliberately never disabled — see handleContinue. */}
               <button
                 type="button"
                 onClick={handleContinue}
-                disabled={!complete}
-                className="bg-primary text-white rounded-[10px] px-6 h-11 font-semibold flex items-center justify-center gap-2 hover:bg-primary-600 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shadow-primary/25"
+                className="bg-primary text-white rounded-[10px] px-6 h-11 font-semibold flex items-center justify-center gap-2 hover:bg-primary-600 transition-colors whitespace-nowrap shadow-sm shadow-primary/25"
               >
                 Generate QR <ArrowRight size={17} />
               </button>

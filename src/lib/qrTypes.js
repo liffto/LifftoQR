@@ -84,6 +84,7 @@ export {
   findEncoder,
   defaultContent,
   isComplete,
+  incompleteFields,
   isValidWebsiteUrl,
   encodeContent,
   deriveContentName,

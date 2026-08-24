@@ -6,7 +6,10 @@ import GoogleSignInButton from './GoogleSignInButton'
 // The sign-in form itself, with no opinion about how it is framed — the modal
 // wraps it in a dialog. Keeping it separate means the Google button, its error
 // handling and the terms copy have exactly one definition.
-export default function LoginPanel({ compact = false }) {
+// onContinueAsGuest, when given, offers a way past this dialog for a code that
+// does not need an account. Absent means there is no honest guest path for
+// whatever is pending, so no button is shown.
+export default function LoginPanel({ compact = false, onContinueAsGuest }) {
   const googleLogin = useGoogleLogin()
   const [error, setError] = useState('')
 
@@ -55,10 +58,49 @@ export default function LoginPanel({ compact = false }) {
         onError={handleGoogleError}
       />
 
-      <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-ink-faint">
+      <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-ink-muted">
         <ShieldCheck size={13} className="shrink-0" />
         Secure sign-in — no passwords to remember
       </div>
+
+      {/* Only rendered when the pending code can actually be finished without
+          an account — the host decides, since the four types that need a page
+          we host cannot. States the cost plainly instead of burying it: a
+          static code is fixed the moment it is generated. */}
+      {onContinueAsGuest && (
+        <>
+          <div className="my-5 flex items-center gap-3" aria-hidden="true">
+            <span className="h-px flex-1 bg-line" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+              or
+            </span>
+            <span className="h-px flex-1 bg-line" />
+          </div>
+
+          <button
+            type="button"
+            onClick={onContinueAsGuest}
+            className="flex h-12 w-full items-center justify-center rounded-[10px] border border-line bg-surface text-sm font-semibold text-ink-soft transition-colors hover:border-ink-faint hover:text-ink"
+          >
+            Continue without an account
+          </button>
+
+          {/* The consequence in the warning colour, on its own line, because
+              the muted paragraph underneath was being read past. red-700
+              rather than the danger token: the token measures 3.73:1 on white
+              and this has to be the most readable line here, not the least. */}
+          <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[12.5px] font-semibold text-red-700">
+            <AlertCircle size={14} className="shrink-0" />
+            You will only get a Static QR code
+          </p>
+
+          <p className="mt-1.5 text-center text-[11.5px] leading-relaxed text-ink-muted">
+            It is fixed the moment it is generated — the destination can&apos;t
+            be changed and scans aren&apos;t counted. Sign in if you want to
+            edit it later.
+          </p>
+        </>
+      )}
 
       {/* Opened in a new tab on purpose: this panel is usually a dialog over a
           half-finished code, and navigating away would abandon it. */}

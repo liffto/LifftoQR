@@ -9,13 +9,18 @@ export default function DynamicQRInfo() {
 
   return (
     <>
+      {/* The glyph stays 14px, but the target around it does not: negative
+          margins let the hit area reach 44x44 without pushing the toggle row
+          apart. This control explains dynamic vs static — the idea the whole
+          product turns on — and at 16x16 it was the hardest thing on the page
+          to hit. */}
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation()
           setOpen(true)
         }}
-        className="inline-flex h-4 w-4 items-center justify-center align-middle text-ink-faint hover:text-primary transition-colors"
+        className="relative -m-3 inline-flex h-11 w-11 items-center justify-center align-middle text-ink-muted transition-colors hover:text-primary"
         aria-label="How Dynamic and Static QR codes work"
       >
         <Info size={14} />
