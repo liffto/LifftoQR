@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { defaultDesign } from '../lib/store'
 import QRView from './QRView'
+import LazyMount from './LazyMount'
 
 // The "Make it yours" step, made playable: tap a style or a colour and the code
 // above restyles instantly. Swatches are rendered at 36px — below roughly 30px
@@ -71,7 +72,9 @@ export default function StepStyleDemo() {
     <div className="w-full">
       <div className="flex justify-center">
         <div className="rounded-[14px] bg-white p-3 shadow-card ring-1 ring-black/[0.04]">
-          <QRView record={record} size={92} />
+          <LazyMount width={92} height={92}>
+            <QRView record={record} size={92} />
+          </LazyMount>
         </div>
       </div>
 
@@ -91,7 +94,9 @@ export default function StepStyleDemo() {
                   : 'ring-1 ring-line hover:ring-primary/40'
               }`}
             >
-              <QRView record={swatchRecord(p)} size={36} />
+              <LazyMount width={36} height={36}>
+                <QRView record={swatchRecord(p)} size={36} />
+              </LazyMount>
               <span className="sr-only">{p.label}</span>
             </button>
           )
