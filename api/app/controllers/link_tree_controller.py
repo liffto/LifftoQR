@@ -11,7 +11,7 @@ class LinkTreeController:
     def __init__(self, service: LinkTreeService) -> None:
         self.service = service
 
-    async def create_link_tree(self, payload: LinkTreeCreate, user: User) -> JSONResponse:
+    def create_link_tree(self, payload: LinkTreeCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         item = self.service.create_link_tree(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class LinkTreeController:
             content=success_response(item.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_link_tree(self, link_tree_id: int) -> JSONResponse:
+    def get_link_tree(self, link_tree_id: int) -> JSONResponse:
         item = self.service.get_link_tree(link_tree_id)
         if item is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class LinkTreeController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def list_link_trees(self) -> JSONResponse:
+    def list_link_trees(self) -> JSONResponse:
         items = self.service.list_link_trees()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class LinkTreeController:
             )
         )
 
-    async def update_link_tree(
+    def update_link_tree(
         self, link_tree_id: int, payload: LinkTreeUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class LinkTreeController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def delete_link_tree(self, link_tree_id: int) -> JSONResponse:
+    def delete_link_tree(self, link_tree_id: int) -> JSONResponse:
         deleted = self.service.delete_link_tree(link_tree_id)
         if not deleted:
             raise HTTPException(

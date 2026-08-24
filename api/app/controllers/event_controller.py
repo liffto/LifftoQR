@@ -11,7 +11,7 @@ class EventController:
     def __init__(self, service: EventService) -> None:
         self.service = service
 
-    async def create_event(self, payload: EventCreate, user: User) -> JSONResponse:
+    def create_event(self, payload: EventCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         event = self.service.create_event(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class EventController:
             content=success_response(event.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_event(self, event_id: int) -> JSONResponse:
+    def get_event(self, event_id: int) -> JSONResponse:
         event = self.service.get_event(event_id)
         if event is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class EventController:
             )
         return JSONResponse(content=success_response(event.model_dump(mode="json", by_alias=True)))
 
-    async def list_events(self) -> JSONResponse:
+    def list_events(self) -> JSONResponse:
         events = self.service.list_events()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class EventController:
             )
         )
 
-    async def update_event(
+    def update_event(
         self, event_id: int, payload: EventUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class EventController:
             )
         return JSONResponse(content=success_response(event.model_dump(mode="json", by_alias=True)))
 
-    async def delete_event(self, event_id: int) -> JSONResponse:
+    def delete_event(self, event_id: int) -> JSONResponse:
         deleted = self.service.delete_event(event_id)
         if not deleted:
             raise HTTPException(

@@ -11,7 +11,7 @@ class LocationController:
     def __init__(self, service: LocationService) -> None:
         self.service = service
 
-    async def create_location(self, payload: LocationCreate, user: User) -> JSONResponse:
+    def create_location(self, payload: LocationCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         item = self.service.create_location(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class LocationController:
             content=success_response(item.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_location(self, location_id: int) -> JSONResponse:
+    def get_location(self, location_id: int) -> JSONResponse:
         item = self.service.get_location(location_id)
         if item is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class LocationController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def list_locations(self) -> JSONResponse:
+    def list_locations(self) -> JSONResponse:
         items = self.service.list_locations()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class LocationController:
             )
         )
 
-    async def update_location(
+    def update_location(
         self, location_id: int, payload: LocationUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class LocationController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def delete_location(self, location_id: int) -> JSONResponse:
+    def delete_location(self, location_id: int) -> JSONResponse:
         deleted = self.service.delete_location(location_id)
         if not deleted:
             raise HTTPException(

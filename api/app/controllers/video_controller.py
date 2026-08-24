@@ -11,7 +11,7 @@ class VideoController:
     def __init__(self, service: VideoService) -> None:
         self.service = service
 
-    async def create_video(self, payload: VideoCreate, user: User) -> JSONResponse:
+    def create_video(self, payload: VideoCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         item = self.service.create_video(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class VideoController:
             content=success_response(item.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_video(self, video_id: int) -> JSONResponse:
+    def get_video(self, video_id: int) -> JSONResponse:
         item = self.service.get_video(video_id)
         if item is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class VideoController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def list_videos(self) -> JSONResponse:
+    def list_videos(self) -> JSONResponse:
         items = self.service.list_videos()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class VideoController:
             )
         )
 
-    async def update_video(
+    def update_video(
         self, video_id: int, payload: VideoUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class VideoController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def delete_video(self, video_id: int) -> JSONResponse:
+    def delete_video(self, video_id: int) -> JSONResponse:
         deleted = self.service.delete_video(video_id)
         if not deleted:
             raise HTTPException(

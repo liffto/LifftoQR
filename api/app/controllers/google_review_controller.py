@@ -11,7 +11,7 @@ class GoogleReviewController:
     def __init__(self, service: GoogleReviewService) -> None:
         self.service = service
 
-    async def create_google_review(self, payload: GoogleReviewCreate, user: User) -> JSONResponse:
+    def create_google_review(self, payload: GoogleReviewCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         item = self.service.create_google_review(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class GoogleReviewController:
             content=success_response(item.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_google_review(self, google_review_id: int) -> JSONResponse:
+    def get_google_review(self, google_review_id: int) -> JSONResponse:
         item = self.service.get_google_review(google_review_id)
         if item is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class GoogleReviewController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def list_google_reviews(self) -> JSONResponse:
+    def list_google_reviews(self) -> JSONResponse:
         items = self.service.list_google_reviews()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class GoogleReviewController:
             )
         )
 
-    async def update_google_review(
+    def update_google_review(
         self, google_review_id: int, payload: GoogleReviewUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class GoogleReviewController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def delete_google_review(self, google_review_id: int) -> JSONResponse:
+    def delete_google_review(self, google_review_id: int) -> JSONResponse:
         deleted = self.service.delete_google_review(google_review_id)
         if not deleted:
             raise HTTPException(

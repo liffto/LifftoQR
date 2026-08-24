@@ -10,11 +10,11 @@ class QrController:
     def __init__(self, service: QrService) -> None:
         self.service = service
 
-    async def list_qrs(self, user: User) -> JSONResponse:
+    def list_qrs(self, user: User) -> JSONResponse:
         items = self.service.list_qrs(created_by=user.id)
         return JSONResponse(content=success_response(items))
 
-    async def get_qr(self, qr_id: int, user: User) -> JSONResponse:
+    def get_qr(self, qr_id: int, user: User) -> JSONResponse:
         item = self.service.get_qr(qr_id, created_by=user.id)
         if item is None:
             raise HTTPException(
@@ -23,7 +23,7 @@ class QrController:
             )
         return JSONResponse(content=success_response(item))
 
-    async def delete_qr(self, qr_id: int, user: User) -> JSONResponse:
+    def delete_qr(self, qr_id: int, user: User) -> JSONResponse:
         deleted = self.service.delete_qr(qr_id, created_by=user.id)
         if not deleted:
             raise HTTPException(

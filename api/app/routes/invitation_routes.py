@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_invitation(
+def create_invitation(
     payload: InvitationCreate,
     request: Request,
     controller: InvitationController = Depends(get_invitation_controller),
 ) -> JSONResponse:
-    return await controller.create_invitation(payload, request.state.user)
+    return controller.create_invitation(payload, request.state.user)
 
 
 @router.get("")
-async def list_invitations(
+def list_invitations(
     controller: InvitationController = Depends(get_invitation_controller),
 ) -> JSONResponse:
-    return await controller.list_invitations()
+    return controller.list_invitations()
 
 
 @router.get("/{invitation_id}")
-async def get_invitation(
+def get_invitation(
     invitation_id: int,
     controller: InvitationController = Depends(get_invitation_controller),
 ) -> JSONResponse:
-    return await controller.get_invitation(invitation_id)
+    return controller.get_invitation(invitation_id)
 
 
 @router.put("/{invitation_id}")
-async def update_invitation(
+def update_invitation(
     invitation_id: int,
     payload: InvitationUpdate,
     request: Request,
     controller: InvitationController = Depends(get_invitation_controller),
 ) -> JSONResponse:
-    return await controller.update_invitation(invitation_id, payload, request.state.user)
+    return controller.update_invitation(invitation_id, payload, request.state.user)
 
 
 @router.delete("/{invitation_id}")
-async def delete_invitation(
+def delete_invitation(
     invitation_id: int,
     controller: InvitationController = Depends(get_invitation_controller),
 ) -> JSONResponse:
-    return await controller.delete_invitation(invitation_id)
+    return controller.delete_invitation(invitation_id)

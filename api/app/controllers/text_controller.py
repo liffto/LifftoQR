@@ -11,7 +11,7 @@ class TextController:
     def __init__(self, service: TextService) -> None:
         self.service = service
 
-    async def create_text(self, payload: TextCreate, user: User) -> JSONResponse:
+    def create_text(self, payload: TextCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         text = self.service.create_text(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class TextController:
             content=success_response(text.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_text(self, text_id: int) -> JSONResponse:
+    def get_text(self, text_id: int) -> JSONResponse:
         text = self.service.get_text(text_id)
         if text is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class TextController:
             )
         return JSONResponse(content=success_response(text.model_dump(mode="json", by_alias=True)))
 
-    async def list_texts(self) -> JSONResponse:
+    def list_texts(self) -> JSONResponse:
         texts = self.service.list_texts()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class TextController:
             )
         )
 
-    async def update_text(
+    def update_text(
         self, text_id: int, payload: TextUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class TextController:
             )
         return JSONResponse(content=success_response(text.model_dump(mode="json", by_alias=True)))
 
-    async def delete_text(self, text_id: int) -> JSONResponse:
+    def delete_text(self, text_id: int) -> JSONResponse:
         deleted = self.service.delete_text(text_id)
         if not deleted:
             raise HTTPException(

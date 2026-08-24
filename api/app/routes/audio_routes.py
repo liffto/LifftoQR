@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_audio(
+def create_audio(
     payload: AudioCreate,
     request: Request,
     controller: AudioController = Depends(get_audio_controller),
 ) -> JSONResponse:
-    return await controller.create_audio(payload, request.state.user)
+    return controller.create_audio(payload, request.state.user)
 
 
 @router.get("")
-async def list_audios(
+def list_audios(
     controller: AudioController = Depends(get_audio_controller),
 ) -> JSONResponse:
-    return await controller.list_audios()
+    return controller.list_audios()
 
 
 @router.get("/{audio_id}")
-async def get_audio(
+def get_audio(
     audio_id: int,
     controller: AudioController = Depends(get_audio_controller),
 ) -> JSONResponse:
-    return await controller.get_audio(audio_id)
+    return controller.get_audio(audio_id)
 
 
 @router.put("/{audio_id}")
-async def update_audio(
+def update_audio(
     audio_id: int,
     payload: AudioUpdate,
     request: Request,
     controller: AudioController = Depends(get_audio_controller),
 ) -> JSONResponse:
-    return await controller.update_audio(audio_id, payload, request.state.user)
+    return controller.update_audio(audio_id, payload, request.state.user)
 
 
 @router.delete("/{audio_id}")
-async def delete_audio(
+def delete_audio(
     audio_id: int,
     controller: AudioController = Depends(get_audio_controller),
 ) -> JSONResponse:
-    return await controller.delete_audio(audio_id)
+    return controller.delete_audio(audio_id)

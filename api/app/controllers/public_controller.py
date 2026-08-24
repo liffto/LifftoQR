@@ -38,7 +38,7 @@ class PublicController:
             )
         return qr
 
-    async def get_content(self, slug: str) -> JSONResponse:
+    def get_content(self, slug: str) -> JSONResponse:
         qr = self._get_active_qr(slug)
         item = self.service.serialize(qr)
         if item is None:
@@ -49,7 +49,7 @@ class PublicController:
         payload = {k: item.get(k) for k in _PUBLIC_FIELDS}
         return JSONResponse(content=success_response(payload))
 
-    async def get_vcard_file(self, slug: str) -> Response:
+    def get_vcard_file(self, slug: str) -> Response:
         qr = self._get_active_qr(slug)
         if qr.type_key != "vcard" or qr.vcard is None:
             raise HTTPException(

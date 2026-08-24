@@ -11,7 +11,7 @@ class WifiController:
     def __init__(self, service: WifiService) -> None:
         self.service = service
 
-    async def create_wifi(self, payload: WifiCreate, user: User) -> JSONResponse:
+    def create_wifi(self, payload: WifiCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         wifi = self.service.create_wifi(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class WifiController:
             content=success_response(wifi.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_wifi(self, wifi_id: int) -> JSONResponse:
+    def get_wifi(self, wifi_id: int) -> JSONResponse:
         wifi = self.service.get_wifi(wifi_id)
         if wifi is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class WifiController:
             )
         return JSONResponse(content=success_response(wifi.model_dump(mode="json", by_alias=True)))
 
-    async def list_wifis(self) -> JSONResponse:
+    def list_wifis(self) -> JSONResponse:
         wifis = self.service.list_wifis()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class WifiController:
             )
         )
 
-    async def update_wifi(
+    def update_wifi(
         self, wifi_id: int, payload: WifiUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class WifiController:
             )
         return JSONResponse(content=success_response(wifi.model_dump(mode="json", by_alias=True)))
 
-    async def delete_wifi(self, wifi_id: int) -> JSONResponse:
+    def delete_wifi(self, wifi_id: int) -> JSONResponse:
         deleted = self.service.delete_wifi(wifi_id)
         if not deleted:
             raise HTTPException(

@@ -6,7 +6,7 @@ class UserService:
     def __init__(self, repository: UserRepository) -> None:
         self.repository = repository
 
-    async def create_user(self, payload: UserCreate) -> UserResponse:
+    def create_user(self, payload: UserCreate) -> UserResponse:
         if "@" not in payload.email:
             raise ValueError("Email address must be valid")
         return self.repository.create_user(payload)

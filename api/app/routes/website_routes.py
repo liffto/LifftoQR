@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_website(
+def create_website(
     payload: WebsiteCreate,
     request: Request,
     controller: WebsiteController = Depends(get_website_controller),
 ) -> JSONResponse:
-    return await controller.create_website(payload, request.state.user)
+    return controller.create_website(payload, request.state.user)
 
 
 @router.get("")
-async def list_websites(
+def list_websites(
     controller: WebsiteController = Depends(get_website_controller),
 ) -> JSONResponse:
-    return await controller.list_websites()
+    return controller.list_websites()
 
 
 @router.get("/{website_id}")
-async def get_website(
+def get_website(
     website_id: int,
     controller: WebsiteController = Depends(get_website_controller),
 ) -> JSONResponse:
-    return await controller.get_website(website_id)
+    return controller.get_website(website_id)
 
 
 @router.put("/{website_id}")
-async def update_website(
+def update_website(
     website_id: int,
     payload: WebsiteUpdate,
     request: Request,
     controller: WebsiteController = Depends(get_website_controller),
 ) -> JSONResponse:
-    return await controller.update_website(website_id, payload, request.state.user)
+    return controller.update_website(website_id, payload, request.state.user)
 
 
 @router.delete("/{website_id}")
-async def delete_website(
+def delete_website(
     website_id: int,
     controller: WebsiteController = Depends(get_website_controller),
 ) -> JSONResponse:
-    return await controller.delete_website(website_id)
+    return controller.delete_website(website_id)

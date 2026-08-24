@@ -11,7 +11,7 @@ class InvitationController:
     def __init__(self, service: InvitationService) -> None:
         self.service = service
 
-    async def create_invitation(self, payload: InvitationCreate, user: User) -> JSONResponse:
+    def create_invitation(self, payload: InvitationCreate, user: User) -> JSONResponse:
         payload = payload.model_copy(update={"created_by": user.id})
         item = self.service.create_invitation(payload)
         return JSONResponse(
@@ -19,7 +19,7 @@ class InvitationController:
             content=success_response(item.model_dump(mode="json", by_alias=True)),
         )
 
-    async def get_invitation(self, invitation_id: int) -> JSONResponse:
+    def get_invitation(self, invitation_id: int) -> JSONResponse:
         item = self.service.get_invitation(invitation_id)
         if item is None:
             raise HTTPException(
@@ -28,7 +28,7 @@ class InvitationController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def list_invitations(self) -> JSONResponse:
+    def list_invitations(self) -> JSONResponse:
         items = self.service.list_invitations()
         return JSONResponse(
             content=success_response(
@@ -36,7 +36,7 @@ class InvitationController:
             )
         )
 
-    async def update_invitation(
+    def update_invitation(
         self, invitation_id: int, payload: InvitationUpdate, user: User
     ) -> JSONResponse:
         payload = payload.model_copy(update={"updated_by": user.id})
@@ -48,7 +48,7 @@ class InvitationController:
             )
         return JSONResponse(content=success_response(item.model_dump(mode="json", by_alias=True)))
 
-    async def delete_invitation(self, invitation_id: int) -> JSONResponse:
+    def delete_invitation(self, invitation_id: int) -> JSONResponse:
         deleted = self.service.delete_invitation(invitation_id)
         if not deleted:
             raise HTTPException(

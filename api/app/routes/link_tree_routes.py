@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_link_tree(
+def create_link_tree(
     payload: LinkTreeCreate,
     request: Request,
     controller: LinkTreeController = Depends(get_link_tree_controller),
 ) -> JSONResponse:
-    return await controller.create_link_tree(payload, request.state.user)
+    return controller.create_link_tree(payload, request.state.user)
 
 
 @router.get("")
-async def list_link_trees(
+def list_link_trees(
     controller: LinkTreeController = Depends(get_link_tree_controller),
 ) -> JSONResponse:
-    return await controller.list_link_trees()
+    return controller.list_link_trees()
 
 
 @router.get("/{link_tree_id}")
-async def get_link_tree(
+def get_link_tree(
     link_tree_id: int,
     controller: LinkTreeController = Depends(get_link_tree_controller),
 ) -> JSONResponse:
-    return await controller.get_link_tree(link_tree_id)
+    return controller.get_link_tree(link_tree_id)
 
 
 @router.put("/{link_tree_id}")
-async def update_link_tree(
+def update_link_tree(
     link_tree_id: int,
     payload: LinkTreeUpdate,
     request: Request,
     controller: LinkTreeController = Depends(get_link_tree_controller),
 ) -> JSONResponse:
-    return await controller.update_link_tree(link_tree_id, payload, request.state.user)
+    return controller.update_link_tree(link_tree_id, payload, request.state.user)
 
 
 @router.delete("/{link_tree_id}")
-async def delete_link_tree(
+def delete_link_tree(
     link_tree_id: int,
     controller: LinkTreeController = Depends(get_link_tree_controller),
 ) -> JSONResponse:
-    return await controller.delete_link_tree(link_tree_id)
+    return controller.delete_link_tree(link_tree_id)

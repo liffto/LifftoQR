@@ -351,7 +351,7 @@ def update_me(
 
 
 @router.post("/me/avatar", response_model=UserOut, summary="Upload profile photo")
-async def upload_avatar(
+def upload_avatar(
     payload: AvatarUploadRequest,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),

@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_vcard(
+def create_vcard(
     payload: VcardCreate,
     request: Request,
     controller: VcardController = Depends(get_vcard_controller),
 ) -> JSONResponse:
-    return await controller.create_vcard(payload, request.state.user)
+    return controller.create_vcard(payload, request.state.user)
 
 
 @router.get("")
-async def list_vcards(
+def list_vcards(
     controller: VcardController = Depends(get_vcard_controller),
 ) -> JSONResponse:
-    return await controller.list_vcards()
+    return controller.list_vcards()
 
 
 @router.get("/{vcard_id}")
-async def get_vcard(
+def get_vcard(
     vcard_id: int,
     controller: VcardController = Depends(get_vcard_controller),
 ) -> JSONResponse:
-    return await controller.get_vcard(vcard_id)
+    return controller.get_vcard(vcard_id)
 
 
 @router.put("/{vcard_id}")
-async def update_vcard(
+def update_vcard(
     vcard_id: int,
     payload: VcardUpdate,
     request: Request,
     controller: VcardController = Depends(get_vcard_controller),
 ) -> JSONResponse:
-    return await controller.update_vcard(vcard_id, payload, request.state.user)
+    return controller.update_vcard(vcard_id, payload, request.state.user)
 
 
 @router.delete("/{vcard_id}")
-async def delete_vcard(
+def delete_vcard(
     vcard_id: int,
     controller: VcardController = Depends(get_vcard_controller),
 ) -> JSONResponse:
-    return await controller.delete_vcard(vcard_id)
+    return controller.delete_vcard(vcard_id)

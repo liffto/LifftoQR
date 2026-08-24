@@ -15,42 +15,42 @@ router = APIRouter(
 
 
 @router.post("", status_code=201)
-async def create_coupon(
+def create_coupon(
     payload: CouponCreate,
     request: Request,
     controller: CouponController = Depends(get_coupon_controller),
 ) -> JSONResponse:
-    return await controller.create_coupon(payload, request.state.user)
+    return controller.create_coupon(payload, request.state.user)
 
 
 @router.get("")
-async def list_coupons(
+def list_coupons(
     controller: CouponController = Depends(get_coupon_controller),
 ) -> JSONResponse:
-    return await controller.list_coupons()
+    return controller.list_coupons()
 
 
 @router.get("/{coupon_id}")
-async def get_coupon(
+def get_coupon(
     coupon_id: int,
     controller: CouponController = Depends(get_coupon_controller),
 ) -> JSONResponse:
-    return await controller.get_coupon(coupon_id)
+    return controller.get_coupon(coupon_id)
 
 
 @router.put("/{coupon_id}")
-async def update_coupon(
+def update_coupon(
     coupon_id: int,
     payload: CouponUpdate,
     request: Request,
     controller: CouponController = Depends(get_coupon_controller),
 ) -> JSONResponse:
-    return await controller.update_coupon(coupon_id, payload, request.state.user)
+    return controller.update_coupon(coupon_id, payload, request.state.user)
 
 
 @router.delete("/{coupon_id}")
-async def delete_coupon(
+def delete_coupon(
     coupon_id: int,
     controller: CouponController = Depends(get_coupon_controller),
 ) -> JSONResponse:
-    return await controller.delete_coupon(coupon_id)
+    return controller.delete_coupon(coupon_id)
