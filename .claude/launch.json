@@ -12,6 +12,13 @@
       "autoPort": false
     },
     {
+      "name": "built",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview", "--", "--port", "4173"],
+      "port": 4173,
+      "autoPort": false
+    },
+    {
       "name": "api",
       "runtimeExecutable": "sh",
       "runtimeArgs": [
