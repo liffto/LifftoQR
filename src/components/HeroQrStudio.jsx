@@ -68,6 +68,23 @@ const STYLES = [
 const SWATCH_URL = 'https://liffto.com'
 const CYCLE_MS = 2000
 
+// A style swatch's QR renders synchronously on mount — qr-code-styling has no
+// async path — and five of them landing in the same commit was measured on a
+// real device (a WhatsApp in-app browser, from a user's own screenshot) to
+// leave some blank: the JS thread never got back to them. The first swatch
+// (the default, already-active style) stays instant; the rest are spread out
+// by index. Imperceptible on a fast device, and gives a throttled one room to
+// keep up between each one.
+function StaggeredSwatch({ index, children }) {
+  const [ready, setReady] = useState(index === 0)
+  useEffect(() => {
+    if (ready) return undefined
+    const id = setTimeout(() => setReady(true), index * 90)
+    return () => clearTimeout(id)
+  }, [index, ready])
+  return ready ? children : null
+}
+
 // Built once. Rebuilding these per render gave every swatch a new record object,
 // which invalidated QRView's config on each 2s cycle tick and left some
 // thumbnails blank mid-redraw.
@@ -256,7 +273,9 @@ export default function HeroQrStudio({ onStart }) {
                     : 'border border-line opacity-70 hover:opacity-100 hover:border-primary/40'
                 }`}
               >
-                <QRView record={SWATCH_RECORDS[i]} size={38} />
+                <StaggeredSwatch index={i}>
+                  <QRView record={SWATCH_RECORDS[i]} size={38} />
+                </StaggeredSwatch>
                 <span className="sr-only">{s.label}</span>
               </button>
             )

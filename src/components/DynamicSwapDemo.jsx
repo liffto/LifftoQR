@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Check, RefreshCw } from 'lucide-react'
 import { defaultDesign } from '../lib/store'
 import QRView from './QRView'
+import LazyMount from './LazyMount'
 
 // The single strongest truth about a dynamic code, proven instead of claimed:
 // the QR encodes a short link we host, so changing the destination leaves the
@@ -47,7 +48,9 @@ export default function DynamicSwapDemo() {
       {/* The printed artefact — never changes */}
       <div className="rounded-2xl bg-surface border border-line p-6 sm:p-8 flex flex-col items-center justify-center">
         <div className="rounded-2xl bg-white p-5 shadow-card border border-line/60">
-          <QRView record={RECORD} size={168} />
+          <LazyMount width={168} height={168}>
+            <QRView record={RECORD} size={168} />
+          </LazyMount>
         </div>
         <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-ink-faint">
           Printed once

@@ -1,5 +1,6 @@
 import { defaultDesign } from '../lib/store'
 import QRView from './QRView'
+import LazyMount from './LazyMount'
 
 // Design range, proven. Every tile is a real code rendered by the same engine the
 // studio uses — not an illustration — so the wall itself is the argument.
@@ -85,7 +86,9 @@ export default function QrGalleryWall() {
           className="group rounded-2xl bg-white p-4 sm:p-5 shadow-card ring-1 ring-black/[0.04] transition-all duration-300 hover:-translate-y-1 hover:shadow-panel"
         >
           <div className="flex items-center justify-center">
-            <QRView record={record} size={104} />
+            <LazyMount width={104} height={104}>
+              <QRView record={record} size={104} />
+            </LazyMount>
           </div>
         </div>
       ))}

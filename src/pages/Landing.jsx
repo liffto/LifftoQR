@@ -28,6 +28,7 @@ import DynamicSwapDemo from '../components/DynamicSwapDemo'
 import QrGalleryWall from '../components/QrGalleryWall'
 import StepStyleDemo from '../components/StepStyleDemo'
 import QRView from '../components/QRView'
+import LazyMount from '../components/LazyMount'
 import ScanPreview from '../components/ScanPreview'
 import Reveal from '../components/Reveal'
 
@@ -687,7 +688,9 @@ export default function Landing() {
                   </div>
                 </div>
                 <div className="shrink-0 rounded-2xl bg-white p-4 shadow-card ring-1 ring-black/[0.04]">
-                  <QRView record={FEATURE_QR} size={132} />
+                  <LazyMount width={132} height={132}>
+                    <QRView record={FEATURE_QR} size={132} />
+                  </LazyMount>
                 </div>
               </div>
 
@@ -827,7 +830,9 @@ export default function Landing() {
                         {/* a row lifted from the dashboard */}
                         <div className="flex items-center gap-3 rounded-[12px] bg-surface ring-1 ring-line p-3 shadow-sm">
                           <span className="rounded-[8px] bg-white p-1 ring-1 ring-line">
-                            <QRView record={FEATURE_QR} size={30} />
+                            <LazyMount width={30} height={30}>
+                              <QRView record={FEATURE_QR} size={30} />
+                            </LazyMount>
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block text-[11px] font-bold text-ink truncate">
