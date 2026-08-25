@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
@@ -31,8 +31,14 @@ import QrGalleryWall from '../components/QrGalleryWall'
 import StepStyleDemo from '../components/StepStyleDemo'
 import QRView from '../components/QRView'
 import LazyMount from '../components/LazyMount'
-import ScanPreview from '../components/ScanPreview'
 import Reveal from '../components/Reveal'
+
+// The scan demos sit most of a page down, and the component brings react-icons
+// with it for the brand marks — a whole icon set the visible part of this page
+// never uses. Split out and warmed during idle time, so it is in place long
+// before anyone scrolls to it.
+const loadScanPreview = () => import('../components/ScanPreview')
+const ScanPreview = lazy(loadScanPreview)
 
 const NAV_LINKS = [
   { label: 'QR types', href: '#create' },
@@ -236,6 +242,17 @@ export default function Landing() {
   const { openLogin } = useLoginModal()
   const { isAuthenticated } = useAuth()
   const [theme, setThemeVal] = useState(getTheme)
+
+  // Pull the scan demos down once the browser is idle, so they are ready by
+  // the time anyone scrolls that far without competing with the first paint.
+  useEffect(() => {
+    const schedule = window.requestIdleCallback || ((fn) => setTimeout(fn, 2000))
+    const cancel = window.cancelIdleCallback || clearTimeout
+    const id = schedule(() => {
+      loadScanPreview()
+    })
+    return () => cancel(id)
+  }, [])
 
   const onToggleTheme = () => {
     toggleTheme()
@@ -640,6 +657,12 @@ export default function Landing() {
 
             <div className="lg:col-span-7">
               <div className="flex flex-wrap sm:flex-nowrap justify-center gap-6 lg:gap-8">
+                {/* One boundary for all three so they arrive together rather
+                    than popping in one at a time. The min-height holds the
+                    section's shape open so nothing below it jumps. */}
+                <Suspense
+                  fallback={<div className="min-h-[420px] w-full" aria-busy="true" />}
+                >
                 {SCAN_DEMOS.map((d) => (
                   <figure key={d.label} className="shrink-0">
                     <ScanPreview record={d.record} />
@@ -653,6 +676,7 @@ export default function Landing() {
                     </figcaption>
                   </figure>
                 ))}
+                </Suspense>
               </div>
             </div>
           </div>

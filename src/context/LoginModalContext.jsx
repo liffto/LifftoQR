@@ -1,5 +1,7 @@
 import {
   createContext,
+  lazy,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -16,8 +18,16 @@ import {
   takePendingRedirect,
 } from '../lib/store'
 import { findType } from '../lib/qrTypes'
-import LoginPanel from '../components/LoginPanel'
 import Logo from '../components/Logo'
+
+// Fetched on demand rather than bundled with the app. The panel drags in
+// Google's OAuth library, which in turn loads gsi/client from
+// accounts.google.com the moment it mounts — all of it useless to a visitor
+// who never signs in, which on a landing page is most of them. Warmed during
+// idle time once the page has settled (see below), so the dialog still opens
+// without a wait for the visitors who do.
+const loadLoginPanel = () => import('../components/LoginPanel')
+const LoginPanel = lazy(loadLoginPanel)
 
 const LoginModalContext = createContext(null)
 
@@ -69,7 +79,12 @@ function LoginModal({ open, onClose, onContinueAsGuest }) {
           </button>
         </div>
         <div className="px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5">
-          <LoginPanel compact onContinueAsGuest={onContinueAsGuest} />
+          {/* Reserves roughly the panel's height so the dialog does not resize
+              under the cursor on the rare occasion the warm-up has not
+              finished. */}
+          <Suspense fallback={<div className="h-[300px]" aria-busy="true" />}>
+            <LoginPanel compact onContinueAsGuest={onContinueAsGuest} />
+          </Suspense>
         </div>
       </div>
     </div>
@@ -109,6 +124,18 @@ export function LoginModalProvider({ children }) {
   }, [])
 
   const closeLogin = useCallback(() => setOpen(false), [])
+
+  // Warm the panel once the browser has nothing better to do, so the dialog
+  // opens instantly despite being a separate chunk. Idle time only — this must
+  // never compete with the first paint it was split out to protect.
+  useEffect(() => {
+    const schedule = window.requestIdleCallback || ((fn) => setTimeout(fn, 2000))
+    const cancel = window.cancelIdleCallback || clearTimeout
+    const id = schedule(() => {
+      loadLoginPanel()
+    })
+    return () => cancel(id)
+  }, [])
 
   // Signing in succeeds asynchronously; dismiss on the auth state itself so the
   // modal cannot linger over an already-authenticated page.
