@@ -3,11 +3,12 @@ import { findActiveTemplate, filterTemplates } from '../src/lib/templateMatch'
 import { defaultDesign } from '../src/lib/store'
 
 // The built-ins, as DesignQR defines them.
-const CLASSIC = { label: 'Classic', design: { bodyPattern: 'square', cornerStyle: 0 } }
-const ROUNDED = { label: 'Rounded', design: { bodyPattern: 'rounded', cornerStyle: 4 } }
-const DOTS = { label: 'Dots', design: { bodyPattern: 'dots', cornerStyle: 3 } }
+const CLASSIC = { label: 'Classic', builtIn: true, design: { bodyPattern: 'square', cornerStyle: 0 } }
+const ROUNDED = { label: 'Rounded', builtIn: true, design: { bodyPattern: 'rounded', cornerStyle: 4 } }
+const DOTS = { label: 'Dots', builtIn: true, design: { bodyPattern: 'dots', cornerStyle: 3 } }
 const BRANDED = {
   label: 'Branded',
+  builtIn: true,
   design: {
     bodyPattern: 'classy-rounded',
     cornerStyle: 8,
@@ -19,6 +20,13 @@ const BRANDED = {
 const BUILTINS = [CLASSIC, ROUNDED, DOTS, BRANDED]
 
 const withDesign = (over) => ({ ...defaultDesign(), ...over })
+
+// How the app really saves one: a full copy of the design at the time. Every
+// value, which is why these outrank the built-ins on size alone.
+const saved = (label, over = {}) => ({
+  label,
+  design: { ...defaultDesign(), ...over },
+})
 
 describe('which template a design corresponds to', () => {
   it('names the template that was applied', () => {
@@ -70,6 +78,37 @@ describe('which template a design corresponds to', () => {
     expect(
       findActiveTemplate(templates, design, 'My template 42')?.label,
     ).not.toBe('My template 42')
+  })
+
+  it('calls an untouched design Classic, not a saved template equal to it', () => {
+    // Saving stores the whole design, so a template saved without changing
+    // anything is a thirteen-value match for the defaults, against Classic's
+    // two. Ranking on size alone labelled a brand-new code "My template 1".
+    const templates = [...BUILTINS, saved('My template 1')]
+    expect(findActiveTemplate(templates, defaultDesign())?.label).toBe('Classic')
+  })
+
+  it('goes back to Classic when the design is reset', () => {
+    // Reset restores the defaults and clears the pick. Passing no pick is what
+    // DesignQR does after resetDesign; before it did, a saved template equal to
+    // the defaults kept its name on the button because it still matched.
+    const templates = [...BUILTINS, saved('My template 27')]
+    expect(
+      findActiveTemplate(templates, defaultDesign(), 'My template 27')?.label,
+    ).toBe('My template 27')
+    expect(findActiveTemplate(templates, defaultDesign(), null)?.label).toBe(
+      'Classic',
+    )
+  })
+
+  it('still names a saved template while it is the one picked', () => {
+    // The preference for built-ins must not swallow an explicit choice.
+    const mine = saved('My template 8', { bodyColor1: '#abcdef' })
+    const templates = [...BUILTINS, mine]
+    const design = withDesign({ bodyColor1: '#abcdef' })
+    expect(findActiveTemplate(templates, design, 'My template 8')?.label).toBe(
+      'My template 8',
+    )
   })
 
   it('ignores a picked template that no longer exists', () => {
