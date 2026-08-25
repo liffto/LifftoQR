@@ -32,6 +32,25 @@ const isIOS =
 // skips reconciling its children. The wrapper structure MUST NOT change across
 // renders (no conditional wrapper swaps), or the holder will unmount and lose
 // the rendered QR.
+// Which parts of a config currently carry a gradient, as a comparable string.
+//
+// buildQRConfig omits the `gradient` key entirely when a design has none, and
+// .update() merges rather than replaces — so an omitted key leaves the previous
+// gradient in place. Reset a code away from a gradient template and the dots
+// stayed filled with url(#dot-color-N), still wearing colours the design no
+// longer had. Only presence is tracked: adding or removing one needs a fresh
+// instance, while recolouring an existing gradient updates cleanly and happens
+// on every drag of a colour picker.
+const gradientShape = (config) =>
+  [
+    config.dotsOptions,
+    config.cornersSquareOptions,
+    config.cornersDotOptions,
+    config.backgroundOptions,
+  ]
+    .map((opts) => (opts?.gradient ? '1' : '0'))
+    .join('')
+
 const QRView = forwardRef(function QRView(
   { record, size = 280, className = '' },
   ref,
@@ -39,6 +58,7 @@ const QRView = forwardRef(function QRView(
   const holderRef = useRef(null)
   const instanceRef = useRef(null)
   const lastImageRef = useRef(undefined)
+  const lastGradientRef = useRef(undefined)
 
   const config = useMemo(() => buildQRConfig(record, size), [record, size])
 
@@ -52,6 +72,7 @@ const QRView = forwardRef(function QRView(
 
   useEffect(() => {
     lastImageRef.current = config.image
+    lastGradientRef.current = gradientShape(config)
     mount(new QRCodeStyling(config))
     return () => {
       instanceRef.current = null
@@ -62,11 +83,18 @@ const QRView = forwardRef(function QRView(
 
   useEffect(() => {
     if (!instanceRef.current) return
-    // qr-code-styling's .update() does NOT remove a previously-embedded logo,
-    // so when the image is added/removed/swapped we recreate the instance.
-    // Everything else (colours, patterns, corners, data) uses the cheap update.
-    if (config.image !== lastImageRef.current) {
+    // .update() merges the new config over the old, so it can change a value
+    // but never unset one. Two things are therefore expressed by their absence
+    // and cannot survive the cheap path: a removed logo, and a removed gradient
+    // — both leave the previous one showing. Recreate the instance for either.
+    // Everything else (colours, patterns, corners, data) updates in place.
+    const gradients = gradientShape(config)
+    if (
+      config.image !== lastImageRef.current ||
+      gradients !== lastGradientRef.current
+    ) {
       lastImageRef.current = config.image
+      lastGradientRef.current = gradients
       mount(new QRCodeStyling(config))
     } else {
       instanceRef.current.update(config)
