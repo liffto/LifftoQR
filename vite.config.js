@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 /**
- * Stop the compiled stylesheet from blocking the first paint.
+ * Inline the compiled stylesheet into the HTML.
  *
  * A <link rel="stylesheet"> in the head halts *all* rendering until it
  * arrives — including the inline boot shell in index.html, which exists
@@ -10,36 +10,57 @@ import react from '@vitejs/plugin-react'
  * on production: the stylesheet ran 430ms→642ms and first paint did not
  * happen until 696ms, so the shell never got to do its job.
  *
- * This is the shape critical-CSS extraction takes in a single-page app. The
- * usual technique inlines the above-the-fold rules and defers the rest, but
- * here the served HTML has an empty #root — there is no above-the-fold markup
- * to extract from, because React has not run yet. The boot shell *is* the
- * first screen, its CSS is already inline, and everything else can arrive
- * without holding up paint.
+ * The obvious fix is rel=preload with an onload handler that swaps it to a
+ * real stylesheet. Do not do that here — it was tried and shipped, and it is
+ * how you get fifteen seconds of unstyled page on a phone. The swap is a
+ * JavaScript callback, so it cannot run until the main thread is free, and
+ * the main thread is busy for exactly as long as this app takes to boot:
+ * half a megabyte of JS to parse and execute, then six QR codes that render
+ * synchronously. The stylesheet had downloaded long before, and sat there
+ * unapplied. Any CSS strategy whose final step is a JS callback inherits the
+ * blocking it was meant to avoid.
  *
- * rel=preload as=style rather than the media="print" trick: both avoid
- * blocking, but preload keeps the request at high priority instead of
- * dropping it to the bottom of the queue. onload swaps it to a real
- * stylesheet; <noscript> covers browsers that would otherwise never run it.
+ * Inlining has no such dependency: the rules are in the document, so they
+ * apply as the parser reads them. No request, no round trip, no main thread.
+ *
+ * This is what critical-CSS extraction collapses to in a single-page app. The
+ * usual technique inlines the above-the-fold rules and defers the rest, but
+ * the served HTML has an empty #root — there is no rendered markup to extract
+ * from, because React has not run yet. And at 9KB brotli the whole sheet is
+ * smaller than most sites' extracted critical subset, so "the critical part"
+ * is all of it.
+ *
+ * The cost is that 9KB rides on every HTML response instead of being cached
+ * separately. That is the right trade here: index.html is served
+ * must-revalidate, so it is a conditional request every time anyway, and the
+ * page this most affects is the one strangers land on with an empty cache.
+ * The .css file stays in the bundle — unreferenced and never requested, but
+ * removing it from the output buys nothing.
  */
-function nonBlockingStylesheet() {
+function inlineStylesheet() {
   return {
-    name: 'liffto:non-blocking-stylesheet',
+    name: 'liffto:inline-stylesheet',
     enforce: 'post',
     apply: 'build',
-    transformIndexHtml(html) {
-      return html.replace(
-        /<link rel="stylesheet"([^>]*?)href="([^"]+\.css)"([^>]*)>/g,
-        (_match, before, href, after) =>
-          `<link rel="preload" as="style"${before}href="${href}"${after} onload="this.onload=null;this.rel='stylesheet'">` +
-          `<noscript><link rel="stylesheet"${before}href="${href}"${after}></noscript>`,
-      )
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        if (!ctx?.bundle) return html
+        return html.replace(
+          /<link[^>]*rel="stylesheet"[^>]*href="([^"]+\.css)"[^>]*>/g,
+          (match, href) => {
+            const asset = ctx.bundle[href.replace(/^\//, '')]
+            if (!asset || typeof asset.source !== 'string') return match
+            return `<style>${asset.source}</style>`
+          },
+        )
+      },
     },
   }
 }
 
 export default defineConfig({
-  plugins: [react(), nonBlockingStylesheet()],
+  plugins: [react(), inlineStylesheet()],
   build: {
     rollupOptions: {
       output: {

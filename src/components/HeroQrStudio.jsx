@@ -68,6 +68,13 @@ const STYLES = [
 const SWATCH_URL = 'https://liffto.com'
 const CYCLE_MS = 2000
 
+// How long the field has to be quiet before the preview redraws. A QR redraw
+// is synchronous — qr-code-styling offers no async path — so following every
+// keystroke meant one full redraw per character of a pasted URL, on the main
+// thread, on whatever phone the visitor happens to be holding. Waiting for a
+// pause costs a beat of latency nobody is watching for and removes all of it.
+const PREVIEW_DEBOUNCE_MS = 400
+
 // A style swatch's QR renders synchronously on mount — qr-code-styling has no
 // async path — and five of them landing in the same commit was measured on a
 // real device (a WhatsApp in-app browser, from a user's own screenshot) to
@@ -99,37 +106,55 @@ const SWATCH_RECORDS = STYLES.map((s) => ({
 export default function HeroQrStudio({ onStart }) {
   const [url, setUrl] = useState('')
   const [dynamic, setDynamic] = useState(true)
-  const [featured, setFeatured] = useState(0)
+  // Counts elapsed showcase steps rather than naming a style, so the cycle can
+  // stop simply by refusing to schedule the next one.
+  const [tick, setTick] = useState(0)
   // null until the visitor picks a style themselves.
   const [picked, setPicked] = useState(null)
   const [hint, setHint] = useState(false)
+  // The field's value as of the last pause in typing. The preview reads this;
+  // everything about the field itself reads `value` and stays immediate.
+  const [settled, setSettled] = useState('')
   const inputRef = useRef(null)
 
   const value = url.trim()
+  const featured = tick % STYLES.length
   const activeIdx = picked ?? featured
   const activeStyle = STYLES[activeIdx] || STYLES[0]
   // With no link yet we show a labelled sample rather than an empty box — the
-  // hero's focal object should never be a void. It's replaced the moment they type.
-  const isSample = !value
+  // hero's focal object should never be a void. Keyed to the settled value, not
+  // the field: while the redraw is still pending the sample is genuinely what
+  // is on screen, and the caption below should not claim otherwise.
+  const isSample = !settled
 
-  // Cycle the showcase until the visitor takes over. Paused for reduced motion.
+  // Let the preview catch up once typing stops.
   useEffect(() => {
-    if (picked !== null) return undefined
+    if (settled === value) return undefined
+    const id = setTimeout(() => setSettled(value), PREVIEW_DEBOUNCE_MS)
+    return () => clearTimeout(id)
+  }, [value, settled])
+
+  // Run the showcase once through and stop, unless the visitor takes over
+  // first. It used to cycle forever, which meant a QR redraw every two seconds
+  // for as long as the tab stayed open — and two of the five styles carry a
+  // logo, which qr-code-styling cannot apply through its cheap update path, so
+  // those steps rebuild the instance outright. The early ticks landed while a
+  // phone was still parsing the app. One pass makes the same point.
+  const cycling = picked === null && tick < STYLES.length
+  useEffect(() => {
+    if (!cycling) return undefined
     const reduced =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     if (reduced) return undefined
-    const id = setInterval(
-      () => setFeatured((f) => (f + 1) % STYLES.length),
-      CYCLE_MS,
-    )
-    return () => clearInterval(id)
-  }, [picked])
+    const id = setTimeout(() => setTick((t) => t + 1), CYCLE_MS)
+    return () => clearTimeout(id)
+  }, [cycling, tick])
 
   // Always a real code: theirs once they type, a sample until then. Either way it
   // wears the style currently showing, so the strip visibly does something.
   const preview = useMemo(() => {
-    const link = value || SWATCH_URL
+    const link = settled || SWATCH_URL
     return {
       typeKey: 'url',
       type: 'Website URL',
@@ -139,7 +164,7 @@ export default function HeroQrStudio({ onStart }) {
       qrType: 'Static QR',
       design: { ...defaultDesign(), ...activeStyle.design },
     }
-  }, [value, activeStyle])
+  }, [settled, activeStyle])
 
   // URL is what the hero already does inline, so choosing it just returns the
   // visitor to the field. Every other type needs fields the hero has no room
