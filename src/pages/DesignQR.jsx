@@ -755,7 +755,13 @@ export default function DesignQR() {
                 )
               })()}
             </div>
-            <div className="relative">
+            {/* w-fit matters. The row this sits in stacks on narrow screens,
+                and as a stretched flex item this wrapper spanned the full card
+                — so the menu's right-0 pinned it to the card's right edge
+                while the button sat over on the left, leaving it floating in
+                open space with nothing to attach it to. Hugging the button
+                gives the menu the right thing to anchor against. */}
+            <div className="relative w-fit">
               {/* Names the template in effect instead of the word "Template".
                   It said only "Template" before, which left no way to tell
                   which of them the code was wearing — unworkable once a few
@@ -780,10 +786,14 @@ export default function DesignQR() {
                 </span>
                 <ChevronDown size={16} className="shrink-0" />
               </button>
+              {/* Falls from the button's left edge while the row is stacked and
+                  the button sits at the left, and from its right edge once the
+                  row spreads out and the button moves right. Either way it
+                  stays inside the card rather than hanging off an edge. */}
               {templateOpen && (
                 <div
                   role="listbox"
-                  className="absolute right-0 top-full z-20 mt-2 w-56 rounded-[10px] border border-line bg-white py-1 shadow-pop"
+                  className="absolute left-0 top-full z-20 mt-2 w-56 rounded-[10px] border border-line bg-white py-1 shadow-pop sm:left-auto sm:right-0"
                 >
                   {/* Only worth the space once the list is long enough to
                       scroll past what fits. */}
