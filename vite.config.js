@@ -59,29 +59,33 @@ function inlineStylesheet() {
   }
 }
 
-export default defineConfig({
+// Split the dependencies out of the app chunk. Everything is still loaded up
+// front, so this changes nothing about the first visit — what it fixes is every
+// visit after a deploy. As one chunk, editing a single component invalidated
+// all 636KB; split, the vendor code keeps its hash and stays cached, and only
+// the app chunk is refetched.
+const manualChunks = {
+  react: ['react', 'react-dom', 'react-router-dom'],
+  qr: ['qr-code-styling'],
+  data: ['@tanstack/react-query', 'axios'],
+  // Kept apart on purpose. Grouping these forced react-icons into the same
+  // chunk as lucide-react, and because the landing page uses lucide-react that
+  // chunk is preloaded up front — so react-icons was eagerly fetched on every
+  // visit even though only the brand marks in the scan preview and the sign-in
+  // button ever touch it.
+  icons: ['lucide-react'],
+  'icons-brand': ['react-icons/fa', 'react-icons/fa6', 'react-icons/fc'],
+}
+
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [react(), inlineStylesheet()],
   build: {
     rollupOptions: {
-      output: {
-        // Split the dependencies out of the app chunk. Everything is still
-        // loaded up front, so this changes nothing about the first visit —
-        // what it fixes is every visit after a deploy. As one chunk, editing
-        // a single component invalidated all 636KB; split, the vendor code
-        // keeps its hash and stays cached, and only the app chunk is refetched.
-        manualChunks: {
-          react: ['react', 'react-dom', 'react-router-dom'],
-          qr: ['qr-code-styling'],
-          data: ['@tanstack/react-query', 'axios'],
-          // Kept apart on purpose. Grouping these forced react-icons into the
-          // same chunk as lucide-react, and because the landing page uses
-          // lucide-react that chunk is preloaded up front — so react-icons was
-          // eagerly fetched on every visit even though only the brand marks in
-          // the scan preview and the sign-in button ever touch it.
-          icons: ['lucide-react'],
-          'icons-brand': ['react-icons/fa', 'react-icons/fa6', 'react-icons/fc'],
-        },
-      },
+      // The prerender pass (scripts/prerender.mjs) builds entry-server.jsx for
+      // Node, where dependencies stay external — and Rollup refuses to assign
+      // an external module to a manual chunk. Chunking is a delivery concern
+      // anyway, and that build is a throwaway that never ships.
+      output: isSsrBuild ? {} : { manualChunks },
     },
   },
   server: {
@@ -94,4 +98,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))
