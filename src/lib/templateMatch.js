@@ -25,9 +25,20 @@
 // template the code no longer resembles.
 //
 // With nothing picked — a fresh page, or a design edited away from the pick —
-// the most specific match wins, so the label accounts for as much of the design
-// as it can. Ties keep the earlier template, putting built-ins ahead of saved
-// ones.
+// a built-in is preferred, and only then does specificity decide.
+//
+// Preferring built-ins is not arbitrary. Saving a template stores the whole
+// design, all thirteen values, while a built-in pins two or three. So any saved
+// template matches more of the design than any built-in can, and ranking by
+// specificity alone handed every label to a saved template: a code sitting at
+// its untouched defaults was labelled "My template 1" purely because that
+// template had been saved without changing anything, and Classic — which is
+// exactly what an untouched design is — could never outrank it.
+//
+// The cost is that a design which happens to match a saved template exactly,
+// without it having been chosen here, is labelled with the built-in instead.
+// That names less of the design than it could, but it is predictable, and the
+// case that matters — the person picking a template — is handled above.
 
 const describesDesign = (tpl, design) => {
   const entries = Object.entries(tpl?.design || {})
@@ -45,14 +56,18 @@ export function findActiveTemplate(templates = [], design = {}, picked = null) {
   }
 
   let best = null
-  let bestSize = -1
+  let bestRank = null
 
   templates.forEach((tpl) => {
     if (!describesDesign(tpl, design)) return
-    const size = Object.keys(tpl.design).length
-    if (size > bestSize) {
+    const rank = [tpl.builtIn ? 1 : 0, Object.keys(tpl.design).length]
+    if (
+      !bestRank ||
+      rank[0] > bestRank[0] ||
+      (rank[0] === bestRank[0] && rank[1] > bestRank[1])
+    ) {
       best = tpl
-      bestSize = size
+      bestRank = rank
     }
   })
 

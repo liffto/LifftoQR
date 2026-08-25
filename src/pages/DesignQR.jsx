@@ -454,12 +454,17 @@ function AccordionSection({
   )
 }
 
+// builtIn marks these apart from anything the user has saved. Saving stores the
+// whole design, so a saved template always matches more of it than one of these
+// can — see findActiveTemplate for why that has to be ranked around rather than
+// by size alone.
 const BUILTIN_TEMPLATES = [
-  { label: 'Classic', design: { bodyPattern: 'square', cornerStyle: 0 } },
-  { label: 'Rounded', design: { bodyPattern: 'rounded', cornerStyle: 4 } },
-  { label: 'Dots', design: { bodyPattern: 'dots', cornerStyle: 3 } },
+  { label: 'Classic', builtIn: true, design: { bodyPattern: 'square', cornerStyle: 0 } },
+  { label: 'Rounded', builtIn: true, design: { bodyPattern: 'rounded', cornerStyle: 4 } },
+  { label: 'Dots', builtIn: true, design: { bodyPattern: 'dots', cornerStyle: 3 } },
   {
     label: 'Branded',
+    builtIn: true,
     design: {
       bodyPattern: 'classy-rounded',
       cornerStyle: 8,
@@ -543,12 +548,18 @@ export default function DesignQR() {
       persistRecord(n)
       return n
     })
-  const resetDesign = () =>
+  const resetDesign = () => {
+    // Drop the chosen template along with the design it was chosen for.
+    // Without this the pick outlived the reset: saved templates hold a whole
+    // design, so one saved at the defaults still matched the freshly reset
+    // design and kept its name on the button.
+    setPickedTemplate(null)
     setRecord((r) => {
       const n = { ...r, design: defaultDesign() }
       persistRecord(n)
       return n
     })
+  }
 
   // Edit the QR's actual content/inputs (Website URL, Wi-Fi, links, …).
   // Keeps the stored destination and (auto) name in sync. Persists to the draft
