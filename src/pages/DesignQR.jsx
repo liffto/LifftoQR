@@ -49,6 +49,7 @@ import {
   DOWNLOAD_FORMATS,
 } from '../lib/qr'
 import { findType, encodeContent, deriveContentName } from '../lib/qrTypes'
+import { findActiveTemplate, filterTemplates } from '../lib/templateMatch'
 import { compressImageFile } from '../lib/imageCompress'
 import { useSaveQr } from '../hooks/useSaveQr'
 import { useAuth } from '../context/AuthContext'
@@ -570,6 +571,10 @@ export default function DesignQR() {
   const [editingUrl, setEditingUrl] = useState(false)
   const [slugDraft, setSlugDraft] = useState(record.slug)
   const [templateOpen, setTemplateOpen] = useState(false)
+  const [templateQuery, setTemplateQuery] = useState('')
+  // The template the person chose here, if they chose one. Only a tiebreak —
+  // it is ignored the moment the design stops matching it.
+  const [pickedTemplate, setPickedTemplate] = useState(null)
   const [saveTemplate, setSaveTemplate] = useState(false)
   const [showSaveTplModal, setShowSaveTplModal] = useState(false)
   const [format, setFormat] = useState('PNG')
@@ -597,9 +602,19 @@ export default function DesignQR() {
 
   const allTemplates = [...BUILTIN_TEMPLATES, ...userTemplates]
 
+  // Named rather than remembered — see src/lib/templateMatch.js for why the
+  // template in effect is derived from the design itself.
+  const activeTemplate = findActiveTemplate(allTemplates, design, pickedTemplate)
+
+  // A saved-template list can grow without limit, so past a certain size
+  // scrolling to find one stops being reasonable.
+  const visibleTemplates = filterTemplates(allTemplates, templateQuery)
+
   const applyTemplate = (tpl) => {
     updateDesign(tpl.design)
+    setPickedTemplate(tpl.label)
     setTemplateOpen(false)
+    setTemplateQuery('')
   }
 
   const saveQrToApi = async (currentRecord) => {
@@ -741,35 +756,91 @@ export default function DesignQR() {
               })()}
             </div>
             <div className="relative">
+              {/* Names the template in effect instead of the word "Template".
+                  It said only "Template" before, which left no way to tell
+                  which of them the code was wearing — unworkable once a few
+                  have been saved, let alone a hundred. */}
               <button
                 type="button"
                 onClick={() => setTemplateOpen((v) => !v)}
-                className="flex h-10 items-center gap-2 rounded-[10px] border border-primary px-4 text-sm font-medium text-primary hover:bg-primary-50"
+                aria-expanded={templateOpen}
+                aria-haspopup="listbox"
+                aria-label={
+                  activeTemplate
+                    ? `Template: ${activeTemplate.label}. Choose another`
+                    : 'Choose a template'
+                }
+                className="flex h-10 max-w-[240px] items-center gap-2 rounded-[10px] border border-primary px-4 text-sm font-medium text-primary hover:bg-primary-50"
               >
-                Template <ChevronDown size={16} />
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-primary/60 shrink-0">
+                  Template
+                </span>
+                <span className="truncate">
+                  {activeTemplate ? activeTemplate.label : 'Choose'}
+                </span>
+                <ChevronDown size={16} className="shrink-0" />
               </button>
               {templateOpen && (
-                <div className="absolute right-0 top-full z-20 mt-2 w-48 rounded-[10px] border border-line bg-white py-1 shadow-pop">
-                  {allTemplates.length === 0 && (
-                    <p className="px-4 py-3 text-xs text-ink-muted">
-                      No templates yet.
-                    </p>
+                <div
+                  role="listbox"
+                  className="absolute right-0 top-full z-20 mt-2 w-56 rounded-[10px] border border-line bg-white py-1 shadow-pop"
+                >
+                  {/* Only worth the space once the list is long enough to
+                      scroll past what fits. */}
+                  {allTemplates.length > 8 && (
+                    <div className="px-2 pb-1 pt-1">
+                      <input
+                        type="text"
+                        value={templateQuery}
+                        onChange={(e) => setTemplateQuery(e.target.value)}
+                        placeholder={`Search ${allTemplates.length} templates`}
+                        aria-label="Search templates"
+                        className="h-8 w-full rounded-[8px] border border-line px-2.5 text-[13px] text-ink outline-none focus:border-primary"
+                      />
+                    </div>
                   )}
-                  {allTemplates.map((t) => (
-                    <button
-                      key={t.label}
-                      type="button"
-                      onClick={() => applyTemplate(t)}
-                      className="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-ink hover:bg-canvas"
-                    >
-                      <span>{t.label}</span>
-                      {userTemplates.find((u) => u.label === t.label) && (
-                        <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
-                          Custom
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                  {/* Capped so a long list scrolls inside the menu rather than
+                      running off the bottom of the screen. */}
+                  <div className="max-h-[280px] overflow-y-auto">
+                    {allTemplates.length === 0 && (
+                      <p className="px-4 py-3 text-xs text-ink-muted">
+                        No templates yet.
+                      </p>
+                    )}
+                    {allTemplates.length > 0 && visibleTemplates.length === 0 && (
+                      <p className="px-4 py-3 text-xs text-ink-muted">
+                        Nothing matches “{templateQuery.trim()}”.
+                      </p>
+                    )}
+                    {visibleTemplates.map((t) => {
+                      const isActive = activeTemplate?.label === t.label
+                      return (
+                        <button
+                          key={t.label}
+                          type="button"
+                          role="option"
+                          aria-selected={isActive}
+                          onClick={() => applyTemplate(t)}
+                          className={`flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-canvas ${
+                            isActive
+                              ? 'font-semibold text-primary'
+                              : 'text-ink'
+                          }`}
+                        >
+                          <Check
+                            size={14}
+                            className={`shrink-0 ${isActive ? 'opacity-100' : 'opacity-0'}`}
+                          />
+                          <span className="truncate flex-1">{t.label}</span>
+                          {userTemplates.find((u) => u.label === t.label) && (
+                            <span className="shrink-0 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
+                              Custom
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </div>

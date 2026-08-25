@@ -61,17 +61,36 @@ export default function LoginPanel({ compact = false, onContinueAsGuest }) {
         </div>
       )}
 
-      {/* The provider is scoped to the button rather than the whole app: it
+      {/* Without a client id the button still renders and still opens Google,
+          which then refuses the request and shows its own "Access blocked:
+          Authorization Error — Missing required parameter: client_id". That
+          reads like the account is in trouble rather than the build being
+          misconfigured, so say what it actually is and do not send anyone to
+          Google to find out. Only reachable in a build where the variable is
+          absent; where it is set, this branch is constant-folded away and never
+          ships.
+
+          The provider is scoped to the button rather than the whole app: it
           pulls in Google's gsi/client script on mount, and nobody looking at
           the landing page needs that. */}
-      <GoogleOAuthProvider clientId={googleClientId || ''}>
-        <GoogleSignInButton
-          disabled={googleLogin.isPending}
-          loading={googleLogin.isPending}
-          onSuccess={handleGoogleSuccess}
-          onError={handleGoogleError}
-        />
-      </GoogleOAuthProvider>
+      {googleClientId ? (
+        <GoogleOAuthProvider clientId={googleClientId}>
+          <GoogleSignInButton
+            disabled={googleLogin.isPending}
+            loading={googleLogin.isPending}
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+          />
+        </GoogleOAuthProvider>
+      ) : (
+        <div className="flex items-start gap-2.5 rounded-[10px] border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-800">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span>
+            Sign-in isn&apos;t configured in this build — VITE_CLIENT_ID is
+            missing. This is a build setting, not a problem with your account.
+          </span>
+        </div>
+      )}
 
       <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-ink-muted">
         <ShieldCheck size={13} className="shrink-0" />
