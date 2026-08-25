@@ -15,7 +15,6 @@ import {
   BarChart2,
   Zap,
   Plus,
-  TrendingUp,
   ExternalLink,
   LayoutGrid,
   List,
@@ -32,6 +31,7 @@ import { useQrs, useDeleteQr, useSetQrStatus } from '../hooks/useQrs'
 import { useQrScanCount } from '../hooks/useQrScanCount'
 import { DOWNLOAD_FORMATS } from '../lib/qr'
 import { findType } from '../lib/qrTypes'
+import { dashboardStats } from '../lib/dashboardStats'
 import QRView from '../components/QRView'
 import Layout from '../components/Layout'
 import { Toggle } from '../components/ui'
@@ -1030,17 +1030,19 @@ export default function Dashboard() {
     statusMutation.mutate({ id, typeKey: row.typeKey, status })
   }
 
-  const totalScans = list.reduce((s, r) => s + (r.scans || 0), 0)
-  const dynamicCount = list.filter(
-    (r) => normaliseType(r.qrType) === 'Dynamic QR',
-  ).length
+  // Derived in src/lib/dashboardStats.js so the figures can be tested without
+  // signing in. See the note there on why the two "vs last week" style
+  // subtitles this replaced could not be made real.
+  // Not `total` — that name is taken further up by the count of the *filtered*
+  // rows behind the table's footer. This one counts everything the account has.
+  const { total: totalCodes, totalScans, dynamicCount, codesSub, scansSub } =
+    dashboardStats(list)
 
   const STATS = [
     {
       label: 'Total QR Codes',
-      value: list.length,
-      sub: '+2 this week',
-      up: true,
+      value: totalCodes,
+      sub: codesSub,
       icon: QrCode,
       cls: 'bg-primary/10 text-primary',
       ring: 'ring-primary/15',
@@ -1048,8 +1050,7 @@ export default function Dashboard() {
     {
       label: 'Total Scans',
       value: totalScans.toLocaleString(),
-      sub: '+18% vs last week',
-      up: true,
+      sub: scansSub,
       icon: BarChart2,
       cls: 'bg-amber-50 text-amber-500',
       ring: 'ring-amber-100',
@@ -1058,7 +1059,6 @@ export default function Dashboard() {
       label: 'Dynamic QR',
       value: dynamicCount,
       sub: 'real-time redirects',
-      up: null,
       icon: Zap,
       cls: 'bg-success/10 text-success',
       ring: 'ring-success/15',
@@ -1074,7 +1074,7 @@ export default function Dashboard() {
         ))}
       {/* Stats — stacked on mobile, single bar on desktop */}
       <div className="bg-white rounded-[10px] shadow-card flex flex-col divide-y divide-line sm:flex-row sm:divide-y-0 sm:divide-x mb-5">
-        {STATS.map(({ label, value, sub, up, icon: Icon, cls }) => (
+        {STATS.map(({ label, value, sub, icon: Icon, cls }) => (
           <div
             key={label}
             className="flex-1 flex items-center gap-3 px-5 py-3.5 min-w-0"
@@ -1092,10 +1092,7 @@ export default function Dashboard() {
                 <span className="text-xl font-bold text-ink leading-none">
                   {value}
                 </span>
-                <span
-                  className={`inline-flex items-center gap-0.5 text-[11px] font-medium ${up ? 'text-success' : 'text-ink-faint'}`}
-                >
-                  {up && <TrendingUp size={10} className="shrink-0" />}
+                <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-ink-faint">
                   {sub}
                 </span>
               </div>

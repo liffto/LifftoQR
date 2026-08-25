@@ -11,7 +11,6 @@ import {
   QrCode,
   CreditCard,
   Info,
-  TrendingUp,
   CheckCheck,
   Check,
   X,
