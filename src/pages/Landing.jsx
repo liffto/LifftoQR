@@ -40,6 +40,13 @@ import Reveal from '../components/Reveal'
 const loadScanPreview = () => import('../components/ScanPreview')
 const ScanPreview = lazy(loadScanPreview)
 
+// Holds the section's shape open while the cards are still on their way, so
+// nothing below them jumps. Shared by the prerender and the Suspense fallback —
+// they have to be identical for hydration to match.
+const SCAN_DEMO_PLACEHOLDER = (
+  <div className="min-h-[420px] w-full" aria-busy="true" />
+)
+
 const NAV_LINKS = [
   { label: 'QR types', href: '#create' },
   { label: 'Features', href: '#features' },
@@ -241,7 +248,20 @@ export default function Landing() {
   const navigate = useNavigate()
   const { openLogin } = useLoginModal()
   const { isAuthenticated } = useAuth()
-  const [theme, setThemeVal] = useState(getTheme)
+  // Both of these start at the value the prerender necessarily produced. A
+  // build has no localStorage, so the baked HTML is always the logged-out,
+  // light-theme page; if the first client render disagreed, hydration would
+  // find a mismatch and throw the markup away. They correct themselves in the
+  // effect below, one frame later. The palette is never wrong in the meantime —
+  // the inline script in index.html sets the dark class before the first paint,
+  // so this is only about which icon and which label are showing.
+  const [theme, setThemeVal] = useState('light')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    setThemeVal(getTheme())
+  }, [])
 
   // Pull the scan demos down once the browser is idle, so they are ready by
   // the time anyone scrolls that far without competing with the first paint.
@@ -420,7 +440,7 @@ export default function Landing() {
             >
               {/* A signed-out visitor does not have a dashboard to go to, and
                   this is the only button in the header. */}
-              {isAuthenticated ? 'Go to dashboard' : 'Sign in'}
+              {mounted && isAuthenticated ? 'Go to dashboard' : 'Sign in'}
             </button>
             <button
               type="button"
@@ -658,11 +678,23 @@ export default function Landing() {
             <div className="lg:col-span-7">
               <div className="flex flex-wrap sm:flex-nowrap justify-center gap-6 lg:gap-8">
                 {/* One boundary for all three so they arrive together rather
-                    than popping in one at a time. The min-height holds the
-                    section's shape open so nothing below it jumps. */}
-                <Suspense
-                  fallback={<div className="min-h-[420px] w-full" aria-busy="true" />}
-                >
+                    than popping in one at a time, and held back until after
+                    hydration.
+
+                    The `mounted` gate is what keeps hydration clean.
+                    renderToString cannot wait for a lazy chunk, so the
+                    prerendered HTML contains this placeholder. If the client's
+                    first render produced the cards instead, React would find a
+                    boundary the server never finished, discard it and rebuild
+                    it from scratch — React error #419, which is exactly what
+                    this page threw before the gate was added. Rendering the
+                    same placeholder on both sides means the trees match; the
+                    real cards mount a frame later, still far ahead of anyone
+                    scrolling this far down. */}
+                {!mounted ? (
+                  SCAN_DEMO_PLACEHOLDER
+                ) : (
+                <Suspense fallback={SCAN_DEMO_PLACEHOLDER}>
                 {SCAN_DEMOS.map((d) => (
                   <figure key={d.label} className="shrink-0">
                     <ScanPreview record={d.record} />
@@ -677,6 +709,7 @@ export default function Landing() {
                   </figure>
                 ))}
                 </Suspense>
+                )}
               </div>
             </div>
           </div>

@@ -28,14 +28,15 @@
   "packageManager": "pnpm@10.15.0",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings 32",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:client": "vite build"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",

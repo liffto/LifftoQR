@@ -4,9 +4,14 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 import { useGoogleLogin } from '../hooks/useGoogleLogin'
 import GoogleSignInButton from './GoogleSignInButton'
 
-// Read at module scope, so it is evaluated when this chunk loads rather than
-// on every render.
+// Read once when this chunk loads, and warned about once — inside the
+// component this fired on every render, which on a page that re-renders as you
+// type buried the console.
 const googleClientId = import.meta.env.VITE_CLIENT_ID
+
+if (!googleClientId) {
+  console.warn('VITE_CLIENT_ID is missing — Google sign-in will not work.')
+}
 
 // The sign-in form itself, with no opinion about how it is framed — the modal
 // wraps it in a dialog. Keeping it separate means the Google button, its error
@@ -17,10 +22,6 @@ const googleClientId = import.meta.env.VITE_CLIENT_ID
 export default function LoginPanel({ compact = false, onContinueAsGuest }) {
   const googleLogin = useGoogleLogin()
   const [error, setError] = useState('')
-
-  if (!googleClientId) {
-    console.warn('VITE_CLIENT_ID is missing — Google sign-in will not work.')
-  }
 
   const handleGoogleSuccess = (idToken) => {
     setError('')

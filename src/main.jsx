@@ -38,8 +38,23 @@ function Root() {
   )
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const container = document.getElementById('root')
+const tree = (
   <React.StrictMode>
     <Root />
-  </React.StrictMode>,
+  </React.StrictMode>
 )
+
+// The landing page is baked into its HTML at build time, so there is already a
+// real page on screen by the time this runs — adopt it rather than rebuild it.
+// Every other route is served a plain shell and mounts normally.
+//
+// The path check is not redundant with the marker. Vercel rewrites unknown
+// paths to a file, and if that ever pointed at the prerendered one, hydrating
+// the landing markup while the router renders something else would mismatch
+// every node. Cheap insurance against a config change made elsewhere.
+if (container.dataset.prerendered === '/' && window.location.pathname === '/') {
+  ReactDOM.hydrateRoot(container, tree)
+} else {
+  ReactDOM.createRoot(container).render(tree)
+}

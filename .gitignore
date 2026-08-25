@@ -27,3 +27,6 @@ venv/
 api/uploads/**
 !api/uploads/avatars/
 !api/uploads/avatars/.gitkeep
+# Throwaway server bundle from scripts/prerender.mjs (deleted on success,
+# left behind if the build fails)
+.prerender-ssr
