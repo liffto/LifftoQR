@@ -4,11 +4,9 @@ import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './middleware/ProtectedRoute'
 import PublicRoute from './middleware/PublicRoute'
 
-// The two ways a stranger arrives stay in the main bundle, because splitting
-// an entry point only adds a round trip before anything can render: the
-// landing page, and the page a scanned code opens. Nobody hits both.
+// The landing page is the one thing that must never wait on a second round
+// trip, so it stays in the main bundle.
 import Landing from './pages/Landing'
-import ScanLanding from './pages/ScanLanding'
 
 // Everything else is fetched when it is actually routed to. A first-time
 // visitor was downloading and parsing the dashboard, the design studio, the
@@ -38,6 +36,12 @@ const page = (load) =>
       }),
   )
 
+// Split from the landing page rather than shipped alongside it. The two are
+// mutually exclusive — you either arrive at the site or you scanned a code —
+// yet every visitor was downloading both. Making this one lazy costs a scanner
+// nothing measurable: the page cannot render until getPublicQr comes back, and
+// the chunk is fetched in parallel with that request.
+const ScanLanding = page(() => import('./pages/ScanLanding'))
 const Login = page(() => import('./pages/Login'))
 const Dashboard = page(() => import('./pages/Dashboard'))
 const CreateUrl = page(() => import('./pages/CreateUrl'))

@@ -73,7 +73,13 @@ export default defineConfig({
           react: ['react', 'react-dom', 'react-router-dom'],
           qr: ['qr-code-styling'],
           data: ['@tanstack/react-query', 'axios'],
-          icons: ['lucide-react', 'react-icons/fa', 'react-icons/fa6'],
+          // Kept apart on purpose. Grouping these forced react-icons into the
+          // same chunk as lucide-react, and because the landing page uses
+          // lucide-react that chunk is preloaded up front — so react-icons was
+          // eagerly fetched on every visit even though only the brand marks in
+          // the scan preview and the sign-in button ever touch it.
+          icons: ['lucide-react'],
+          'icons-brand': ['react-icons/fa', 'react-icons/fa6', 'react-icons/fc'],
         },
       },
     },

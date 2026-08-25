@@ -1,7 +1,12 @@
 import { useState } from 'react'
 import { ShieldCheck, AlertCircle } from 'lucide-react'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 import { useGoogleLogin } from '../hooks/useGoogleLogin'
 import GoogleSignInButton from './GoogleSignInButton'
+
+// Read at module scope, so it is evaluated when this chunk loads rather than
+// on every render.
+const googleClientId = import.meta.env.VITE_CLIENT_ID
 
 // The sign-in form itself, with no opinion about how it is framed — the modal
 // wraps it in a dialog. Keeping it separate means the Google button, its error
@@ -12,6 +17,10 @@ import GoogleSignInButton from './GoogleSignInButton'
 export default function LoginPanel({ compact = false, onContinueAsGuest }) {
   const googleLogin = useGoogleLogin()
   const [error, setError] = useState('')
+
+  if (!googleClientId) {
+    console.warn('VITE_CLIENT_ID is missing — Google sign-in will not work.')
+  }
 
   const handleGoogleSuccess = (idToken) => {
     setError('')
@@ -51,12 +60,17 @@ export default function LoginPanel({ compact = false, onContinueAsGuest }) {
         </div>
       )}
 
-      <GoogleSignInButton
-        disabled={googleLogin.isPending}
-        loading={googleLogin.isPending}
-        onSuccess={handleGoogleSuccess}
-        onError={handleGoogleError}
-      />
+      {/* The provider is scoped to the button rather than the whole app: it
+          pulls in Google's gsi/client script on mount, and nobody looking at
+          the landing page needs that. */}
+      <GoogleOAuthProvider clientId={googleClientId || ''}>
+        <GoogleSignInButton
+          disabled={googleLogin.isPending}
+          loading={googleLogin.isPending}
+          onSuccess={handleGoogleSuccess}
+          onError={handleGoogleError}
+        />
+      </GoogleOAuthProvider>
 
       <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-ink-muted">
         <ShieldCheck size={13} className="shrink-0" />
