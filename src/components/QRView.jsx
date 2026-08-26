@@ -7,6 +7,12 @@ import {
 } from 'react'
 import QRCodeStyling from 'qr-code-styling'
 import { buildQRConfig } from '../lib/qr'
+import {
+  frameAddsNothing,
+  frameGeometry,
+  framedSvg,
+  drawFramedCanvas,
+} from '../lib/qrFrame'
 
 // On-screen previews are small (down to ~36px thumbnails), and qr-code-styling
 // rasterizes PNG/JPEG/WEBP at the instance's render size — so downloading the
@@ -50,6 +56,90 @@ const gradientShape = (config) =>
   ]
     .map((opts) => (opts?.gradient ? '1' : '0'))
     .join('')
+
+const MIME = {
+  png: 'image/png',
+  jpeg: 'image/jpeg',
+  jpg: 'image/jpeg',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+}
+
+const loadImage = (blob) =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(img)
+    }
+    img.onerror = (err) => {
+      URL.revokeObjectURL(url)
+      reject(err)
+    }
+    img.src = url
+  })
+
+// Render the code with its frame drawn around it.
+//
+// qr-code-styling has no concept of a frame, so it cannot produce this: it
+// draws the code, and the frame is composited around the result. SVG exports
+// nest the generated markup inside a frame built from the same measurements the
+// preview uses; raster exports draw onto a canvas, which has the page's fonts
+// and so gets the label in Poppins.
+async function framedBlob(record, extension, size) {
+  const design = record?.design || {}
+  const opts = {
+    frameKey: design.frame,
+    text: design.frameText || 'SCAN ME',
+    accent: design.bodyColor1 || '#1B59F5',
+    background: design.background || '#FFFFFF',
+    size,
+  }
+
+  const qr = new QRCodeStyling(buildQRConfig(record, size))
+
+  if (extension === 'svg') {
+    const raw = await qr.getRawData('svg')
+    const markup = typeof raw === 'string' ? raw : await raw.text()
+    return new Blob([framedSvg({ qrSvgMarkup: markup, ...opts })], {
+      type: MIME.svg,
+    })
+  }
+
+  const image = await loadImage(await qr.getRawData('png'))
+  const geo = frameGeometry(opts.frameKey, size, opts.text)
+  const canvas = document.createElement('canvas')
+  canvas.width = geo.width
+  canvas.height = geo.height
+  const ctx = canvas.getContext('2d')
+
+  // Without this the label can be drawn before Poppins has loaded and come out
+  // in the fallback face — the sort of thing that only shows up on a cold load.
+  try {
+    await document.fonts?.ready
+  } catch {
+    /* fonts API unavailable — the fallback face is still legible */
+  }
+
+  drawFramedCanvas(ctx, { qrImage: image, ...opts })
+  return new Promise((resolve) =>
+    canvas.toBlob(resolve, MIME[extension] || MIME.png, 0.92),
+  )
+}
+
+const saveBlob = (blob, filename) => {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  // Revoked on a later turn of the loop; revoking immediately can cancel the
+  // download in some browsers before it has read the blob.
+  setTimeout(() => URL.revokeObjectURL(url), 10000)
+}
 
 const QRView = forwardRef(function QRView(
   { record, size = 280, className = '' },
@@ -104,6 +194,32 @@ const QRView = forwardRef(function QRView(
   useImperativeHandle(ref, () => ({
     download: async (format = 'PNG', name = 'qr-code') => {
       const extension = format.toLowerCase()
+
+      // A framed code cannot come out of qr-code-styling, so it is composited
+      // here and saved directly. SVG is built at the preview's own size since
+      // it scales without loss; raster gets the full export size.
+      if (!frameAddsNothing(record?.design?.frame)) {
+        const blob = await framedBlob(
+          record,
+          extension,
+          extension === 'svg' ? size : DOWNLOAD_SIZE,
+        )
+        const filename = `${name}.${extension}`
+        if (blob && isIOS && typeof navigator.share === 'function') {
+          try {
+            const file = new File([blob], filename, { type: blob.type })
+            if (navigator.canShare?.({ files: [file] })) {
+              await navigator.share({ files: [file], title: name })
+              return
+            }
+          } catch (err) {
+            if (err?.name === 'AbortError') return
+          }
+        }
+        if (blob) saveBlob(blob, filename)
+        return
+      }
+
       // SVG is vector — resolution-independent, so the on-screen instance is fine.
       // Raster formats render a fresh high-resolution instance from the same
       // config so the exported image isn't limited to the preview size.
