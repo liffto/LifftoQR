@@ -1,3 +1,5 @@
+import { isDynamicRecord, isInactiveRecord } from './qrRecord'
+
 // Narrowing the dashboard list: the search box, the type pills, and the status
 // pills. Kept here rather than inline so it can be tested — the dashboard is
 // behind sign-in, so a unit test is the only way to check what a given set of
@@ -7,17 +9,6 @@ export const TYPE_FILTERS = ['All', 'Dynamic QR', 'Static QR']
 export const STATUS_FILTERS = ['Any status', 'Active', 'Inactive']
 
 const normaliseType = (t) => (t === 'Statistic' ? 'Static QR' : t)
-
-export const isDynamicRecord = (row) =>
-  Boolean(row?.dynamic) || normaliseType(row?.qrType) === 'Dynamic QR'
-
-// Anything not explicitly inactive reads as active, matching the pill in the
-// list. The API sends the string; older records have carried a bare boolean.
-export const isInactiveRecord = (row) =>
-  row?.status === 'Inactive' ||
-  row?.status === false ||
-  row?.status === 0 ||
-  row?.status === 'false'
 
 // Active and Inactive are properties of a redirect, and a static code has no
 // redirect to enable or disable — it carries its content in the pattern, so
