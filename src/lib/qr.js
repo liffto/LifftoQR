@@ -104,7 +104,13 @@ export const CORNER_OPTIONS = [
 ]
 
 // --- frames ---------------------------------------------------------------
-// Each frame has a `style` field consumed by QRView to render distinctly.
+// Each frame has a `style` field, read by QRFramePreview in DesignQR — not by
+// QRView, and deliberately absent from buildQRConfig below.
+//
+// Frames are drawn in React around the code, not by qr-code-styling, which has
+// no concept of them. So they exist only on screen: nothing composites a frame
+// into a download, and the dashboard does not draw them either. Worth knowing
+// before hunting for a frame bug in the QR pipeline — it is not there.
 export const FRAME_OPTIONS = [
   { key: 'none', label: 'None', style: 'none' },
   { key: 'border', label: 'Border', style: 'border-only' },
