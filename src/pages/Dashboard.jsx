@@ -33,6 +33,13 @@ import { DOWNLOAD_FORMATS } from '../lib/qr'
 import { findType } from '../lib/qrTypes'
 import { destinationUrl } from '../lib/qrDestination'
 import { dashboardStats } from '../lib/dashboardStats'
+import {
+  TYPE_FILTERS,
+  STATUS_FILTERS,
+  filterRecords,
+  filtersContradict,
+  isNarrowed,
+} from '../lib/dashboardFilters'
 import QRView from '../components/QRView'
 import Layout from '../components/Layout'
 import { Toggle } from '../components/ui'
@@ -58,7 +65,6 @@ const buildCloneDraft = (row) => {
   }
 }
 
-const FILTERS = ['All', 'Dynamic QR', 'Static QR']
 const BATCH = 8
 const VIEWS = ['card', 'table']
 
@@ -939,6 +945,7 @@ export default function Dashboard() {
   const statusMutation = useSetQrStatus()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('All')
+  const [status, setStatusFilter] = useState('Any status')
   const [visibleCount, setVisibleCount] = useState(BATCH)
   const [loadingMore, setLoadingMore] = useState(false)
   const [selectedRow, setSelectedRow] = useState(null)
@@ -965,18 +972,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     setVisibleCount(BATCH)
-  }, [query, filter])
+  }, [query, filter, status])
 
-  const q = query.trim().toLowerCase()
-  const derived = list.filter((r) => {
-    const matchesQuery =
-      !q ||
-      r.name.toLowerCase().includes(q) ||
-      (r.url || '').toLowerCase().includes(q) ||
-      (r.slug || '').toLowerCase().includes(q)
-    const matchesFilter = filter === 'All' || normaliseType(r.qrType) === filter
-    return matchesQuery && matchesFilter
-  })
+  const criteria = { query, type: filter, status }
+  const derived = filterRecords(list, criteria)
+  const narrowed = isNarrowed(criteria)
+  // Static codes have no redirect to switch off, so this pair can never match.
+  const impossible = filtersContradict(criteria)
 
   const total = derived.length
   const visible = derived.slice(0, visibleCount)
@@ -1129,7 +1131,10 @@ export default function Dashboard() {
       {/* Table card */}
       <div className="bg-white rounded-[10px] shadow-card">
         {/* Toolbar */}
-        <div className="flex flex-col gap-3 px-4 py-3.5 border-b border-line sm:flex-row sm:items-center">
+        {/* flex-wrap because the row now carries a search box and six pills:
+            below roughly a laptop width the status group drops to its own line
+            rather than squeezing the search field down to nothing. */}
+        <div className="flex flex-col gap-3 px-4 py-3.5 border-b border-line sm:flex-row sm:flex-wrap sm:items-center">
           {/* Search — on mobile the view toggle sits beside it so the filter
               row below gets the full width and doesn't feel cramped */}
           <div className="flex items-center gap-2 sm:flex-1">
@@ -1164,11 +1169,12 @@ export default function Dashboard() {
 
           {/* Filters — full-width evenly-spaced pills on mobile, auto on desktop */}
           <div className="flex items-center gap-1.5 sm:shrink-0">
-            {FILTERS.map((f) => (
+            {TYPE_FILTERS.map((f) => (
               <button
                 key={f}
                 type="button"
                 onClick={() => setFilter(f)}
+                aria-pressed={filter === f}
                 className={`h-9 flex-1 whitespace-nowrap px-3 rounded-[10px] text-xs font-bold transition-colors sm:flex-none sm:px-3.5 ${
                   filter === f
                     ? 'bg-primary text-white shadow-sm shadow-primary/25'
@@ -1179,6 +1185,35 @@ export default function Dashboard() {
                     each pill on one line; show the full label on desktop */}
                 <span className="sm:hidden">{f.replace(' QR', '')}</span>
                 <span className="hidden sm:inline">{f}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Status — its own row rather than three more pills alongside the
+              type ones, which would have put six across a phone. Only dynamic
+              codes can carry a status, so choosing one narrows to those: a
+              static code has no redirect to switch off, and the list already
+              shows no status on a static row. */}
+          <div className="flex items-center gap-1.5 sm:shrink-0">
+            {STATUS_FILTERS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setStatusFilter(s)}
+                aria-pressed={status === s}
+                title={
+                  s === 'Any status'
+                    ? 'Show codes whatever their status'
+                    : `Show ${s.toLowerCase()} codes — dynamic only`
+                }
+                className={`h-9 flex-1 whitespace-nowrap px-3 rounded-[10px] text-xs font-bold transition-colors sm:flex-none sm:px-3.5 ${
+                  status === s
+                    ? 'bg-ink text-white shadow-sm'
+                    : 'bg-canvas text-ink-muted hover:bg-line/60'
+                }`}
+              >
+                <span className="sm:hidden">{s.replace(' status', '')}</span>
+                <span className="hidden sm:inline">{s}</span>
               </button>
             ))}
           </div>
@@ -1245,17 +1280,20 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="font-bold text-ink mb-1">
-                  {q || filter !== 'All'
-                    ? 'No matching QR codes'
-                    : 'No QR codes yet'}
+                  {narrowed ? 'No matching QR codes' : 'No QR codes yet'}
                 </p>
-                <p className="text-sm text-ink-muted max-w-[220px] mx-auto leading-relaxed">
-                  {q || filter !== 'All'
-                    ? 'Try adjusting your search or filter'
-                    : 'Create your first QR code to get started'}
+                <p className="text-sm text-ink-muted max-w-[240px] mx-auto leading-relaxed">
+                  {/* Static + a status can never match, and saying "try
+                      adjusting your filter" for a combination that is empty by
+                      definition just sends people round the same loop. */}
+                  {impossible
+                    ? 'Static codes carry their content in the pattern, so there is no redirect to switch on or off — only dynamic codes have a status.'
+                    : narrowed
+                      ? 'Try adjusting your search or filter'
+                      : 'Create your first QR code to get started'}
                 </p>
               </div>
-              {!q && filter === 'All' && (
+              {!narrowed && (
                 <button
                   type="button"
                   onClick={() => {
