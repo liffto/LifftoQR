@@ -31,6 +31,7 @@ import { useQrs, useDeleteQr, useSetQrStatus } from '../hooks/useQrs'
 import { useQrScanCount } from '../hooks/useQrScanCount'
 import { DOWNLOAD_FORMATS } from '../lib/qr'
 import { findType } from '../lib/qrTypes'
+import { destinationUrl } from '../lib/qrDestination'
 import { dashboardStats } from '../lib/dashboardStats'
 import QRView from '../components/QRView'
 import Layout from '../components/Layout'
@@ -233,6 +234,9 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
   const fmtWrapRef = useRef(null)
   const typeLabel = normaliseType(row.qrType)
   const isDynamic = Boolean(row.dynamic) || typeLabel === 'Dynamic QR'
+  // null for the types that encode their content directly and have nowhere to
+  // point — see src/lib/qrDestination.js.
+  const destination = destinationUrl(row)
   const { scanCount, connectionStatus } = useQrScanCount(
     isDynamic ? row.slug : null,
   )
@@ -346,25 +350,34 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
 
         {/* ── Info grid ── */}
         <div className="px-5 py-4 space-y-3.5">
-          {/* Destination URL */}
-          <div>
-            <p className="text-[10px] font-bold text-ink-faint uppercase tracking-widest mb-1">
-              Destination URL
-            </p>
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-ink-soft truncate flex-1">{row.url}</p>
-              <a
-                href={row.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="shrink-0 text-ink-faint hover:text-primary transition-colors"
-                title="Open URL"
-              >
-                <ExternalLink size={13} />
-              </a>
+          {/* Destination URL — only for codes that point somewhere openable.
+              This used to render for every type, so a Wi-Fi code showed the
+              heading over an empty line next to an open-link icon whose href
+              was "". An empty href resolves to the current page, so the only
+              thing that link could do was reload the dashboard behind the
+              dialog. */}
+          {destination && (
+            <div>
+              <p className="text-[10px] font-bold text-ink-faint uppercase tracking-widest mb-1">
+                Destination URL
+              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-ink-soft truncate flex-1">
+                  {row.url}
+                </p>
+                <a
+                  href={destination}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="shrink-0 text-ink-faint hover:text-primary transition-colors"
+                  title="Open URL"
+                >
+                  <ExternalLink size={13} />
+                </a>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Short URL — Dynamic QRs only (Static QRs encode content directly) */}
           {isDynamic && (
