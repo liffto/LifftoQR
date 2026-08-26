@@ -34,12 +34,11 @@ import { findType } from '../lib/qrTypes'
 import { destinationUrl } from '../lib/qrDestination'
 import { dashboardStats } from '../lib/dashboardStats'
 import {
-  TYPE_FILTERS,
-  STATUS_FILTERS,
   filterRecords,
   filtersContradict,
   isNarrowed,
 } from '../lib/dashboardFilters'
+import QrFilterMenu from '../components/QrFilterMenu'
 import QRView from '../components/QRView'
 import Layout from '../components/Layout'
 import { Toggle } from '../components/ui'
@@ -977,6 +976,19 @@ export default function Dashboard() {
   const criteria = { query, type: filter, status }
   const derived = filterRecords(list, criteria)
   const narrowed = isNarrowed(criteria)
+  // The chosen filters in words, for the count line under the list. The search
+  // term is left out — whoever typed it can see it in the field.
+  const filterSummary = [
+    filter !== 'All' ? filter.replace(' QR', '') : null,
+    status !== 'Any status' ? status : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  const clearFilters = () => {
+    setQuery('')
+    setFilter('All')
+    setStatusFilter('Any status')
+  }
   // Static codes have no redirect to switch off, so this pair can never match.
   const impossible = filtersContradict(criteria)
 
@@ -1131,12 +1143,9 @@ export default function Dashboard() {
       {/* Table card */}
       <div className="bg-white rounded-[10px] shadow-card">
         {/* Toolbar */}
-        {/* flex-wrap because the row now carries a search box and six pills:
-            below roughly a laptop width the status group drops to its own line
-            rather than squeezing the search field down to nothing. */}
-        <div className="flex flex-col gap-3 px-4 py-3.5 border-b border-line sm:flex-row sm:flex-wrap sm:items-center">
-          {/* Search — on mobile the view toggle sits beside it so the filter
-              row below gets the full width and doesn't feel cramped */}
+        <div className="flex flex-col gap-3 px-4 py-3.5 border-b border-line sm:flex-row sm:items-center">
+          {/* Search, with the filters folded into its right edge. On mobile the
+              view toggle sits alongside so the field still gets the width. */}
           <div className="flex items-center gap-2 sm:flex-1">
             <div className="relative flex-1">
               <Search
@@ -1148,74 +1157,39 @@ export default function Dashboard() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by name, URL or slug…"
-                className="w-full pl-10 h-10 rounded-[10px] bg-canvas border border-transparent focus:border-primary focus:bg-white outline-none text-sm text-ink placeholder:text-ink-faint transition"
+                // Right padding reserves the filter button, and more again when
+                // the clear cross joins it, so a long query never runs under
+                // either.
+                className={`w-full pl-10 h-10 rounded-[10px] bg-canvas border border-transparent focus:border-primary focus:bg-white outline-none text-sm text-ink placeholder:text-ink-faint transition ${
+                  query ? 'pr-[68px]' : 'pr-11'
+                }`}
               />
               {query && (
                 <button
                   type="button"
                   onClick={() => setQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink transition-colors"
+                  aria-label="Clear search"
+                  className="absolute right-10 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink transition-colors"
                 >
                   <X size={14} />
                 </button>
               )}
+              <QrFilterMenu
+                type={filter}
+                status={status}
+                onChangeType={setFilter}
+                onChangeStatus={setStatusFilter}
+                onClear={() => {
+                  setFilter('All')
+                  setStatusFilter('Any status')
+                }}
+              />
             </div>
             <ViewToggle
               view={view}
               onChange={changeView}
               className="sm:hidden"
             />
-          </div>
-
-          {/* Filters — full-width evenly-spaced pills on mobile, auto on desktop */}
-          <div className="flex items-center gap-1.5 sm:shrink-0">
-            {TYPE_FILTERS.map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                aria-pressed={filter === f}
-                className={`h-9 flex-1 whitespace-nowrap px-3 rounded-[10px] text-xs font-bold transition-colors sm:flex-none sm:px-3.5 ${
-                  filter === f
-                    ? 'bg-primary text-white shadow-sm shadow-primary/25'
-                    : 'bg-canvas text-ink-muted hover:bg-line/60'
-                }`}
-              >
-                {/* "QR" is redundant in a QR app — drop it on mobile to keep
-                    each pill on one line; show the full label on desktop */}
-                <span className="sm:hidden">{f.replace(' QR', '')}</span>
-                <span className="hidden sm:inline">{f}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Status — its own row rather than three more pills alongside the
-              type ones, which would have put six across a phone. Only dynamic
-              codes can carry a status, so choosing one narrows to those: a
-              static code has no redirect to switch off, and the list already
-              shows no status on a static row. */}
-          <div className="flex items-center gap-1.5 sm:shrink-0">
-            {STATUS_FILTERS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setStatusFilter(s)}
-                aria-pressed={status === s}
-                title={
-                  s === 'Any status'
-                    ? 'Show codes whatever their status'
-                    : `Show ${s.toLowerCase()} codes — dynamic only`
-                }
-                className={`h-9 flex-1 whitespace-nowrap px-3 rounded-[10px] text-xs font-bold transition-colors sm:flex-none sm:px-3.5 ${
-                  status === s
-                    ? 'bg-ink text-white shadow-sm'
-                    : 'bg-canvas text-ink-muted hover:bg-line/60'
-                }`}
-              >
-                <span className="sm:hidden">{s.replace(' status', '')}</span>
-                <span className="hidden sm:inline">{s}</span>
-              </button>
-            ))}
           </div>
 
           {/* View toggle — desktop only (mobile copy lives beside search) */}
@@ -1381,9 +1355,36 @@ export default function Dashboard() {
         <div ref={sentinelRef} className="h-1 w-full" />
         {total > 0 && (
           <div className="py-3 px-4 text-center text-xs text-ink-faint border-t border-line">
-            {hasMore
-              ? `Showing ${visible.length} of ${total} QR codes`
-              : `All ${total} QR code${total !== 1 ? 's' : ''} · You're all caught up`}
+            {/* Names the filters in words when any are on. Folding them into a
+                menu means a shortened list no longer explains itself at a
+                glance, and "where did my codes go" is a worse problem than a
+                crowded toolbar. The count is the honest version of that: how
+                many of how many, and on what grounds. */}
+            {narrowed ? (
+              <span className="inline-flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
+                <span>
+                  {hasMore
+                    ? `Showing ${visible.length} of ${total} matching`
+                    : `${total} of ${list.length} QR code${list.length !== 1 ? 's' : ''}`}
+                </span>
+                {filterSummary && (
+                  <span className="font-semibold text-ink-muted">
+                    · {filterSummary}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="font-semibold text-primary underline-offset-2 hover:underline"
+                >
+                  Clear
+                </button>
+              </span>
+            ) : hasMore ? (
+              `Showing ${visible.length} of ${total} QR codes`
+            ) : (
+              `All ${total} QR code${total !== 1 ? 's' : ''} · You're all caught up`
+            )}
           </div>
         )}
       </div>
