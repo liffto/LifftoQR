@@ -5,6 +5,7 @@ import {
   Building2,
   Calendar,
   CalendarPlus,
+  CalendarX,
   Check,
   Clock,
   Copy,
@@ -21,7 +22,11 @@ import {
 } from 'lucide-react'
 import { getPublicQr, vcardFileUrl } from '../api/qrcode/publicQr'
 import { copyToClipboard } from '../lib/store'
-import { googleCalendarUrl, formatEventWhen } from '../lib/qrTypes'
+import {
+  googleCalendarUrl,
+  formatEventWhen,
+  eventStatus,
+} from '../lib/qrTypes'
 import { useAuth } from '../context/AuthContext'
 import { useLoginModal } from '../context/LoginModalContext'
 
@@ -347,13 +352,51 @@ function EventCard({ c }) {
   // Null when there is no usable start date — no point offering a link that
   // opens an empty calendar form.
   const calendarUrl = googleCalendarUrl(c)
+  // A printed QR outlives the event it was printed for. Without this the page
+  // read as an invitation forever, and went on offering to put last month's
+  // thing in your calendar.
+  const status = eventStatus(c)
+  const ended = status === 'ended'
+
   return (
     <>
       <Card className="p-5">
-        <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-amber-50 text-amber-600">
+        <div
+          className={`flex h-14 w-14 items-center justify-center rounded-[16px] ${
+            ended ? 'bg-canvas text-ink-faint' : 'bg-amber-50 text-amber-600'
+          }`}
+        >
           <Calendar size={26} />
         </div>
-        <h1 className="mt-4 text-lg font-bold leading-tight text-ink">
+
+        {/* Said before the title, because it changes what the rest of the card
+            means. Nothing is shown for an event still to come — the date says
+            that already, and a badge reading "Upcoming" on every future event
+            is noise. */}
+        {(ended || status === 'now') && (
+          <span
+            className={`mt-4 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] ${
+              ended
+                ? 'bg-canvas text-ink-muted'
+                : 'bg-success/10 text-success'
+            }`}
+          >
+            {ended ? (
+              <>
+                <CalendarX size={13} /> Event ended
+              </>
+            ) : (
+              <>
+                <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                Happening now
+              </>
+            )}
+          </span>
+        )}
+
+        <h1
+          className={`mt-3 text-lg font-bold leading-tight ${ended ? 'text-ink-muted' : 'text-ink'}`}
+        >
           {c.title || 'Event'}
         </h1>
         <div className="mt-2">
@@ -367,20 +410,30 @@ function EventCard({ c }) {
         )}
       </Card>
 
-      {calendarUrl && (
-        <div className="mt-4 space-y-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          <a
-            href={calendarUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={PRIMARY_ACTION_CLS}
-          >
-            <CalendarPlus size={18} /> Add to Google Calendar
-          </a>
-          <p className="text-center text-[11px] text-ink-faint">
-            Opens Google Calendar with the details filled in
-          </p>
-        </div>
+      {/* The details stay — someone scanning an old poster may well want to
+          know what it was — but the invitation does not. Adding a finished
+          event to a calendar is not useful, and a primary button offering it is
+          the page failing to notice the date. */}
+      {ended ? (
+        <p className="mt-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] text-center text-[12px] leading-relaxed text-ink-faint">
+          This event has already taken place.
+        </p>
+      ) : (
+        calendarUrl && (
+          <div className="mt-4 space-y-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            <a
+              href={calendarUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={PRIMARY_ACTION_CLS}
+            >
+              <CalendarPlus size={18} /> Add to Google Calendar
+            </a>
+            <p className="text-center text-[11px] text-ink-faint">
+              Opens Google Calendar with the details filled in
+            </p>
+          </div>
+        )
       )}
     </>
   )

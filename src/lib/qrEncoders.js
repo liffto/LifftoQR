@@ -364,6 +364,51 @@ export const formatEventWhen = (c = {}) => {
  * Returns null when there is no usable start, so callers can hide the button
  * instead of offering a link to an empty calendar form.
  */
+// A timestamp for a stored wall-clock string.
+//
+// The stored value carries no timezone — a datetime-local input never does — so
+// it is read in the timezone of whoever is looking. That is the same assumption
+// formatEventWhen already makes when it prints the stored time back verbatim:
+// right for anyone in the event's own timezone, and off by the difference for
+// anyone else. Fixing that properly means asking the organiser for a timezone,
+// which is a change to the create form and the stored shape, not to this.
+const eventMoment = (local, { endOfDay = false } = {}) => {
+  const p = eventParts(local)
+  if (!p) return null
+  const [h, min] = p.time ? p.time.split(':').map(Number) : [0, 0]
+  const d = new Date(+p.y, p.mo - 1, p.d, h, min, 0, 0)
+  if (endOfDay) d.setHours(23, 59, 59, 999)
+  return d.getTime()
+}
+
+/**
+ * Where an event sits relative to now: 'upcoming', 'now', 'ended', or null when
+ * there is no usable start date to judge by.
+ *
+ * The scanned page showed the same card forever, so a code on a poster for last
+ * month's thing still read as an invitation and still offered to put it in your
+ * calendar. A QR code outlives the event it was printed for; the page it opens
+ * has to admit that.
+ */
+export const eventStatus = (c = {}, now = Date.now()) => {
+  const start = eventMoment(c.start)
+  if (start == null) return null
+
+  const allDay = isAllDayEvent(c)
+  // An all-day event runs to the end of its last day, and the stored end is
+  // that day itself. A timed event with no end is treated as lasting the rest
+  // of its day rather than ending the instant it starts — the field is
+  // required, but a record saved before it was, or edited around, should not
+  // read as over the minute it begins.
+  const end = allDay
+    ? eventMoment(c.end || c.start, { endOfDay: true })
+    : (eventMoment(c.end) ?? eventMoment(c.start, { endOfDay: true }))
+
+  if (now < start) return 'upcoming'
+  if (end != null && now > end) return 'ended'
+  return 'now'
+}
+
 export const googleCalendarUrl = (c = {}) => {
   const allDay = isAllDayEvent(c)
   let start, end
