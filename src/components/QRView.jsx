@@ -6,19 +6,13 @@ import {
   useRef,
 } from 'react'
 import QRCodeStyling from 'qr-code-styling'
-import { buildQRConfig } from '../lib/qr'
+import { buildQRConfig, DOWNLOAD_SIZE } from '../lib/qr'
 import {
   frameAddsNothing,
   frameGeometry,
   framedSvg,
   drawFramedCanvas,
 } from '../lib/qrFrame'
-
-// On-screen previews are small (down to ~36px thumbnails), and qr-code-styling
-// rasterizes PNG/JPEG/WEBP at the instance's render size — so downloading the
-// preview directly produces a pixelated file. For raster exports we render a
-// throwaway high-resolution instance instead, so the file is crisp for print.
-const DOWNLOAD_SIZE = 2048
 
 // iOS Safari (including iPadOS, which reports as "Mac" but has touch) doesn't
 // honor the <a download> trick qr-code-styling uses internally — it just opens
@@ -29,15 +23,6 @@ const isIOS =
   (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
 
-// Renders a live, styled QR for a record.
-// Exposes `download(format, name)` via ref for the download buttons.
-//
-// IMPORTANT: qr-code-styling injects an <svg> into the holder <div> via direct
-// DOM manipulation. To keep React's reconciler away from that subtree we memoize
-// the holder element so its reference is stable across renders — React then
-// skips reconciling its children. The wrapper structure MUST NOT change across
-// renders (no conditional wrapper swaps), or the holder will unmount and lose
-// the rendered QR.
 // Which parts of a config currently carry a gradient, as a comparable string.
 //
 // buildQRConfig omits the `gradient` key entirely when a design has none, and
@@ -146,6 +131,15 @@ const saveBlob = (blob, filename) => {
   setTimeout(() => URL.revokeObjectURL(url), 10000)
 }
 
+// Renders a live, styled QR for a record.
+// Exposes `download(format, name)` via ref for the download buttons.
+//
+// IMPORTANT: qr-code-styling injects an <svg> into the holder <div> via direct
+// DOM manipulation. To keep React's reconciler away from that subtree we memoize
+// the holder element so its reference is stable across renders — React then
+// skips reconciling its children. The wrapper structure MUST NOT change across
+// renders (no conditional wrapper swaps), or the holder will unmount and lose
+// the rendered QR.
 const QRView = forwardRef(function QRView(
   { record, size = 280, className = '' },
   ref,
