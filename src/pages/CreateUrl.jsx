@@ -9,7 +9,7 @@ import {
   setDraft,
 } from '../lib/store'
 import {
-  QR_TYPES,
+  SELECTABLE_QR_TYPES,
   findType,
   defaultContent,
   deriveContentName,
@@ -186,7 +186,7 @@ export default function CreateUrl() {
           </div>
 
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {QR_TYPES.map((t) => {
+            {SELECTABLE_QR_TYPES.map((t) => {
               const Icon = t.Icon
               return (
                 <button

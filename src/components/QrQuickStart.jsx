@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Check, ArrowRight } from 'lucide-react'
-import { QR_TYPES, findType, defaultContent } from '../lib/qrTypes'
+import { SELECTABLE_QR_TYPES, findType, defaultContent } from '../lib/qrTypes'
 import { Toggle } from './ui'
 import DynamicQRInfo from './DynamicQRInfo'
 
@@ -118,7 +118,7 @@ export function UrlQuickStart({ onStart, stacked = false }) {
 export function QrTypeGrid({ onStart, bare = false }) {
   const grid = (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-      {QR_TYPES.map((t) => {
+      {SELECTABLE_QR_TYPES.map((t) => {
         const Icon = t.Icon
         return (
           <button

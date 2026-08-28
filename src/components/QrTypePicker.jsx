@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
-import { QR_TYPES, findType } from '../lib/qrTypes'
+import { SELECTABLE_QR_TYPES, findType } from '../lib/qrTypes'
 
 // A type chooser for the hero.
 //
 // The hero used to say "Paste URL" and nothing else, so a first-time visitor
-// had no way to learn the other seventeen types exist without scrolling to the
+// had no way to learn the other types exist without scrolling to the
 // grid further down the page. This puts that fact in the highest-attention
 // spot on the site.
 //
@@ -16,7 +16,7 @@ import { QR_TYPES, findType } from '../lib/qrTypes'
 
 export default function QrTypePicker({ value = 'url', onSelect, labelId }) {
   const [open, setOpen] = useState(false)
-  // Which option the arrow keys are sitting on, as an index into QR_TYPES.
+  // Which option the arrow keys are sitting on, as an index into the list.
   const [cursor, setCursor] = useState(0)
   const rootRef = useRef(null)
   const triggerRef = useRef(null)
@@ -33,7 +33,7 @@ export default function QrTypePicker({ value = 'url', onSelect, labelId }) {
   const openList = () => {
     const i = Math.max(
       0,
-      QR_TYPES.findIndex((t) => t.key === value),
+      SELECTABLE_QR_TYPES.findIndex((t) => t.key === value),
     )
     setCursor(i)
     setOpen(true)
@@ -62,7 +62,7 @@ export default function QrTypePicker({ value = 'url', onSelect, labelId }) {
   }
 
   const onListKeyDown = (e) => {
-    const last = QR_TYPES.length - 1
+    const last = SELECTABLE_QR_TYPES.length - 1
     switch (e.key) {
       case 'Escape':
         e.preventDefault()
@@ -124,7 +124,7 @@ export default function QrTypePicker({ value = 'url', onSelect, labelId }) {
         </span>
         {/* The count is the whole point of the control — visible without a click. */}
         <span className="shrink-0 text-[11px] font-medium text-ink-faint">
-          {QR_TYPES.length} types
+          {SELECTABLE_QR_TYPES.length} types
         </span>
         <ChevronDown
           size={16}
@@ -143,7 +143,7 @@ export default function QrTypePicker({ value = 'url', onSelect, labelId }) {
               leaves ~82px for the label, and "Google Review" needs ~92 — a
               truncated type name defeats the point of showing the list. */}
           <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-            {QR_TYPES.map((t, i) => {
+            {SELECTABLE_QR_TYPES.map((t, i) => {
               const Icon = t.Icon
               const selected = t.key === value
               return (
