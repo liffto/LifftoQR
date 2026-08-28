@@ -18,6 +18,8 @@ import {
   Loader2,
 } from 'lucide-react'
 import Layout from '../components/Layout'
+
+const SUPPORT_EMAIL = 'support@liffto.com'
 import { useAuth } from '../context/AuthContext'
 import { uploadAvatar, updateProfile, mapApiUser } from '../api/auth.api'
 import { updateNotificationPrefs } from '../api/notifications.api'
@@ -39,76 +41,7 @@ import {
   resolvePictureUrl,
 } from '../utils/userDisplay'
 
-const DELETE_CONFIRM_PHRASE = 'Delete Account'
-
 // GitHub-style destructive confirmation — requires typing the exact phrase.
-function DeleteAccountModal({ onConfirm, onCancel }) {
-  const [text, setText] = useState('')
-  const matches = text === DELETE_CONFIRM_PHRASE
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade">
-      <div className="bg-white rounded-[10px] shadow-2xl w-full max-w-sm animate-pop">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-line">
-          <div className="flex items-center gap-2">
-            <Shield size={18} className="text-danger" />
-            <h2 className="font-semibold text-ink">Delete Account</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="w-8 h-8 rounded-[10px] flex items-center justify-center text-ink-soft hover:bg-canvas"
-          >
-            <X size={18} />
-          </button>
-        </div>
-        <div className="p-6 space-y-4">
-          <p className="text-sm text-ink-soft leading-relaxed">
-            This will permanently delete your account and all of your QR codes.{' '}
-            <span className="font-semibold text-danger">
-              This action cannot be undone.
-            </span>
-          </p>
-          <div>
-            <label className="block text-xs text-ink-muted mb-1.5">
-              Type{' '}
-              <span className="font-semibold text-ink">
-                {DELETE_CONFIRM_PHRASE}
-              </span>{' '}
-              to confirm
-            </label>
-            <input
-              autoFocus
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && matches && onConfirm()}
-              placeholder={DELETE_CONFIRM_PHRASE}
-              className="w-full h-11 rounded-[10px] border border-line px-4 text-sm text-ink focus:border-danger focus:ring-2 focus:ring-danger/10 outline-none transition"
-            />
-          </div>
-        </div>
-        <div className="flex gap-3 px-6 pb-6">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 h-10 rounded-[10px] border border-line text-ink-soft text-sm font-medium hover:bg-canvas transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={!matches}
-            onClick={onConfirm}
-            className="flex-1 h-10 rounded-[10px] bg-danger text-white text-sm font-medium hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Delete Account
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 const DEVICE_ICON = { desktop: Monitor, mobile: Smartphone, tablet: Tablet }
 
 // Coarse on purpose: "3 days ago" is all this list needs, and it avoids
@@ -267,7 +200,6 @@ export default function UserAccount() {
   } = useDevices()
   const signOutDevice = useSignOutDevice()
   const signOutOthers = useSignOutOtherDevices()
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   // Profile form. Seeded from the loaded user and re-seeded if that arrives
   // after first paint, but only while untouched so a refetch can't overwrite
@@ -369,9 +301,6 @@ export default function UserAccount() {
     }
   }
 
-  const handleConfirmDelete = () => {
-    logout()
-  }
   const { data: qrs = [], isLoading: qrsLoading } = useQrs()
   const totalScans = qrs.reduce((s, r) => s + (r.scans || 0), 0)
 
@@ -671,40 +600,49 @@ export default function UserAccount() {
             </div>
           </SectionCard>
 
-          {/* Danger zone */}
+          {/* Deleting an account.
+              
+              This button used to open a type-the-words-to-confirm dialog
+              promising to permanently delete the account and every code, and
+              then called logout(). Nothing was deleted. Someone asking to be
+              forgotten — quite possibly for exactly the reasons people ask that
+              — was told it had happened and signed out, with all of it still
+              there.
+              
+              There is no endpoint to call: the API can delete a single QR code
+              and sign a device out, and has nothing for removing an account. So
+              this now says what actually happens and hands the request to a
+              person, which is what the privacy policy already told people to
+              expect. */}
           <div className="bg-white rounded-[10px] shadow-card overflow-hidden border border-red-100">
             <div className="flex items-center gap-3 px-6 py-4 border-b border-red-100 bg-red-50/40">
               <div className="w-8 h-8 rounded-[10px] bg-red-100 flex items-center justify-center">
                 <Shield size={15} className="text-danger" />
               </div>
-              <h3 className="font-semibold text-danger text-sm">Danger Zone</h3>
+              <h3 className="font-semibold text-danger text-sm">Delete Account</h3>
             </div>
-            <div className="p-6 flex items-center justify-between gap-4">
+            <div className="p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium text-ink">Delete Account</p>
-                <p className="text-xs text-ink-muted mt-0.5 leading-relaxed">
-                  Permanently delete your account and all QR codes. This action
-                  cannot be undone.
+                <p className="text-sm font-medium text-ink">
+                  Deleting your account is handled by a person
+                </p>
+                <p className="text-xs text-ink-muted mt-0.5 leading-relaxed max-w-md">
+                  Email us and we will remove your account and every code on it.
+                  We cannot do it from this page yet, and would rather say so
+                  than pretend otherwise.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(true)}
-                className="shrink-0 h-9 px-4 rounded-[10px] border border-danger text-danger text-sm font-medium flex items-center gap-2 hover:bg-red-50 transition-colors"
+              <a
+                href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Delete my Liffto account')}`}
+                className="shrink-0 h-9 px-4 rounded-[10px] border border-danger text-danger text-sm font-medium inline-flex items-center gap-2 hover:bg-red-50 transition-colors"
               >
-                <Trash2 size={14} /> Delete
-              </button>
+                <Trash2 size={14} /> Request deletion
+              </a>
             </div>
           </div>
         </div>
       </div>
 
-      {showDeleteModal && (
-        <DeleteAccountModal
-          onConfirm={handleConfirmDelete}
-          onCancel={() => setShowDeleteModal(false)}
-        />
-      )}
     </Layout>
   )
 }

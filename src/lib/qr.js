@@ -251,3 +251,10 @@ export const DOWNLOAD_SIZE = 2048
 
 // The raster formats, for copy that needs to distinguish them from SVG.
 export const RASTER_FORMATS = DOWNLOAD_FORMATS.filter((f) => f !== 'SVG')
+
+// Frames you can actually put around a code. FRAME_OPTIONS opens with 'none',
+// which is the absence of a frame rather than one of them — counting it gave
+// the landing page a "7 frame styles" claim for six frames and an opt-out.
+export const FRAME_STYLE_COUNT = FRAME_OPTIONS.filter(
+  (f) => f.style !== 'none',
+).length
