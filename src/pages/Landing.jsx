@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import { defaultDesign, getDraft } from '../lib/store'
 import { useLoginModal } from '../context/LoginModalContext'
-import { LOGO_OPTIONS } from '../lib/qr'
+import { LOGO_OPTIONS, FRAME_STYLE_COUNT, PATTERN_OPTIONS } from '../lib/qr'
 import { startDraft, draftHasContent } from '../lib/qrDraft'
 import { getTheme, toggleTheme } from '../lib/theme'
 import { findType, SELECTABLE_QR_TYPES } from '../lib/qrTypes'
@@ -131,7 +131,7 @@ const STEP_TYPES = ['url', 'wifi', 'vcard', 'whatsapp', 'coupon', 'event'].map(
 // Product facts, not invented usage numbers.
 const STATS = [
   { value: `${SELECTABLE_QR_TYPES.length}`, label: 'QR code types' },
-  { value: '7', label: 'Frame styles' },
+  { value: `${FRAME_STYLE_COUNT}`, label: 'Frame styles' },
   { value: '4', label: 'Export formats' },
   { value: '2048px', label: 'Print resolution' },
 ]
@@ -141,7 +141,7 @@ const FEATURES = [
     icon: Palette,
     tint: 'bg-primary/10 text-primary',
     title: 'A real design studio',
-    body: 'Six body patterns, corner styles, seven frames with your own call-to-action, colours and gradients, plus a logo in the centre — with a live preview of every change.',
+    body: `${PATTERN_OPTIONS.length} body patterns, corner styles, ${FRAME_STYLE_COUNT} frames with your own call-to-action, colours and gradients, plus a logo in the centre — with a live preview of every change.`,
   },
   {
     icon: RefreshCw,
@@ -205,7 +205,7 @@ const FAQS = [
   },
   {
     q: 'Can I put my own logo and colours on a code?',
-    a: 'Yes. Add a logo in the centre, set body and corner colours or a gradient, choose from six body patterns and seven frames, then save the result as a template to reuse.',
+    a: `Yes. Add a logo in the centre, set body and corner colours or a gradient, choose from ${PATTERN_OPTIONS.length} body patterns and ${FRAME_STYLE_COUNT} frames, then save the result as a template to reuse.`,
   },
   {
     q: 'What does it cost?',
@@ -820,12 +820,18 @@ export default function Landing() {
                     A real design studio
                   </h3>
                   <p className="mt-2.5 text-[14px] text-ink-muted leading-relaxed">
-                    Six body patterns, corner styles, seven frames with your own
-                    call-to-action, colours and gradients, plus a logo in the
-                    centre — with a live preview of every change.
+                    {PATTERN_OPTIONS.length} body patterns, corner styles,{' '}
+                    {FRAME_STYLE_COUNT} frames with your own call-to-action,
+                    colours and gradients, plus a logo in the centre — with a
+                    live preview of every change.
                   </p>
                   <div className="mt-5 flex flex-wrap gap-2">
-                    {['6 patterns', '7 frames', 'Gradients', 'Centre logo'].map(
+                    {[
+                      `${PATTERN_OPTIONS.length} patterns`,
+                      `${FRAME_STYLE_COUNT} frames`,
+                      'Gradients',
+                      'Centre logo',
+                    ].map(
                       (t) => (
                         <span
                           key={t}
