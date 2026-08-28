@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { destinationUrl } from '../src/lib/qrDestination'
+import { QR_TYPES } from '../src/lib/qrTypes'
 
-// The nine types that encode their content straight into the pattern. Records
-// of these carry an empty url, which is what put an unopenable "Destination
-// URL" row in the details dialog.
+// The nine types that encode their content straight into the pattern, and the
+// eleven that carry an address. Checked against the registry below, so these
+// cannot drift from where the line is actually drawn.
 const CONTENT_TYPES = [
   'text',
   'wifi',
@@ -14,6 +15,20 @@ const CONTENT_TYPES = [
   'event',
   'location',
   'coupon',
+]
+
+const LINK_TYPES = [
+  'url',
+  'whatsapp',
+  'social',
+  'google-review',
+  'pdf',
+  'video',
+  'mp3',
+  'app',
+  'linktree',
+  'invitation',
+  'feedback',
 ]
 
 const dyn = (over = {}) => ({ qrType: 'Dynamic QR', dynamic: true, ...over })
@@ -34,7 +49,7 @@ describe('the destination a saved QR offers to open', () => {
     })
   })
 
-  it('offers nothing for a static code, even one carrying a valid url', () => {
+  it('offers nothing for a Text code carrying a perfectly valid url', () => {
     // The second report, and the reason the url field cannot decide this. A
     // static Text code was holding the short URL for its own slug, so the
     // dialog offered it as a destination — a real, openable address that the
@@ -51,16 +66,31 @@ describe('the destination a saved QR offers to open', () => {
     ).toBeNull()
   })
 
-  it('offers the link for a static website code', () => {
+  it('offers the link for every static link-kind code', () => {
     // No redirect, but the address *is* the content: it is written into the
-    // pattern, and scanning it opens exactly that. The row is as true here as
-    // for a dynamic code.
-    expect(
-      destinationUrl(stat({ typeKey: 'url', url: 'https://liffto.com' })),
-    ).toBe('https://liffto.com')
+    // pattern, and scanning it opens exactly that. As true for a WhatsApp or a
+    // PDF code as for a website one.
+    LINK_TYPES.forEach((typeKey) => {
+      expect(
+        destinationUrl(stat({ typeKey, url: 'https://liffto.com' })),
+        `${typeKey} should offer its destination`,
+      ).toBe('https://liffto.com')
+    })
   })
 
-  it('does not extend that to other static types carrying a url', () => {
+  it('agrees with the registry about which types are links', () => {
+    // Listing the keys here would let a type added later be classified in one
+    // place and forgotten in the other.
+    const fromRegistry = QR_TYPES.filter((t) => t.kind === 'link').map((t) => t.key)
+    expect([...LINK_TYPES].sort()).toEqual([...fromRegistry].sort())
+    expect([...CONTENT_TYPES].sort()).toEqual(
+      QR_TYPES.filter((t) => t.kind === 'data')
+        .map((t) => t.key)
+        .sort(),
+    )
+  })
+
+  it('does not extend that to static types that encode content directly', () => {
     // The Text code from the report is the case this protects: its url field
     // held a real, openable address that the code does not encode.
     expect(
@@ -68,8 +98,22 @@ describe('the destination a saved QR offers to open', () => {
         stat({ typeKey: 'text', url: 'https://liffto-qr.vercel.app/iLI2mv' }),
       ),
     ).toBeNull()
+    CONTENT_TYPES.forEach((typeKey) => {
+      expect(
+        destinationUrl(stat({ typeKey, url: 'https://liffto.com' })),
+        `${typeKey} should not offer a destination`,
+      ).toBeNull()
+    })
+  })
+
+  it('treats an unrecognised type as having nowhere to go', () => {
+    // findType falls back to the website type, which would quietly promote an
+    // unknown key to link-kind; this reads the map directly to avoid that.
     expect(
-      destinationUrl(stat({ typeKey: 'wifi', url: 'https://liffto.com' })),
+      destinationUrl(stat({ typeKey: 'nonsense', url: 'https://liffto.com' })),
+    ).toBeNull()
+    expect(
+      destinationUrl(stat({ url: 'https://liffto.com' })),
     ).toBeNull()
   })
 
