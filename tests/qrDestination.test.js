@@ -51,11 +51,25 @@ describe('the destination a saved QR offers to open', () => {
     ).toBeNull()
   })
 
-  it('offers nothing for a static website code either', () => {
-    // Its url is genuine, but a static code encodes the address itself and has
-    // no redirect behind it — there is no destination separate from the code.
+  it('offers the link for a static website code', () => {
+    // No redirect, but the address *is* the content: it is written into the
+    // pattern, and scanning it opens exactly that. The row is as true here as
+    // for a dynamic code.
     expect(
       destinationUrl(stat({ typeKey: 'url', url: 'https://liffto.com' })),
+    ).toBe('https://liffto.com')
+  })
+
+  it('does not extend that to other static types carrying a url', () => {
+    // The Text code from the report is the case this protects: its url field
+    // held a real, openable address that the code does not encode.
+    expect(
+      destinationUrl(
+        stat({ typeKey: 'text', url: 'https://liffto-qr.vercel.app/iLI2mv' }),
+      ),
+    ).toBeNull()
+    expect(
+      destinationUrl(stat({ typeKey: 'wifi', url: 'https://liffto.com' })),
     ).toBeNull()
   })
 
