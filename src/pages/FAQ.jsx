@@ -8,6 +8,13 @@ import {
   BarChart2,
 } from 'lucide-react'
 import Layout from '../components/Layout'
+import { RASTER_FORMATS, DOWNLOAD_SIZE } from '../lib/qr'
+
+// "PNG, JPEG or WEBP" — an Oxford-comma-free list for prose.
+const listFormats = (formats) =>
+  formats.length < 2
+    ? formats.join('')
+    : `${formats.slice(0, -1).join(', ')} or ${formats[formats.length - 1]}`
 
 const CATEGORIES = [
   {
@@ -36,7 +43,10 @@ const CATEGORIES = [
     items: [
       {
         q: 'How do I download my QR code in high quality?',
-        a: 'Click the Download button on any QR code in your dashboard. You can download in PNG (best for digital), SVG (vector, infinitely scalable for print), or PDF formats. For large-format printing we recommend SVG.',
+        // Read from the formats the download button actually offers. This
+        // promised PDF, which the app has never exported, and left out WEBP,
+        // which it does — a list written from memory rather than from the code.
+        a: `Click the Download button on any QR code in your dashboard. ${listFormats(RASTER_FORMATS)} give you an image rendered at ${DOWNLOAD_SIZE}px, which stays sharp well past business-card size. SVG is vector, so it scales to anything at all — that is the one to use for large-format printing.`,
       },
       {
         q: 'Can I customise the design and colours of my QR code?',
@@ -62,11 +72,21 @@ const CATEGORIES = [
     items: [
       {
         q: 'How do I track how many times my QR code was scanned?',
-        a: 'Dynamic QR codes include built-in scan tracking. You can see total scan counts in the Scans column on your dashboard. Detailed analytics (time, location, device) are available on Pro and Enterprise plans.',
+        // Was: "Detailed analytics (time, location, device) are available on
+        // Pro and Enterprise plans." Nothing about that was true. A scan
+        // increments a single counter on the code — no row is written per
+        // scan, so there is no time, location or device to report even in
+        // principle. And the answer two above this one says Liffto is free with
+        // no plans, so the page was contradicting itself.
+        a: 'Dynamic QR codes count their scans. The total for each one is on your dashboard and updates live as it happens. Individual scans are not recorded, so there is no breakdown by time, location or device.',
       },
       {
         q: 'Can I use the API to create QR codes programmatically?',
-        a: 'Yes — your API keys are available in the Integration page. Full REST API documentation with endpoints for creating, updating, and deleting QR codes is linked there.',
+        // Was: "your API keys are available in the Integration page. Full REST
+        // API documentation ... is linked there." There are no keys to issue,
+        // no documented endpoints, and nothing linked — the Integration page is
+        // a webhook form that does not call anything yet.
+        a: 'Not at the moment. There are no API keys to issue and no public endpoints published, so creating and managing codes is done through the dashboard. If this is something you need, tell us at support@liffto.com.',
       },
     ],
   },

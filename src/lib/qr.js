@@ -238,3 +238,16 @@ export const buildQRConfig = (record, size = 280) => {
 }
 
 export const DOWNLOAD_FORMATS = ['PNG', 'JPEG', 'SVG', 'WEBP']
+
+// The size raster exports are rendered at. On-screen previews go down to ~36px
+// thumbnails and qr-code-styling rasterises at the instance's render size, so a
+// preview downloaded directly would be a pixelated file — raster formats render
+// a throwaway instance at this size instead.
+//
+// Lives here beside the formats because it is quoted at people: the FAQ and the
+// landing page both state it, and a number kept only in a component is one they
+// can drift away from.
+export const DOWNLOAD_SIZE = 2048
+
+// The raster formats, for copy that needs to distinguish them from SVG.
+export const RASTER_FORMATS = DOWNLOAD_FORMATS.filter((f) => f !== 'SVG')
