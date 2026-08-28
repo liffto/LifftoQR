@@ -27,6 +27,16 @@
       ],
       "port": 8000,
       "autoPort": false
+    },
+    {
+      "name": "api-local-db",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd api && DATABASE_URL=\"postgresql+psycopg://$(whoami)@localhost:5432/liffto_local\" FRONTEND_URL=\"http://localhost:4173,http://localhost:5173\" ENVIRONMENT=development venv/bin/uvicorn app.main:app --reload --port 8000"
+      ],
+      "port": 8000,
+      "autoPort": false
     }
   ]
 }
