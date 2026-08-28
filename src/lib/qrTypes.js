@@ -79,6 +79,31 @@ export const QR_TYPE_MAP = Object.fromEntries(QR_TYPES.map((t) => [t.key, t]))
 
 export const findType = (key) => QR_TYPE_MAP[key] || QR_TYPE_MAP.url
 
+// Types that are no longer offered when creating a code.
+//
+// Withdrawn from the pickers only. They stay in QR_TYPES and QR_TYPE_MAP on
+// purpose, because codes of these types are already out there: the dashboard
+// has to name and draw them, the scan page has to render what they contain,
+// their edit screens have to keep working, and a printed code cannot be
+// recalled. Taking them out of the registry would break all of that — the point
+// is to stop offering them, not to pretend they never existed.
+const WITHDRAWN_TYPES = new Set([
+  'video',
+  'mp3',
+  'pdf',
+  'location',
+  'social',
+  'google-review',
+  'invitation',
+])
+
+export const isOfferedType = (key) => !WITHDRAWN_TYPES.has(key)
+
+// What every type chooser lists. Derived rather than hand-written, so a type
+// added later is offered without anyone remembering to add it here, and a type
+// withdrawn later disappears from all three pickers at once.
+export const SELECTABLE_QR_TYPES = QR_TYPES.filter((t) => isOfferedType(t.key))
+
 // Re-export the pure helpers so pages have one import site.
 export {
   findEncoder,

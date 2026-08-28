@@ -21,7 +21,7 @@ import { useLoginModal } from '../context/LoginModalContext'
 import { LOGO_OPTIONS } from '../lib/qr'
 import { startDraft, draftHasContent } from '../lib/qrDraft'
 import { getTheme, toggleTheme } from '../lib/theme'
-import { findType } from '../lib/qrTypes'
+import { findType, SELECTABLE_QR_TYPES } from '../lib/qrTypes'
 import { useAuth } from '../context/AuthContext'
 import Logo from '../components/Logo'
 import { QrTypeGrid } from '../components/QrQuickStart'
@@ -122,14 +122,15 @@ const FEATURE_QR = {
   },
 }
 
-// A handful of real types for the step-one visual.
-const STEP_TYPES = ['url', 'wifi', 'vcard', 'whatsapp', 'coupon', 'pdf'].map(
+// A handful of real types for the step-one visual. Offered ones only — a tile
+// for something the picker no longer lists is an advert for a dead end.
+const STEP_TYPES = ['url', 'wifi', 'vcard', 'whatsapp', 'coupon', 'event'].map(
   (k) => findType(k),
 )
 
 // Product facts, not invented usage numbers.
 const STATS = [
-  { value: '20+', label: 'QR code types' },
+  { value: `${SELECTABLE_QR_TYPES.length}`, label: 'QR code types' },
   { value: '7', label: 'Frame styles' },
   { value: '4', label: 'Export formats' },
   { value: '2048px', label: 'Print resolution' },
@@ -157,8 +158,8 @@ const FEATURES = [
   {
     icon: LayoutGrid,
     tint: 'bg-amber-50 text-amber-500',
-    title: 'Twenty-plus types',
-    body: 'Links, Wi-Fi, contact cards, WhatsApp, menus and PDFs, coupons, events, locations, app stores and a link tree — each with a guided form.',
+    title: `${SELECTABLE_QR_TYPES.length} QR code types`,
+    body: 'Links, Wi-Fi, contact cards, WhatsApp, email and SMS, coupons, events, app stores and a link tree — each with a guided form.',
   },
   {
     icon: Download,
@@ -177,7 +178,7 @@ const FEATURES = [
 const STEPS = [
   {
     title: 'Pick a type, add your content',
-    body: 'Start with a link right here, or choose from twenty-plus types. Each one has a guided form and shows what people see when they scan.',
+    body: `Start with a link right here, or choose from ${SELECTABLE_QR_TYPES.length} types. Each one has a guided form and shows what people see when they scan.`,
   },
   {
     title: 'Make it yours',
@@ -533,10 +534,13 @@ export default function Landing() {
                   you print
                 </h1>
 
+                {/* Counted, not written down. "Sixteen more types" was true
+                    when it was typed and silently stopped being true the moment
+                    the list changed. */}
                 <p className="mt-7 max-w-md text-[16px] sm:text-[17px] text-white/60 leading-relaxed">
                   Design codes that match your brand, point them anywhere, and
-                  track every scan — for links, Wi-Fi, contact cards, menus and
-                  sixteen more types.
+                  track every scan — for links, Wi-Fi, contact cards, events and{' '}
+                  {SELECTABLE_QR_TYPES.length - 4} more types.
                 </p>
 
                 {/* Every one of these is verifiable in the codebase: no ad or
