@@ -113,6 +113,11 @@ async function framedBlob(record, extension, size) {
   canvas.width = geo.width
   canvas.height = geo.height
   const ctx = canvas.getContext('2d')
+  // Null rather than throwing is a real possibility here: this canvas is a few
+  // thousand pixels square, and a browser short of memory will decline. The
+  // caller falls back to the plain export, so the worst case is a code without
+  // its frame rather than a button that does nothing.
+  if (!ctx) return null
 
   // Without this the label can be drawn before Poppins has loaded and come out
   // in the fallback face — the sort of thing that only shows up on a cold load.
@@ -198,26 +203,39 @@ const QRView = forwardRef(function QRView(
       // A framed code cannot come out of qr-code-styling, so it is composited
       // here and saved directly. SVG is built at the preview's own size since
       // it scales without loss; raster gets the full export size.
+      //
+      // If compositing cannot be done — no 2D context, a canvas the browser
+      // will not encode — this falls through to the plain export below. A code
+      // without its frame is a poor result; a download button that quietly does
+      // nothing is a worse one.
       if (!frameAddsNothing(record?.design?.frame)) {
-        const blob = await framedBlob(
-          record,
-          extension,
-          extension === 'svg' ? size : DOWNLOAD_SIZE,
-        )
-        const filename = `${name}.${extension}`
-        if (blob && isIOS && typeof navigator.share === 'function') {
-          try {
-            const file = new File([blob], filename, { type: blob.type })
-            if (navigator.canShare?.({ files: [file] })) {
-              await navigator.share({ files: [file], title: name })
-              return
-            }
-          } catch (err) {
-            if (err?.name === 'AbortError') return
-          }
+        let blob = null
+        try {
+          blob = await framedBlob(
+            record,
+            extension,
+            extension === 'svg' ? size : DOWNLOAD_SIZE,
+          )
+        } catch {
+          blob = null
         }
-        if (blob) saveBlob(blob, filename)
-        return
+
+        if (blob) {
+          const filename = `${name}.${extension}`
+          if (isIOS && typeof navigator.share === 'function') {
+            try {
+              const file = new File([blob], filename, { type: blob.type })
+              if (navigator.canShare?.({ files: [file] })) {
+                await navigator.share({ files: [file], title: name })
+                return
+              }
+            } catch (err) {
+              if (err?.name === 'AbortError') return
+            }
+          }
+          saveBlob(blob, filename)
+          return
+        }
       }
 
       // SVG is vector — resolution-independent, so the on-screen instance is fine.
