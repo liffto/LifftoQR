@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dashboardStats } from '../src/lib/dashboardStats'
+import { dashboardStats, trackingSince } from '../src/lib/dashboardStats'
 
 const code = (over = {}) => ({
   qrType: 'Static QR',
@@ -74,5 +74,45 @@ describe('dashboard summary figures', () => {
     const s = dashboardStats([{ qrType: 'Static QR', status: 'Active' }])
     expect(s.totalScans).toBe(0)
     expect(s.scansSub).toBe('no scans yet')
+  })
+})
+
+describe('unique scans', () => {
+  it('sums each code\'s own unique count rather than the totals', () => {
+    // Total counts scans; unique counts devices. Both are real numbers and
+    // they are meant to disagree — that disagreement is the whole point.
+    const s = dashboardStats([
+      code({ scans: 7, uniqueScans: 2 }),
+      code({ scans: 3, uniqueScans: 1 }),
+    ])
+    expect(s.totalScans).toBe(10)
+    expect(s.uniqueScans).toBe(3)
+  })
+
+  it('reads a code with no unique figure as zero, not NaN', () => {
+    // Every code scanned before scan_events existed arrives without the field.
+    const s = dashboardStats([code({ scans: 40 }), code({ scans: 2, uniqueScans: 1 })])
+    expect(s.totalScans).toBe(42)
+    expect(s.uniqueScans).toBe(1)
+  })
+
+  it('is zero on an account that has never been scanned', () => {
+    expect(dashboardStats([code(), code()]).uniqueScans).toBe(0)
+  })
+})
+
+describe('the "since" label', () => {
+  it('says the day tracking started, short enough for a stat tile', () => {
+    expect(trackingSince('2026-09-04T20:03:23+05:30')).toBe('since 4 Sept')
+  })
+
+  it('gives nothing back when no scan has ever been recorded', () => {
+    // The tile falls back to its own wording rather than printing "since null".
+    expect(trackingSince(null)).toBeNull()
+    expect(trackingSince(undefined)).toBeNull()
+  })
+
+  it('refuses a date it cannot read instead of rendering "Invalid Date"', () => {
+    expect(trackingSince('not-a-date')).toBeNull()
   })
 })

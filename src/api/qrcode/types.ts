@@ -49,6 +49,9 @@ export interface QrItemBase {
   folder: string | null
   status: string
   scans: number
+  /** Distinct devices that have scanned this code. Only covers scans since
+   *  the scan_events table existed — see the dashboard's "since" label. */
+  uniqueScans?: number
   editedOn: string | null
   template: TemplateItem
 }

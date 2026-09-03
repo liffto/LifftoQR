@@ -1,7 +1,7 @@
-from sqlalchemy import update
+from sqlalchemy import distinct, func, update
 from sqlalchemy.orm import Session, joinedload
 
-from app.models import LinkTree, QR
+from app.models import LinkTree, QR, ScanEvent
 
 
 class QrRepository:
@@ -40,6 +40,35 @@ class QrRepository:
             .order_by(QR.id.desc())
             .all()
         )
+
+    def unique_scans_by_qr(self, *, created_by: int) -> dict[int, int]:
+        """How many distinct devices have scanned each of this user's codes.
+
+        One grouped query for the whole list rather than a count per row.
+        Codes with no recorded scans are simply absent from the result — the
+        caller treats a missing key as zero, which saves carrying a row of
+        zeroes for every code that predates the scan_events table.
+        """
+        rows = (
+            self.db.query(
+                ScanEvent.qr_id,
+                func.count(distinct(ScanEvent.visitor_hash)),
+            )
+            .join(QR, QR.id == ScanEvent.qr_id)
+            .filter(QR.created_by == created_by)
+            .group_by(ScanEvent.qr_id)
+            .all()
+        )
+        return {qr_id: count for qr_id, count in rows}
+
+    def scan_tracking_started_at(self):
+        """When the first scan was recorded, or None if none has been.
+
+        Read from the data rather than hardcoded, so the "unique scans since …"
+        label cannot drift from what the table actually holds — including if
+        these rows are ever purged or the table is rebuilt.
+        """
+        return self.db.query(func.min(ScanEvent.created_at)).scalar()
 
     def get_by_id(self, qr_id: int, *, created_by: int) -> QR | None:
         return (

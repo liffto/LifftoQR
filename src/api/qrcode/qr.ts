@@ -17,6 +17,13 @@ export async function getQr(qrId: number): Promise<QrListItem> {
   return data.data
 }
 
+/** When unique-scan tracking began — null if nothing has been recorded yet. */
+export async function getScanTracking(): Promise<{ since: string | null }> {
+  const { data } =
+    await api.get<ApiSuccessResponse<{ since: string | null }>>('/qrs/scan-tracking')
+  return data.data
+}
+
 export async function deleteQr(qrId: number): Promise<void> {
   await api.delete(`/qrs/${qrId}`)
 }

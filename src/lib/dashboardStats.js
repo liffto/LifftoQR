@@ -21,9 +21,22 @@ const normaliseType = (t) => (t === 'Statistic' ? 'Static QR' : t)
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
 
+// "since 4 Sept" — short, because it sits under a number in a small tile.
+export function trackingSince(iso) {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  return `since ${d.getDate()} ${d.toLocaleString('en-GB', { month: 'short' })}`
+}
+
 export function dashboardStats(list = []) {
   const total = list.length
   const totalScans = list.reduce((sum, r) => sum + (r.scans || 0), 0)
+  // Per code, then summed — the direct counterpart to Total Scans, and what
+  // the per-row unique figures add up to. Deliberately not a distinct count of
+  // devices across the whole account: one person scanning three different
+  // codes is three codes reaching someone, which is the useful reading here.
+  const uniqueScans = list.reduce((sum, r) => sum + (r.uniqueScans || 0), 0)
   const dynamicCount = list.filter(
     (r) => normaliseType(r.qrType) === 'Dynamic QR',
   ).length
@@ -38,6 +51,7 @@ export function dashboardStats(list = []) {
   return {
     total,
     totalScans,
+    uniqueScans,
     dynamicCount,
     activeCount,
     scannedCount,
