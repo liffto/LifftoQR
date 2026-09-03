@@ -27,7 +27,15 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
-      'no-unused-vars': ['warn', { varsIgnorePattern: '^[A-Z_]' }],
+      // Capitalised names are components by React convention. eslint-plugin-react
+      // is not installed, so <Icon /> is not recognised as a use of `Icon` and
+      // every `{ icon: Icon }` prop was reported unused. varsIgnorePattern
+      // already covered the same names declared as variables; a destructured
+      // parameter is an argument, which is why it needed saying twice.
+      'no-unused-vars': [
+        'warn',
+        { varsIgnorePattern: '^[A-Z_]', argsIgnorePattern: '^[A-Z_]' },
+      ],
     },
   },
 ]

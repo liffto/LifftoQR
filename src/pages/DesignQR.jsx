@@ -10,6 +10,7 @@ import {
   Link2,
   Copy,
   Pencil,
+  Palette,
   Check,
   Frame,
   QrCode,
@@ -421,6 +422,60 @@ function SaveTemplateModal({ design, onSave, onSkip }) {
   )
 }
 
+
+/**
+ * One of the two halves this page is now divided into.
+ *
+ * Everything used to be laid out at once: a name field, the type's own content
+ * fields, the logo picker, the short URL, frames, body patterns, corners and
+ * two colour pickers each. On a desktop the inner accordions were pinned open,
+ * so the whole lot arrived in a single column and the page opened on a wall of
+ * controls with no indication of where to start.
+ *
+ * It splits cleanly in two, because the two jobs are different and rarely done
+ * together: changing what the code points to, and changing how it looks. Each
+ * opens on request and stays open until closed, so both can be open at once
+ * for anyone who wants the old view back.
+ *
+ * Unlike AccordionSection below, this collapses at every width. That component
+ * exists to shorten a phone scroll and deliberately does nothing on a desktop;
+ * this one is the structure of the page rather than a concession to a screen.
+ */
+function Panel({ icon: Icon, title, desc, badge, open, onToggle, children }) {
+  return (
+    <div className="overflow-hidden rounded-[10px] border border-line bg-white">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-canvas/60 sm:p-5"
+      >
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] transition-colors ${
+            open ? 'bg-primary/10 text-primary' : 'bg-canvas text-ink-muted'
+          }`}
+        >
+          <Icon size={19} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[15px] font-bold text-ink">{title}</h3>
+            {badge}
+          </div>
+          <p className="mt-0.5 text-xs leading-relaxed text-ink-muted">{desc}</p>
+        </div>
+        <ChevronDown
+          size={19}
+          className={`shrink-0 text-ink-faint transition-transform ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {open && (
+        <div className="border-t border-line p-4 sm:p-5">{children}</div>
+      )}
+    </div>
+  )
+}
+
 // Collapsible section wrapper. On desktop (lg+) it behaves exactly like the
 // original always-open SectionHeader + content. On mobile it becomes an
 // accordion — a heavy multi-section editor (content, logo, frames, patterns,
@@ -590,6 +645,12 @@ export default function DesignQR() {
 
   const [editingUrl, setEditingUrl] = useState(false)
   const [slugDraft, setSlugDraft] = useState(record.slug)
+  // Which half of the editor is open. Both can be, and neither is to start —
+  // the page opens as two labelled choices rather than every control at once.
+  const [openPanel, setOpenPanel] = useState({ details: false, design: false })
+  const togglePanel = (key) =>
+    setOpenPanel((p) => ({ ...p, [key]: !p[key] }))
+
   const [templateOpen, setTemplateOpen] = useState(false)
   const [templateQuery, setTemplateQuery] = useState('')
   // The template the person chose here, if they chose one. Only a tiebreak —
@@ -763,7 +824,7 @@ export default function DesignQR() {
 
       <main className="mx-auto grid w-full max-w-[1240px] grid-cols-1 items-start gap-5 px-4 pt-5 pb-28 sm:px-6 sm:pt-6 lg:grid-cols-[1fr_minmax(380px,440px)] lg:gap-6 lg:pb-6">
         {/* LEFT COLUMN */}
-        <section className="min-w-0 rounded-[10px] bg-white p-4 sm:p-6 shadow-card">
+        <section className="min-w-0 space-y-4">
           {/* Header row */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 flex-wrap">
@@ -884,8 +945,15 @@ export default function DesignQR() {
             </div>
           </div>
 
-          {/* NAME */}
-          <div className="mt-5">
+          {/* ── EDIT DETAILS — what the code points to ── */}
+          <Panel
+            icon={Pencil}
+            title="Edit details"
+            desc="The name, and what this QR points to when scanned."
+            open={openPanel.details}
+            onToggle={() => togglePanel('details')}
+          >
+          <div>
             <label className="block text-xs font-medium text-ink-muted mb-1.5">
               Name your QR
             </label>
@@ -934,7 +1002,23 @@ export default function DesignQR() {
             )
           })()}
 
-          <hr className="my-6 border-line" />
+          </Panel>
+
+          {/* ── CUSTOMISE — how it looks ── */}
+          <Panel
+            icon={Palette}
+            title="Customise QR"
+            desc="Logo, frame, patterns, corners and colours."
+            open={openPanel.design}
+            onToggle={() => togglePanel('design')}
+            badge={
+              activeTemplate ? (
+                <span className="truncate rounded-full bg-canvas px-2 py-0.5 text-[10px] font-semibold text-ink-muted">
+                  {activeTemplate.label}
+                </span>
+              ) : null
+            }
+          >
 
           {/* ADD LOGO */}
           <AccordionSection
@@ -1298,6 +1382,7 @@ export default function DesignQR() {
               )}
             </div>
           </AccordionSection>
+          </Panel>
         </section>
 
         {/* RIGHT COLUMN — PREVIEW */}
