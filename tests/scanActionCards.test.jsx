@@ -189,3 +189,37 @@ describe('opened on a desktop, where tel: and sms: do nothing', () => {
     expect(await screen.findByRole('link', { name: /open whatsapp/i })).toBeInTheDocument()
   })
 })
+
+describe('the number a WhatsApp card shows', () => {
+  it('adds the plus the stored dial code does not have', async () => {
+    // Production stores country_code as "91". Shown verbatim it read
+    // "91 9843137477", which looks like a local number, not +91.
+    getPublicQr.mockResolvedValue(
+      qr('whatsapp', { countryCode: '91', phone: '9843137477' }),
+    )
+    renderScan('wa-plus')
+    // Shown twice — as the recipient and again on the copy row — so both are
+    // asserted rather than one arbitrarily.
+    const shown = await screen.findAllByText('+91 9843137477')
+    expect(shown.length).toBeGreaterThanOrEqual(1)
+    shown.forEach((el) => expect(el).toBeInTheDocument())
+  })
+
+  it('does not double it up when one is already there', async () => {
+    getPublicQr.mockResolvedValue(
+      qr('whatsapp', { countryCode: '+91', phone: '9843137477' }),
+    )
+    renderScan('wa-plus-already')
+    expect((await screen.findAllByText('+91 9843137477')).length).toBeGreaterThanOrEqual(1)
+    expect(screen.queryByText('++91 9843137477')).not.toBeInTheDocument()
+  })
+
+  it('still builds the link from bare digits', async () => {
+    getPublicQr.mockResolvedValue(
+      qr('whatsapp', { countryCode: '91', phone: '9843137477' }),
+    )
+    renderScan('wa-link')
+    const link = await screen.findByRole('link', { name: /open whatsapp/i })
+    expect(link.getAttribute('href')).toContain('wa.me/919843137477')
+  })
+})
