@@ -154,7 +154,12 @@ input[type='range'].range-primary::-moz-range-thumb {
   animation: reveal-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @media (prefers-reduced-motion: reduce) {
-  .reveal-in {
+  /* Entrance animations only — nothing here conveys meaning, so removing them
+     costs nothing. The scan page animates its card on arrival, which is exactly
+     the sort of thing someone turns this setting on to stop. */
+  .reveal-in,
+  .animate-pop,
+  .animate-fade {
     animation: none;
   }
 }
