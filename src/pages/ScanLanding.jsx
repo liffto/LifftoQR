@@ -889,7 +889,15 @@ function WhatsappCard({ c }) {
     /[^0-9]/g,
     '',
   )
-  const shown = [c.countryCode, c.phone].filter(Boolean).join(' ')
+  // The dial code is stored without its plus — every WhatsApp record in
+  // production holds "91", not "+91" — so joining the parts as they come gave
+  // "91 9843137477", which reads as a local number missing a digit rather than
+  // an international one. The link is unaffected either way, since wa.me takes
+  // bare digits; this is only what the person sees and copies.
+  const dial = String(c.countryCode || '').trim()
+  const shown = [dial && (dial.startsWith('+') ? dial : `+${dial}`), c.phone]
+    .filter(Boolean)
+    .join(' ')
   const [message, setMessage] = useState(c.message || '')
   return (
     <ActionScanCard
