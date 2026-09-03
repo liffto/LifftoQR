@@ -202,7 +202,7 @@ export default function HeroQrStudio({ onStart }) {
               <QRView record={preview} size={188} />
             </div>
             {isSample && (
-              <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-ink px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-white shadow-sm">
+              <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-[#1F2430] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-white shadow-sm">
                 Sample
               </span>
             )}

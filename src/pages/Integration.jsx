@@ -26,7 +26,7 @@ export default function Integration() {
   return (
     <Layout breadcrumb="Integration">
       <div className="mx-auto max-w-2xl">
-        <div className="rounded-[10px] bg-white p-6 shadow-card sm:p-8">
+        <div className="rounded-[10px] bg-surface p-6 shadow-card sm:p-8">
           <div className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-primary/10 text-primary">
             <Plug size={22} />
           </div>

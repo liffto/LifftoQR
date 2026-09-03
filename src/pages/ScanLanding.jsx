@@ -67,7 +67,7 @@ function Shell({ children }) {
 function Card({ children, className = '' }) {
   return (
     <div
-      className={`overflow-hidden rounded-[16px] bg-white shadow-card ${className}`}
+      className={`overflow-hidden rounded-[16px] bg-surface shadow-card ${className}`}
     >
       {children}
     </div>
@@ -241,7 +241,7 @@ function CreateYourOwnButton({ label = 'Create your own card' }) {
     <button
       type="button"
       onClick={go}
-      className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] border border-line bg-white text-[15px] font-bold text-ink-soft active:bg-canvas"
+      className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] border border-line bg-surface text-[15px] font-bold text-ink-soft active:bg-canvas"
     >
       <QrCode size={17} className="text-primary" /> {label}
     </button>
@@ -265,7 +265,7 @@ function ContactCard({ c, slug }) {
                 className="h-24 w-24 rounded-full object-cover ring-4 ring-white/30"
               />
             ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white/20 text-3xl font-bold ring-4 ring-white/30">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-surface/20 text-3xl font-bold ring-4 ring-white/30">
                 {initials(name)}
               </div>
             )}
@@ -273,7 +273,7 @@ function ContactCard({ c, slug }) {
               <img
                 src={c.logo}
                 alt=""
-                className="absolute -bottom-1 -right-1 h-9 w-9 rounded-[10px] border-2 border-white bg-white object-cover"
+                className="absolute -bottom-1 -right-1 h-9 w-9 rounded-[10px] border-2 border-surface bg-surface object-cover"
               />
             )}
           </div>
@@ -507,7 +507,7 @@ function EditableMessage({ label, value, onChange, placeholder }) {
         placeholder={placeholder}
         rows={1}
         aria-label={label}
-        className="max-h-[38vh] w-full resize-none overflow-y-auto rounded-[14px] rounded-bl-[4px] border border-line bg-canvas px-4 py-3 text-[14px] leading-relaxed text-ink outline-none transition focus:border-primary focus:bg-white placeholder:text-ink-faint"
+        className="max-h-[38vh] w-full resize-none overflow-y-auto rounded-[14px] rounded-bl-[4px] border border-line bg-canvas px-4 py-3 text-[14px] leading-relaxed text-ink outline-none transition focus:border-primary focus:bg-surface placeholder:text-ink-faint"
       />
     </div>
   )
@@ -559,7 +559,7 @@ const QRViewLazy = lazy(() => import('../components/QRView'))
 function ContinueOnPhone({ payload, caption }) {
   if (!payload) return null
   return (
-    <div className="rounded-[12px] border border-line bg-white p-4">
+    <div className="rounded-[12px] border border-line bg-surface p-4">
       <div className="flex items-center gap-4">
         <div className="shrink-0 rounded-[10px] border border-line/60 bg-white p-1.5">
           <Suspense
@@ -611,7 +611,7 @@ function ActionScanCard({
           className="px-5 pb-6 pt-7 text-center text-white"
           style={{ background: accent.gradient }}
         >
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/20">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface/20 ring-4 ring-white/20">
             <Icon size={28} />
           </div>
           <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">

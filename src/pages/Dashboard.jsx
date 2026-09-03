@@ -88,7 +88,7 @@ function TypeBadge({ type, short = false }) {
       className={`inline-block shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
         type === 'Dynamic QR'
           ? 'bg-primary/10 text-primary'
-          : 'bg-emerald-50 text-emerald-600'
+          : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-300'
       }`}
     >
       {short ? type.replace(' QR', '') : type}
@@ -185,7 +185,7 @@ function ViewToggle({ view, onChange, className = '' }) {
           title={label}
           className={`w-8 h-8 rounded-[8px] flex items-center justify-center transition-colors ${
             view === k
-              ? 'bg-white text-primary shadow-sm'
+              ? 'bg-surface text-primary shadow-sm'
               : 'text-ink-faint hover:text-ink'
           }`}
         >
@@ -320,7 +320,7 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="bg-white rounded-t-[10px] sm:rounded-[10px] shadow-2xl w-full max-w-[480px] max-h-[100dvh] sm:max-h-[min(720px,calc(100dvh-2rem))] flex flex-col animate-pop overflow-hidden">
+      <div className="bg-surface rounded-t-[10px] sm:rounded-[10px] shadow-2xl w-full max-w-[480px] max-h-[100dvh] sm:max-h-[min(720px,calc(100dvh-2rem))] flex flex-col animate-pop overflow-hidden">
         {/* ── Header ── */}
         <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-line">
           <h2 className="font-bold text-ink text-[15px]">QR Details</h2>
@@ -492,7 +492,7 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
         </div>
 
         {/* ── Actions ── */}
-        <div className="shrink-0 border-t border-line bg-white px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col sm:flex-row gap-2.5">
+        <div className="shrink-0 border-t border-line bg-surface px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col sm:flex-row gap-2.5">
           {/* Download + format selector (split control) */}
           <div ref={fmtWrapRef} className="relative w-full sm:flex-1">
             <div className="flex h-10 rounded-[10px] border border-line overflow-hidden">
@@ -525,7 +525,7 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
               </button>
             </div>
             {fmtOpen && (
-              <div className="absolute bottom-full left-0 mb-2 w-full rounded-[10px] border border-line bg-white py-1 shadow-pop z-10 animate-pop">
+              <div className="absolute bottom-full left-0 mb-2 w-full rounded-[10px] border border-line bg-surface py-1 shadow-pop z-10 animate-pop">
                 {DOWNLOAD_FORMATS.map((f) => (
                   <button
                     key={f}
@@ -567,7 +567,7 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
             <button
               type="button"
               onClick={handleDelete}
-              className="h-10 w-10 shrink-0 rounded-[10px] border border-line text-ink-faint flex items-center justify-center hover:border-danger hover:bg-red-50 hover:text-danger transition-colors"
+              className="h-10 w-10 shrink-0 rounded-[10px] border border-line text-ink-faint flex items-center justify-center hover:border-danger hover:bg-red-50 dark:hover:bg-red-500/15 hover:text-danger transition-colors"
               aria-label="Delete"
               title="Delete QR code"
             >
@@ -662,7 +662,7 @@ function ActionMenu({ row }) {
       {menuOpen && menuPos && (
         <div
           style={{ position: 'fixed', top: menuPos.top, left: menuPos.left }}
-          className="w-44 bg-white rounded-[10px] shadow-pop border border-line py-1 z-50 animate-pop"
+          className="w-44 bg-surface rounded-[10px] shadow-pop border border-line py-1 z-50 animate-pop"
         >
           <button
             type="button"
@@ -682,7 +682,7 @@ function ActionMenu({ row }) {
           <button
             type="button"
             onClick={handleDelete}
-            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-danger hover:bg-red-50"
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-danger hover:bg-red-50 dark:hover:bg-red-500/15"
           >
             <Trash2 size={14} /> Delete
           </button>
@@ -858,7 +858,7 @@ function QrGridCard({ row, onOpenModal }) {
       role="button"
       tabIndex={0}
       aria-label={`View details for ${row.name || 'QR code'}`}
-      className="group flex flex-col rounded-[10px] border border-line bg-white p-4 cursor-pointer transition-all hover:border-primary/30 hover:shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      className="group flex flex-col rounded-[10px] border border-line bg-surface p-4 cursor-pointer transition-all hover:border-primary/30 hover:shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       {/* Top: content type + actions menu */}
       <div className="flex items-center justify-between gap-2">
@@ -921,7 +921,7 @@ function QrGridCard({ row, onOpenModal }) {
 
 function SkeletonCard() {
   return (
-    <div className="rounded-[10px] border border-line bg-white p-4">
+    <div className="rounded-[10px] border border-line bg-surface p-4">
       <div className="flex items-center justify-between">
         <div className="h-5 w-20 rounded-full shimmer" />
         <div className="h-8 w-8 rounded-[10px] shimmer" />
@@ -1079,8 +1079,8 @@ export default function Dashboard() {
       value: totalScans.toLocaleString(),
       sub: scansSub,
       icon: BarChart2,
-      cls: 'bg-amber-50 text-amber-500',
-      ring: 'ring-amber-100',
+      cls: 'bg-amber-50 text-amber-500 dark:bg-amber-400/15 dark:text-amber-300',
+      ring: 'ring-amber-100 dark:ring-amber-400/20',
     },
     {
       label: 'Dynamic QR',
@@ -1100,7 +1100,7 @@ export default function Dashboard() {
           <QrScanSubscriber key={row.slug} slug={row.slug} />
         ))}
       {/* Stats — stacked on mobile, single bar on desktop */}
-      <div className="bg-white rounded-[10px] shadow-card flex flex-col divide-y divide-line sm:flex-row sm:divide-y-0 sm:divide-x mb-5">
+      <div className="bg-surface rounded-[10px] shadow-card flex flex-col divide-y divide-line sm:flex-row sm:divide-y-0 sm:divide-x mb-5">
         {STATS.map(({ label, value, sub, icon: Icon, cls }) => (
           <div
             key={label}
@@ -1141,7 +1141,7 @@ export default function Dashboard() {
       </button>
 
       {/* Table card */}
-      <div className="bg-white rounded-[10px] shadow-card">
+      <div className="bg-surface rounded-[10px] shadow-card">
         {/* Toolbar */}
         <div className="flex flex-col gap-3 px-4 py-3.5 border-b border-line sm:flex-row sm:items-center">
           {/* Search, with the filters folded into its right edge. On mobile the
@@ -1160,7 +1160,7 @@ export default function Dashboard() {
                 // Right padding reserves the filter button, and more again when
                 // the clear cross joins it, so a long query never runs under
                 // either.
-                className={`w-full pl-10 h-10 rounded-[10px] bg-canvas border border-transparent focus:border-primary focus:bg-white outline-none text-sm text-ink placeholder:text-ink-faint transition ${
+                className={`w-full pl-10 h-10 rounded-[10px] bg-canvas border border-transparent focus:border-primary focus:bg-surface outline-none text-sm text-ink placeholder:text-ink-faint transition ${
                   query ? 'pr-[68px]' : 'pr-11'
                 }`}
               />

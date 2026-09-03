@@ -24,6 +24,9 @@
   --shimmer-1: 237 239 242;
   --shimmer-2: 246 248 250;
   --scrollbar: 207 211 218;
+  /* Cast by elevated chrome. A blue-grey reads softer than pure black on a
+     light canvas; on a dark one only real black registers as a shadow. */
+  --c-shadow: 16 24 40;
 }
 .dark {
   color-scheme: dark;
@@ -40,6 +43,7 @@
   --shimmer-1: 31 36 43;
   --shimmer-2: 42 49 58;
   --scrollbar: 58 63 71;
+  --c-shadow: 0 0 0;
 }
 
 .no-transitions * {

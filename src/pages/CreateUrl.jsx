@@ -60,7 +60,7 @@ export default function CreateUrl() {
   return (
     <div className="min-h-screen bg-canvas">
       {/* TOP HEADER */}
-      <header className="sticky top-0 z-20 bg-white border-b border-line h-[68px] flex items-center px-4 sm:px-6 gap-3 sm:gap-5">
+      <header className="sticky top-0 z-20 bg-surface border-b border-line h-[68px] flex items-center px-4 sm:px-6 gap-3 sm:gap-5">
         <Logo />
         <div className="h-7 w-px bg-line" />
         <button
@@ -85,7 +85,7 @@ export default function CreateUrl() {
       {/* MAIN */}
       <main className="max-w-[1000px] mx-auto w-full px-4 sm:px-6 py-6 space-y-5">
         {/* FEATURED — Website URL quick start */}
-        <div className="bg-white rounded-[10px] shadow-card">
+        <div className="bg-surface rounded-[10px] shadow-card">
           <div className="p-5 flex items-center gap-3 border-b border-line">
             <div className="w-11 h-11 rounded-[10px] bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <UrlIcon size={20} />
@@ -121,7 +121,7 @@ export default function CreateUrl() {
                   placeholder="https://example.com"
                   autoCapitalize="none"
                   spellCheck={false}
-                  className={`h-12 w-full rounded-[10px] border bg-white px-4 pr-11 text-sm text-ink outline-none transition focus:ring-2 placeholder:text-ink-faint ${
+                  className={`h-12 w-full rounded-[10px] border bg-surface px-4 pr-11 text-sm text-ink outline-none transition focus:ring-2 placeholder:text-ink-faint ${
                     showUrlError
                       ? 'border-danger focus:border-danger focus:ring-danger/10'
                       : 'border-line focus:border-primary focus:ring-primary/10'
@@ -176,7 +176,7 @@ export default function CreateUrl() {
         </div>
 
         {/* TYPE PICKER */}
-        <div className="bg-white rounded-[10px] shadow-card p-5">
+        <div className="bg-surface rounded-[10px] shadow-card p-5">
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-line" />
             <span className="text-xs font-medium text-ink-muted whitespace-nowrap">

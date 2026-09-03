@@ -65,7 +65,7 @@ function SectionCard({
   children,
 }) {
   return (
-    <div className="bg-white rounded-[10px] shadow-card overflow-hidden">
+    <div className="bg-surface rounded-[10px] shadow-card overflow-hidden">
       <div className="flex items-center gap-3 px-6 py-4 border-b border-line">
         <div
           className={`w-8 h-8 rounded-[10px] bg-primary/10 flex items-center justify-center ${iconCls}`}
@@ -102,7 +102,7 @@ function Field({
         className={`w-full rounded-[10px] px-4 py-2.5 text-sm border border-line outline-none transition ${
           readOnly
             ? 'bg-canvas text-ink-muted cursor-not-allowed'
-            : 'bg-canvas text-ink focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10'
+            : 'bg-canvas text-ink focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/10'
         }`}
       />
       {hint && <p className="mt-1 text-[11px] text-ink-faint">{hint}</p>}
@@ -309,7 +309,7 @@ export default function UserAccount() {
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5 max-w-5xl">
         {/* LEFT — Profile card */}
         <div className="space-y-4">
-          <div className="bg-white rounded-[10px] shadow-card overflow-hidden">
+          <div className="bg-surface rounded-[10px] shadow-card overflow-hidden">
             {/* Gradient header */}
             <div className="h-20 bg-gradient-to-br from-primary via-[#2563eb] to-[#7c3aed] relative">
               <div
@@ -351,7 +351,7 @@ export default function UserAccount() {
                   type="button"
                   onClick={handleAvatarPick}
                   disabled={avatarUpload.isPending}
-                  className="absolute bottom-0.5 right-0.5 w-6 h-6 rounded-full bg-white border border-line text-ink-soft flex items-center justify-center shadow-sm hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
+                  className="absolute bottom-0.5 right-0.5 w-6 h-6 rounded-full bg-surface border border-line text-ink-soft flex items-center justify-center shadow-sm hover:border-primary hover:text-primary transition-colors disabled:opacity-60"
                   aria-label="Change avatar"
                 >
                   <Camera size={11} />
@@ -380,7 +380,7 @@ export default function UserAccount() {
           </div>
 
           {/* Quick links */}
-          <div className="bg-white rounded-[10px] shadow-card p-4 space-y-1">
+          <div className="bg-surface rounded-[10px] shadow-card p-4 space-y-1">
             {[
               { icon: QrCode, label: 'My QR Codes', href: '/dashboard' },
               { icon: BarChart2, label: 'Subscription', href: '/payment' },
@@ -400,7 +400,7 @@ export default function UserAccount() {
                 clearDraft()
                 logout()
               }}
-              className="md:hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm text-danger hover:bg-red-50 transition-colors"
+              className="md:hidden w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm text-danger hover:bg-red-50 dark:hover:bg-red-500/15 transition-colors"
             >
               <LogOut size={16} className="text-danger" />
               Log Out
@@ -523,7 +523,7 @@ export default function UserAccount() {
                             type="button"
                             onClick={() => signOutDevice.mutate(d.id)}
                             disabled={signOutDevice.isPending}
-                            className="shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-[10px] border border-line text-ink-soft text-xs font-medium hover:border-danger hover:text-danger hover:bg-red-50 transition-colors disabled:opacity-50"
+                            className="shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-[10px] border border-line text-ink-soft text-xs font-medium hover:border-danger hover:text-danger hover:bg-red-50 dark:hover:bg-red-500/15 transition-colors disabled:opacity-50"
                           >
                             <LogOut size={13} /> Remove
                           </button>
@@ -614,9 +614,9 @@ export default function UserAccount() {
               this now says what actually happens and hands the request to a
               person, which is what the privacy policy already told people to
               expect. */}
-          <div className="bg-white rounded-[10px] shadow-card overflow-hidden border border-red-100">
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-red-100 bg-red-50/40">
-              <div className="w-8 h-8 rounded-[10px] bg-red-100 flex items-center justify-center">
+          <div className="bg-surface rounded-[10px] shadow-card overflow-hidden border border-red-100 dark:border-red-500/25">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-red-100 bg-red-50/40 dark:border-red-500/25 dark:bg-red-500/10">
+              <div className="w-8 h-8 rounded-[10px] bg-red-100 dark:bg-red-500/20 flex items-center justify-center">
                 <Shield size={15} className="text-danger" />
               </div>
               <h3 className="font-semibold text-danger text-sm">Delete Account</h3>
@@ -634,7 +634,7 @@ export default function UserAccount() {
               </div>
               <a
                 href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Delete my Liffto account')}`}
-                className="shrink-0 h-9 px-4 rounded-[10px] border border-danger text-danger text-sm font-medium inline-flex items-center gap-2 hover:bg-red-50 transition-colors"
+                className="shrink-0 h-9 px-4 rounded-[10px] border border-danger text-danger text-sm font-medium inline-flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-500/15 transition-colors"
               >
                 <Trash2 size={14} /> Request deletion
               </a>

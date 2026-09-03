@@ -68,7 +68,7 @@ export default function Notifications() {
   return (
     <Layout breadcrumb="Notifications" notifDot={unreadCount > 0}>
       <div className="max-w-2xl">
-        <div className="bg-white rounded-[10px] shadow-card overflow-hidden">
+        <div className="bg-surface rounded-[10px] shadow-card overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-line">
             <div className="flex items-center gap-2.5">
