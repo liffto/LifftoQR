@@ -141,3 +141,51 @@ describe('the offer to make your own', () => {
     }
   })
 })
+
+describe('opened on a desktop, where tel: and sms: do nothing', () => {
+  // The pages ask the input device, not the user-agent, so the test does too.
+  const withMouse = (has) => {
+    window.matchMedia = (q) => ({
+      matches: has && /hover: hover/.test(q),
+      media: q,
+      addEventListener() {},
+      removeEventListener() {},
+      addListener() {},
+      removeListener() {},
+    })
+  }
+
+  it('drops the dead call button and makes copying the action', async () => {
+    withMouse(true)
+    getPublicQr.mockResolvedValue(qr('phone', { phone: '+91 98400 12345' }))
+    renderScan('phone-desktop')
+
+    expect(await screen.findByRole('button', { name: /copy number/i })).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByRole('link', { name: /call now/i })).not.toBeInTheDocument(),
+    )
+    expect(screen.getByText(/cannot place the call/i)).toBeInTheDocument()
+    expect(screen.getByText(/continue on your phone/i)).toBeInTheDocument()
+  })
+
+  it('keeps the call button on a touch device', async () => {
+    withMouse(false)
+    getPublicQr.mockResolvedValue(qr('phone', { phone: '+91 98400 12345' }))
+    renderScan('phone-touch')
+
+    expect(await screen.findByRole('link', { name: /call now/i })).toBeInTheDocument()
+    expect(screen.queryByText(/continue on your phone/i)).not.toBeInTheDocument()
+  })
+
+  it('leaves WhatsApp and email alone, since those work on a desktop', async () => {
+    withMouse(true)
+    getPublicQr.mockResolvedValue(qr('email', { to: 'hello@liffto.com' }))
+    const { unmount } = renderScan('email-desktop')
+    expect(await screen.findByRole('link', { name: /compose email/i })).toBeInTheDocument()
+    unmount()
+
+    getPublicQr.mockResolvedValue(qr('whatsapp', { countryCode: '+91', phone: '9840012345' }))
+    renderScan('wa-desktop')
+    expect(await screen.findByRole('link', { name: /open whatsapp/i })).toBeInTheDocument()
+  })
+})
