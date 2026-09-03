@@ -39,7 +39,7 @@ const CATEGORIES = [
   {
     label: 'Design & Downloads',
     icon: Palette,
-    iconCls: 'bg-violet-50 text-violet-500',
+    iconCls: 'bg-violet-50 text-violet-500 dark:bg-violet-400/15 dark:text-violet-300',
     items: [
       {
         q: 'How do I download my QR code in high quality?',
@@ -57,7 +57,7 @@ const CATEGORIES = [
   {
     label: 'Plans & Pricing',
     icon: CreditCard,
-    iconCls: 'bg-amber-50 text-amber-500',
+    iconCls: 'bg-amber-50 text-amber-500 dark:bg-amber-400/15 dark:text-amber-300',
     items: [
       {
         q: 'How many QR codes can I create?',
@@ -125,7 +125,7 @@ export default function FAQ() {
     <Layout breadcrumb="FAQ">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-[10px] shadow-card px-5 py-5 sm:px-8 sm:py-7 mb-5 flex items-center gap-4 sm:gap-5">
+        <div className="bg-surface rounded-[10px] shadow-card px-5 py-5 sm:px-8 sm:py-7 mb-5 flex items-center gap-4 sm:gap-5">
           <div className="w-12 h-12 rounded-[10px] bg-primary/10 flex items-center justify-center shrink-0">
             <HelpCircle size={22} className="text-primary" />
           </div>
@@ -150,7 +150,7 @@ export default function FAQ() {
           {CATEGORIES.map(({ label, icon: Icon, iconCls, items }) => (
             <div
               key={label}
-              className="bg-white rounded-[10px] shadow-card overflow-hidden"
+              className="bg-surface rounded-[10px] shadow-card overflow-hidden"
             >
               {/* Category header */}
               <div className="flex items-center gap-3 px-5 py-4 border-b border-line">

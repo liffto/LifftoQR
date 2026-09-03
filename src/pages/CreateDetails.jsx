@@ -106,7 +106,7 @@ export default function CreateDetails() {
   return (
     <div className="min-h-screen bg-canvas">
       {/* HEADER */}
-      <header className="sticky top-0 z-20 bg-white border-b border-line h-[68px] flex items-center px-4 sm:px-6 gap-3 sm:gap-5">
+      <header className="sticky top-0 z-20 bg-surface border-b border-line h-[68px] flex items-center px-4 sm:px-6 gap-3 sm:gap-5">
         <Logo />
         <div className="h-7 w-px bg-line" />
         <button
@@ -131,7 +131,7 @@ export default function CreateDetails() {
       {/* MAIN */}
       <main className="max-w-[1180px] mx-auto w-full px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-[1fr_minmax(320px,380px)] gap-6 items-start">
         {/* LEFT — details form */}
-        <div className="min-w-0 bg-white rounded-[10px] shadow-card">
+        <div className="min-w-0 bg-surface rounded-[10px] shadow-card">
           <div className="p-5 flex items-center gap-3 border-b border-line">
             <div
               className={`w-11 h-11 rounded-[10px] flex items-center justify-center shrink-0 ${type.tint}`}
@@ -162,7 +162,7 @@ export default function CreateDetails() {
             {showMissing && !complete && (
               <p
                 role="alert"
-                className="mt-3 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2.5 text-[13px] font-medium text-red-700"
+                className="mt-3 rounded-[10px] border border-red-200 bg-red-50 px-3 py-2.5 text-[13px] font-medium text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
               >
                 {missing.length === 1
                   ? `${missingLabels[0]} is needed before we can build your code.`

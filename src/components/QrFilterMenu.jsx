@@ -102,7 +102,7 @@ export default function QrFilterMenu({
         <div
           role="dialog"
           aria-label="Filter QR codes"
-          className="absolute right-0 top-full z-30 mt-2 w-60 rounded-[12px] border border-line bg-white py-1.5 shadow-pop"
+          className="absolute right-0 top-full z-30 mt-2 w-60 rounded-[12px] border border-line bg-surface py-1.5 shadow-pop"
         >
           {GROUPS.map((group) => (
             <div key={group.key} className="py-1">
@@ -144,7 +144,7 @@ export default function QrFilterMenu({
           {/* Said here, before the list comes back empty and leaves someone
               wondering which of the two choices was wrong. */}
           {contradicts && (
-            <p className="mx-3.5 my-1 rounded-[8px] bg-amber-50 px-2.5 py-2 text-[11.5px] leading-relaxed text-amber-800">
+            <p className="mx-3.5 my-1 rounded-[8px] bg-amber-50 px-2.5 py-2 text-[11.5px] leading-relaxed text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
               Static codes have no redirect to switch on or off, so this pair
               matches nothing.
             </p>

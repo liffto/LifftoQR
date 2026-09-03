@@ -43,7 +43,7 @@ export default function Payment() {
       </div>
 
       {/* What you get */}
-      <div className="rounded-[10px] bg-white p-6 shadow-card sm:p-7">
+      <div className="rounded-[10px] bg-surface p-6 shadow-card sm:p-7">
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-primary/10 text-primary">
             <InfinityIcon size={19} />

@@ -122,7 +122,7 @@ const LOGO_ICONS = {
 }
 
 function PatternGlyph({ type }) {
-  const C = '#1F2430'
+  const C = 'currentColor'
   const mask = [
     [1, 0, 1, 0, 1],
     [0, 1, 1, 1, 0],
@@ -196,14 +196,14 @@ function PatternGlyph({ type }) {
     }),
   )
   return (
-    <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-full w-full text-ink" aria-hidden>
       {cells}
     </svg>
   )
 }
 
 function CornerGlyph({ square, dot }) {
-  const C = '#1F2430'
+  const C = 'currentColor'
   let outer =
     square === 'dot' ? (
       <circle cx="12" cy="12" r="8" fill="none" stroke={C} strokeWidth="2.5" />
@@ -226,7 +226,7 @@ function CornerGlyph({ square, dot }) {
       <rect x="8.6" y="8.6" width="6.8" height="6.8" fill={C} />
     )
   return (
-    <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-full w-full text-ink" aria-hidden>
       {outer}
       {inner}
     </svg>
@@ -237,12 +237,12 @@ function FrameGlyph({ frame }) {
   const S = 'SCAN'
   const qr = <QrCode size={18} className="text-ink" />
   const bar = (
-    <div className="w-full bg-ink/80 text-white text-[5px] font-bold text-center py-0.5 leading-none">
+    <div className="w-full bg-ink/80 text-canvas text-[5px] font-bold text-center py-0.5 leading-none">
       {S}
     </div>
   )
   const pill = (
-    <div className="bg-ink/80 text-white text-[5px] font-bold px-2 py-0.5 rounded-full leading-none">
+    <div className="bg-ink/80 text-canvas text-[5px] font-bold px-2 py-0.5 rounded-full leading-none">
       {S}
     </div>
   )
@@ -366,7 +366,7 @@ function SaveTemplateModal({ design, onSave, onSkip }) {
   const [name, setName] = useState('')
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade">
-      <div className="bg-white rounded-[10px] shadow-2xl w-full max-w-sm animate-pop">
+      <div className="bg-surface rounded-[10px] shadow-2xl w-full max-w-sm animate-pop">
         <div className="flex items-center justify-between px-6 py-4 border-b border-line">
           <div className="flex items-center gap-2">
             <BookmarkPlus size={18} className="text-primary" />
@@ -456,7 +456,7 @@ function Panel({
     // fill bled through every inner section once the panel opened, so five
     // sub-sections sat on a wash rather than on paper. The badge carries the
     // attention on its own.
-    <div className="overflow-hidden rounded-[10px] border border-line bg-white">
+    <div className="overflow-hidden rounded-[10px] border border-line bg-surface">
       <button
         type="button"
         onClick={onToggle}
@@ -810,7 +810,7 @@ export default function DesignQR() {
   }
 
   const tileBase =
-    'shrink-0 rounded-[10px] border-2 flex items-center justify-center bg-white transition-colors'
+    'shrink-0 rounded-[10px] border-2 flex items-center justify-center bg-surface transition-colors'
 
   if (isApiMode && (isLoading || !apiRecord)) {
     return (
@@ -823,7 +823,7 @@ export default function DesignQR() {
   return (
     <div className="min-h-screen bg-canvas">
       {/* HEADER */}
-      <header className="sticky top-0 z-30 flex h-[68px] items-center gap-3 sm:gap-5 border-b border-line bg-white px-4 sm:px-6">
+      <header className="sticky top-0 z-30 flex h-[68px] items-center gap-3 sm:gap-5 border-b border-line bg-surface px-4 sm:px-6">
         <Logo />
         <div className="h-7 w-px bg-line" />
         <button
@@ -905,7 +905,7 @@ export default function DesignQR() {
               {templateOpen && (
                 <div
                   role="listbox"
-                  className="absolute left-0 top-full z-20 mt-2 w-56 rounded-[10px] border border-line bg-white py-1 shadow-pop sm:left-auto sm:right-0"
+                  className="absolute left-0 top-full z-20 mt-2 w-56 rounded-[10px] border border-line bg-surface py-1 shadow-pop sm:left-auto sm:right-0"
                 >
                   {/* Only worth the space once the list is long enough to
                       scroll past what fits. */}
@@ -1163,7 +1163,7 @@ export default function DesignQR() {
               <button
                 type="button"
                 onClick={() => updateDesign({ logo: null })}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-[10px] border-2 border-dashed border-danger py-3 text-sm font-medium text-danger hover:bg-red-50"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-[10px] border-2 border-dashed border-danger py-3 text-sm font-medium text-danger hover:bg-red-50 dark:hover:bg-red-500/15"
               >
                 <Trash2 size={16} /> Remove logo
               </button>
@@ -1318,7 +1318,7 @@ export default function DesignQR() {
                   }
                   maxLength={20}
                   placeholder="SCAN ME"
-                  className="w-full h-10 rounded-[10px] border border-line bg-canvas px-3 text-sm font-semibold text-ink tracking-widest uppercase focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10 outline-none transition"
+                  className="w-full h-10 rounded-[10px] border border-line bg-canvas px-3 text-sm font-semibold text-ink tracking-widest uppercase focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/10 outline-none transition"
                 />
               </div>
             )}
@@ -1417,7 +1417,7 @@ export default function DesignQR() {
         </section>
 
         {/* RIGHT COLUMN — PREVIEW */}
-        <aside className="lg:sticky lg:top-6 flex flex-col rounded-[10px] bg-white shadow-card">
+        <aside className="lg:sticky lg:top-6 flex flex-col rounded-[10px] bg-surface shadow-card">
           <div className="flex items-center justify-between border-b border-line p-5">
             <div className="flex items-center gap-3">
               {(() => {
@@ -1501,7 +1501,7 @@ export default function DesignQR() {
                   {format} <ChevronDown size={16} />
                 </button>
                 {formatOpen && (
-                  <div className="absolute bottom-full left-0 z-20 mb-2 w-32 rounded-[10px] border border-line bg-white py-1 shadow-pop">
+                  <div className="absolute bottom-full left-0 z-20 mb-2 w-32 rounded-[10px] border border-line bg-surface py-1 shadow-pop">
                     {DOWNLOAD_FORMATS.map((f) => (
                       <button
                         key={f}
@@ -1536,9 +1536,9 @@ export default function DesignQR() {
           primary action (download) stays pinned and reachable without
           scrolling past the editor. Hidden on lg+ where the aside is sticky. */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-2.5 border-t border-line bg-white/95 px-4 py-3 backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-2.5 border-t border-line bg-surface/95 px-4 py-3 backdrop-blur lg:hidden"
         style={{
-          boxShadow: '0 -2px 14px rgba(16, 24, 40, 0.08)',
+          boxShadow: '0 -2px 14px rgb(var(--c-shadow) / 0.4)',
           paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))',
         }}
       >
@@ -1555,7 +1555,7 @@ export default function DesignQR() {
             />
           </button>
           {formatOpen && (
-            <div className="absolute bottom-full left-0 z-20 mb-2 w-32 rounded-[10px] border border-line bg-white py-1 shadow-pop">
+            <div className="absolute bottom-full left-0 z-20 mb-2 w-32 rounded-[10px] border border-line bg-surface py-1 shadow-pop">
               {DOWNLOAD_FORMATS.map((f) => (
                 <button
                   key={f}

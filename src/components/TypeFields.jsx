@@ -97,7 +97,7 @@ function LinkListField({ field, value, onChange }) {
               onClick={() => removeRow(i)}
               disabled={rows.length <= 1}
               aria-label="Remove link"
-              className="h-11 w-9 shrink-0 rounded-[10px] border border-line text-ink-faint flex items-center justify-center hover:border-danger hover:text-danger hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="h-11 w-9 shrink-0 rounded-[10px] border border-line text-ink-faint flex items-center justify-center hover:border-danger hover:text-danger hover:bg-red-50 dark:hover:bg-red-500/15 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <X size={15} />
             </button>

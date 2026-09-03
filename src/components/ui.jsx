@@ -11,7 +11,7 @@ export function Toggle({ checked, onChange, id, ariaLabel }) {
       aria-label={ariaLabel}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 ${
-        checked ? 'bg-primary' : 'bg-gray-300'
+        checked ? 'bg-primary' : 'bg-ink-faint/40'
       }`}
     >
       <span
@@ -30,7 +30,7 @@ export function ColorField({ value, onChange, className = '' }) {
       className={`flex items-center gap-2 rounded-[10px] bg-canvas px-2.5 py-2.5 ${className}`}
     >
       <span
-        className="relative h-7 w-7 shrink-0 overflow-hidden rounded-[10px] ring-1 ring-black/10"
+        className="relative h-7 w-7 shrink-0 overflow-hidden rounded-[10px] ring-1 ring-black/10 dark:ring-white/15"
         style={{ background: value }}
       >
         <input
@@ -63,7 +63,7 @@ export function Checkbox({ checked, onChange, label }) {
     >
       <span
         className={`flex h-5 w-5 items-center justify-center rounded-[10px] border transition-colors ${
-          checked ? 'border-primary bg-primary' : 'border-gray-300 bg-white'
+          checked ? 'border-primary bg-primary' : 'border-ink-faint/40 bg-surface'
         }`}
       >
         {checked && <Check size={14} strokeWidth={3} className="text-white" />}

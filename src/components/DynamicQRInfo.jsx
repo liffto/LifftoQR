@@ -32,7 +32,7 @@ export default function DynamicQRInfo() {
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-white rounded-[10px] shadow-2xl w-full max-w-sm animate-pop"
+            className="bg-surface rounded-[10px] shadow-2xl w-full max-w-sm animate-pop"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-line">

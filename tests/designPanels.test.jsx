@@ -160,7 +160,7 @@ describe('the nudge on Customise QR', () => {
     renderDesign()
     await screen.findByText('Customise QR')
     const card = panel('Customise QR').closest('div')
-    expect(card.className).toMatch(/bg-white/)
+    expect(card.className).toMatch(/bg-surface/)
     expect(card.className).not.toMatch(/orange/)
   })
 

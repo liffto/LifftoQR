@@ -14,8 +14,11 @@ import {
   CheckCheck,
   Check,
   X,
+  Sun,
+  Moon,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../hooks/useTheme'
 import LifftoMark from './LifftoMark'
 import {
   useNotifications,
@@ -122,7 +125,7 @@ function NotificationDropdown({ onClose }) {
     .filter((g) => g.items.length)
 
   return (
-    <div className="fixed left-3 right-3 top-[64px] sm:absolute sm:inset-auto sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[380px] bg-white rounded-[10px] shadow-pop border border-line overflow-hidden z-50 animate-pop">
+    <div className="fixed left-3 right-3 top-[64px] sm:absolute sm:inset-auto sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[380px] bg-surface rounded-[10px] shadow-pop border border-line overflow-hidden z-50 animate-pop">
       <div className="flex items-center justify-between px-4 py-3 border-b border-line">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-ink text-sm">Notifications</span>
@@ -222,6 +225,7 @@ export default function Layout({ children, breadcrumb }) {
   const pictureUrl = resolvePictureUrl(user?.picture, user?.pictureCacheKey)
   const { data: notifItems = [] } = useNotifications()
   const unreadCount = notifItems.filter((n) => !n.read).length
+  const [theme, toggleTheme] = useTheme()
 
   const handleCreate = () => {
     clearDraft()
@@ -312,11 +316,8 @@ export default function Layout({ children, breadcrumb }) {
       <main className="flex-1 flex flex-col min-w-0">
         {/* TOP APP BAR */}
         <header
-          className="h-[60px] bg-white shrink-0 sticky top-0 z-20 flex items-center justify-between px-4 sm:px-6"
-          style={{
-            borderBottom: '1px solid rgba(0,0,0,0.07)',
-            boxShadow: '0 1px 0 rgba(0,0,0,0.04)',
-          }}
+          className="h-[60px] bg-surface shrink-0 sticky top-0 z-20 flex items-center justify-between px-4 sm:px-6"
+          style={{ borderBottom: '1px solid rgb(var(--c-line))' }}
         >
           {/* Left — greeting */}
           <div className="flex flex-col justify-center gap-2">
@@ -330,6 +331,21 @@ export default function Layout({ children, breadcrumb }) {
 
           {/* Right — actions */}
           <div className="flex items-center gap-2">
+            {/* Theme switch. The landing page has had one all along; signing in
+                led to a set of pages with no way back out of whichever theme
+                you were in. Same square as the bell so the two read as a pair. */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={
+                theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+              }
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              className="w-9 h-9 rounded-[10px] border border-line text-ink-muted flex items-center justify-center transition-all hover:border-ink-muted/40 hover:bg-canvas hover:text-ink"
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+
             {/* Notification bell */}
             <div className="relative" ref={notifRef}>
               <button
@@ -344,7 +360,7 @@ export default function Layout({ children, breadcrumb }) {
               >
                 <Bell size={16} />
                 {unreadCount > 0 && (
-                  <span className="w-[7px] h-[7px] bg-red-500 rounded-full absolute top-[7px] right-[7px] ring-[1.5px] ring-white" />
+                  <span className="w-[7px] h-[7px] bg-red-500 rounded-full absolute top-[7px] right-[7px] ring-[1.5px] ring-surface" />
                 )}
               </button>
               {notifOpen && (
@@ -398,9 +414,9 @@ export default function Layout({ children, breadcrumb }) {
 
       {/* ── MOBILE BOTTOM NAV (with center Create FAB) ──────────── */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-line flex items-stretch px-1"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-line flex items-stretch px-1"
         style={{
-          boxShadow: '0 -2px 14px rgba(16,24,40,0.07)',
+          boxShadow: '0 -2px 14px rgb(var(--c-shadow) / 0.4)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
@@ -420,7 +436,7 @@ export default function Layout({ children, breadcrumb }) {
             type="button"
             onClick={handleCreate}
             aria-label="Create QR"
-            className="-mt-5 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/40 border-4 border-white active:scale-95 transition-transform"
+            className="-mt-5 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/40 border-4 border-surface active:scale-95 transition-transform"
           >
             <Plus size={24} strokeWidth={2.5} />
           </button>

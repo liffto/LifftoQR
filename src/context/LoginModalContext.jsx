@@ -66,7 +66,7 @@ function LoginModal({ open, onClose, onContinueAsGuest }) {
       aria-modal="true"
       aria-label="Sign in"
     >
-      <div className="w-full max-w-[420px] animate-pop overflow-hidden rounded-t-[16px] bg-white shadow-2xl sm:rounded-[16px]">
+      <div className="w-full max-w-[420px] animate-pop overflow-hidden rounded-t-[16px] bg-surface shadow-2xl sm:rounded-[16px]">
         <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
           <Logo />
           <button

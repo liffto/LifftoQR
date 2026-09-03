@@ -20,7 +20,7 @@ import { defaultDesign, getDraft } from '../lib/store'
 import { useLoginModal } from '../context/LoginModalContext'
 import { LOGO_OPTIONS, FRAME_STYLE_COUNT, PATTERN_OPTIONS } from '../lib/qr'
 import { startDraft, draftHasContent } from '../lib/qrDraft'
-import { getTheme, toggleTheme } from '../lib/theme'
+import { useTheme } from '../hooks/useTheme'
 import { findType, SELECTABLE_QR_TYPES } from '../lib/qrTypes'
 import { useAuth } from '../context/AuthContext'
 import Logo from '../components/Logo'
@@ -256,12 +256,11 @@ export default function Landing() {
   // effect below, one frame later. The palette is never wrong in the meantime —
   // the inline script in index.html sets the dark class before the first paint,
   // so this is only about which icon and which label are showing.
-  const [theme, setThemeVal] = useState('light')
+  const [theme, onToggleTheme] = useTheme()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-    setThemeVal(getTheme())
   }, [])
 
   // Pull the scan demos down once the browser is idle, so they are ready by
@@ -274,11 +273,6 @@ export default function Landing() {
     })
     return () => cancel(id)
   }, [])
-
-  const onToggleTheme = () => {
-    toggleTheme()
-    setThemeVal(getTheme())
-  }
 
   const goToDashboard = () => {
     if (isAuthenticated) {

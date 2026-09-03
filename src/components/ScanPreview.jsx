@@ -106,7 +106,7 @@ function PhoneFrame({ children }) {
 
 function AddressBar({ slug }) {
   return (
-    <div className="bg-white px-3 pb-2 pt-9">
+    <div className="bg-surface px-3 pb-2 pt-9">
       <div className="flex items-center gap-1.5 rounded-full bg-canvas px-3 py-1.5 text-[11px] text-ink-muted">
         <Lock size={10} className="shrink-0" />
         <span className="truncate">{shortUrl(slug || 'xxxx')}</span>
@@ -122,8 +122,8 @@ function Btn({ icon: Icon, children, color = 'primary' }) {
       : color === 'green'
         ? 'bg-[#25D366] text-white'
         : color === 'dark'
-          ? 'bg-ink text-white'
-          : 'bg-white text-ink border border-line'
+          ? 'bg-[#1F2430] text-white'
+          : 'bg-surface text-ink border border-line'
   return (
     <div
       className={`flex h-11 w-full items-center justify-center gap-2 rounded-[12px] text-sm font-bold ${cls}`}
@@ -203,7 +203,7 @@ function ContactPage({ c }) {
               className="h-20 w-20 rounded-full object-cover ring-4 ring-white/30"
             />
           ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20 text-2xl font-bold ring-4 ring-white/30">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-surface/20 text-2xl font-bold ring-4 ring-white/30">
               {initials(name)}
             </div>
           )}
@@ -211,7 +211,7 @@ function ContactPage({ c }) {
             <img
               src={c.logo}
               alt=""
-              className="absolute -bottom-1 -right-1 h-8 w-8 rounded-[9px] border-2 border-white bg-white object-cover"
+              className="absolute -bottom-1 -right-1 h-8 w-8 rounded-[9px] border-2 border-surface bg-surface object-cover"
             />
           )}
         </div>
@@ -241,7 +241,7 @@ function ContactPage({ c }) {
           </p>
         )}
       </div>
-      <div className="sticky bottom-0 border-t border-line bg-white p-4">
+      <div className="sticky bottom-0 border-t border-line bg-surface p-4">
         <Btn icon={Download}>Save Contact</Btn>
       </div>
     </div>
@@ -259,7 +259,7 @@ function WifiPage({ c }) {
           Join this Wi-Fi network
         </p>
         <div className="mt-4 w-full space-y-2 text-left">
-          <div className="rounded-[10px] bg-white p-3 shadow-sm">
+          <div className="rounded-[10px] bg-surface p-3 shadow-sm">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
               Network
             </p>
@@ -268,7 +268,7 @@ function WifiPage({ c }) {
             </p>
           </div>
           {c.auth !== 'nopass' && (
-            <div className="flex items-center justify-between rounded-[10px] bg-white p-3 shadow-sm">
+            <div className="flex items-center justify-between rounded-[10px] bg-surface p-3 shadow-sm">
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">
                   Password
@@ -336,7 +336,7 @@ function LocationPage({ c }) {
           />
         </div>
       </div>
-      <div className="border-t border-line bg-white p-4">
+      <div className="border-t border-line bg-surface p-4">
         <p className="text-sm font-bold text-ink">{c.label || 'Dropped pin'}</p>
         <p className="mb-3 text-xs text-ink-muted">
           {[c.lat, c.lng].filter(Boolean).join(', ') || 'Coordinates'}
@@ -361,7 +361,7 @@ function LinkTreePage({ c }) {
         {(links.length ? links : [{ label: 'Your first link' }]).map((l, i) => (
           <div
             key={i}
-            className="flex items-center justify-between rounded-[12px] bg-white px-4 py-3 text-sm font-semibold text-ink shadow-sm"
+            className="flex items-center justify-between rounded-[12px] bg-surface px-4 py-3 text-sm font-semibold text-ink shadow-sm"
           >
             <span className="truncate">{l.label || host(l.url) || 'Link'}</span>
             <ChevronRight size={15} className="shrink-0 text-ink-faint" />
@@ -375,7 +375,7 @@ function LinkTreePage({ c }) {
 function CouponPage({ c }) {
   return (
     <div className="flex h-full flex-col items-center justify-center px-5 pb-5 text-center">
-      <div className="w-full rounded-[16px] border-2 border-dashed border-primary/40 bg-white p-5">
+      <div className="w-full rounded-[16px] border-2 border-dashed border-primary/40 bg-surface p-5">
         <Ticket size={26} className="mx-auto text-primary" />
         <p className="mt-2 text-sm font-bold text-ink">
           {c.title || 'Special offer'}
@@ -687,7 +687,7 @@ function bodyFor(record) {
 function QrCard({ record }) {
   const dyn = !!record?.dynamic
   return (
-    <div className="mx-auto flex w-[300px] max-w-full flex-col items-center rounded-[10px] border border-line bg-white p-6 shadow-sm">
+    <div className="mx-auto flex w-[300px] max-w-full flex-col items-center rounded-[10px] border border-line bg-surface p-6 shadow-sm">
       <div className="rounded-[10px] border border-line bg-white p-4 shadow-sm">
         <QRView record={record} size={200} />
       </div>
