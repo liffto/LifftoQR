@@ -8,6 +8,7 @@ import {
   incompleteFields,
   deriveContentName,
   encodeContent,
+  dynamicLandsOnPage,
 } from '../lib/qrTypes'
 import { useAuth } from '../context/AuthContext'
 import { useLoginModal } from '../context/LoginModalContext'
@@ -52,7 +53,7 @@ export default function CreateDetails() {
   const missingLabels = missing.map(
     (key) => type.fields.find((f) => f.key === key)?.label || key,
   )
-  const asQR = previewsAsQR(record.typeKey)
+  const asQR = previewsAsQR(record.typeKey, record.dynamic)
 
   const setField = (k, v) =>
     setRecord((r) => {
@@ -237,10 +238,19 @@ export default function CreateDetails() {
             </span>
           </div>
           <ScanPreview record={record} />
+          {/* For Text, Email, SMS, Phone and WhatsApp the two modes behave
+              visibly differently when scanned, and that difference decides
+              which one someone wants: static fires the action immediately,
+              dynamic shows a page with a button first. Worth saying before the
+              choice, not after the printing. */}
           <p className="mt-3 text-center text-[11px] text-ink-faint leading-relaxed max-w-[280px] mx-auto">
             {record.dynamic
-              ? `Dynamic QR — opens through ${SHORT_HOST} so you can edit it later and track scans.`
-              : 'Static QR — your device handles this directly when scanned.'}
+              ? dynamicLandsOnPage(record.typeKey)
+                ? `Dynamic QR — scanning opens a ${SHORT_HOST} page showing this, with a button to act on it. Editable later, and scans are counted.`
+                : `Dynamic QR — opens through ${SHORT_HOST} so you can edit it later and track scans.`
+              : dynamicLandsOnPage(record.typeKey)
+                ? 'Static QR — the phone acts on this straight away, with no page in between. Fixed once printed.'
+                : 'Static QR — your device handles this directly when scanned.'}
           </p>
         </div>
       </main>

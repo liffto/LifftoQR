@@ -7,6 +7,22 @@ from app.models.qr import QR
 
 WEBSITE_TYPE_KEY = "url"
 
+# Types whose dynamic codes always land on our own page instead of redirecting.
+#
+# Each of these could be turned into a link — mailto:, sms:, tel:, wa.me — and
+# redirecting to one throws the scanner straight into a mail client or a dialer
+# with no idea what they are about to send or to whom. Landing first shows them
+# the message, the number, the recipient, and lets them decide. It is also the
+# only way the scan is worth counting: a redirect to tel: leaves nothing to
+# look at and nothing to come back to.
+#
+# It closes a trap as well. The fallback below accepts qr.url for any type, and
+# records of these types have been found carrying their own short URL in that
+# column — as a dynamic code that would have redirected to itself, forever.
+ALWAYS_LANDING_TYPE_KEYS = frozenset(
+    {"text", "email", "sms", "phone", "whatsapp"}
+)
+
 _LOCAL_HOSTNAMES = {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
 
 
@@ -47,7 +63,13 @@ def _is_valid_http_url(value: str | None) -> bool:
 
 
 def resolve_destination_url(qr: QR) -> str | None:
-    """Return the redirect URL for a QR, or None if unavailable."""
+    """Return the redirect URL for a QR, or None if unavailable.
+
+    None means "show our own page", which is where the types below always go.
+    """
+    if qr.type_key in ALWAYS_LANDING_TYPE_KEYS:
+        return None
+
     if qr.type_key == WEBSITE_TYPE_KEY and qr.website is not None:
         if _is_valid_http_url(qr.website.url):
             return qr.website.url.strip()

@@ -11,13 +11,16 @@ import {
   Copy,
   Download,
   ExternalLink,
+  FileText,
   Globe,
   Loader2,
   Mail,
   MapPin,
+  MessageCircle,
   MessageSquare,
   Phone,
   QrCode,
+  ShieldCheck,
   Wifi,
 } from 'lucide-react'
 import { getPublicQr, vcardFileUrl } from '../api/qrcode/publicQr'
@@ -439,17 +442,295 @@ function EventCard({ c }) {
   )
 }
 
-function TextCard({ c }) {
+/**
+ * The landing for a dynamic code whose whole point is one action: call this
+ * number, send this message, open this chat, read this note.
+ *
+ * Someone reaches this by pointing a camera at a sticker, standing up, on a
+ * phone, with a few seconds of patience and no idea what they just scanned. So
+ * the page answers three questions in that order, before anything else:
+ *
+ *   what is this — the headline, in plain language, saying what the code holds
+ *   what will happen — the button says the app it opens, never just "Continue"
+ *   is that safe — the value is shown in full first, so nobody is handed to a
+ *   dialer or a mail client without seeing the number or the address
+ *
+ * That last one is the whole reason these types land here rather than firing
+ * tel: or mailto: straight from the scan. A code that silently opens your phone
+ * app is the sort of thing people learn not to scan.
+ */
+function ActionScanCard({
+  accent,
+  icon: Icon,
+  eyebrow,
+  headline,
+  value,
+  valueLabel,
+  message,
+  messageLabel,
+  action,
+  reassurance,
+  copyValue,
+  copyLabel,
+}) {
   return (
-    <Card className="p-5">
-      <h1 className="text-lg font-bold text-ink">Note</h1>
-      <p className="mt-3 whitespace-pre-wrap rounded-[10px] bg-canvas p-3.5 text-[14px] leading-relaxed text-ink">
-        {c.text}
-      </p>
-      <div className="mt-4">
-        <CopyRow label="Tap to copy" value={c.text} />
+    <>
+      <Card>
+        <div
+          className="px-5 pb-6 pt-7 text-center text-white"
+          style={{ background: accent.gradient }}
+        >
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/20">
+            <Icon size={28} />
+          </div>
+          <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">
+            {eyebrow}
+          </p>
+          <h1 className="mt-1 text-[21px] font-bold leading-tight">{headline}</h1>
+        </div>
+
+        <div className="px-5 py-5">
+          {/* The value is the point of the card, so it is set at a size you can
+              read at arm's length and left selectable for anyone who would
+              rather take it than tap it. */}
+          {value && (
+            <div className="text-center">
+              {valueLabel && (
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-faint">
+                  {valueLabel}
+                </p>
+              )}
+              <p className="mt-1 select-all break-words text-[19px] font-bold leading-snug text-ink">
+                {value}
+              </p>
+            </div>
+          )}
+
+          {/* Shown as a bubble because that is what it is: a draft, sitting in
+              an app, waiting for the scanner to press send. A plain grey field
+              reads like something already on its way. */}
+          {message && (
+            <div className={value ? 'mt-4' : ''}>
+              {messageLabel && (
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-faint">
+                  {messageLabel}
+                </p>
+              )}
+              <div className="relative rounded-[14px] rounded-bl-[4px] bg-canvas px-4 py-3">
+                <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-ink">
+                  {message}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      <div className="mt-4 space-y-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {/* An anchor when the action is a link the phone should hand to another
+            app, a button when it is something this page does itself. Copying a
+            note is still the action — it should not be demoted to a footnote
+            just because it has no URL. */}
+        {action &&
+          (action.onClick ? (
+            <button
+              type="button"
+              onClick={action.onClick}
+              className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-[12px] text-[15px] font-bold text-white shadow-sm transition-opacity active:opacity-90"
+              style={{ background: accent.solid }}
+            >
+              <action.icon size={19} /> {action.label}
+            </button>
+          ) : (
+            <a
+              href={action.href}
+              className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-[12px] text-[15px] font-bold text-white shadow-sm transition-opacity active:opacity-90"
+              style={{ background: accent.solid }}
+            >
+              <action.icon size={19} /> {action.label}
+            </a>
+          ))}
+
+        {/* Says plainly that pressing the button does not send anything. It is
+            the difference between a scanner acting and a scanner backing out. */}
+        {reassurance && (
+          <p className="flex items-center justify-center gap-1.5 text-center text-[11.5px] leading-relaxed text-ink-faint">
+            <ShieldCheck size={13} className="shrink-0" />
+            {reassurance}
+          </p>
+        )}
+
+        {copyValue && <CopyRow label={copyLabel} value={copyValue} />}
       </div>
-    </Card>
+    </>
+  )
+}
+
+// Per-type colour, because the action is what the scanner is deciding about and
+// the colour is the fastest way to say which one it is. WhatsApp gets its own
+// green for the same reason its button does everywhere else.
+const ACCENTS = {
+  phone: {
+    solid: '#0F9D58',
+    gradient: 'linear-gradient(135deg, #0F9D58 0%, #0B7C46 100%)',
+  },
+  sms: {
+    solid: '#1B59F5',
+    gradient: 'linear-gradient(135deg, #1B59F5 0%, #2563eb 60%, #7c3aed 100%)',
+  },
+  whatsapp: {
+    solid: '#25D366',
+    gradient: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+  },
+  email: {
+    solid: '#5B4BE1',
+    gradient: 'linear-gradient(135deg, #5B4BE1 0%, #7c3aed 100%)',
+  },
+  text: {
+    solid: '#1F2430',
+    gradient: 'linear-gradient(135deg, #2A3142 0%, #1F2430 100%)',
+  },
+}
+
+function TextCard({ c }) {
+  const text = c.text || ''
+  const [copied, setCopied] = useState(false)
+  return (
+    <ActionScanCard
+      accent={ACCENTS.text}
+      icon={FileText}
+      eyebrow="Note"
+      headline="Someone left you a message"
+      message={text}
+      messageLabel="What it says"
+      action={
+        text
+          ? {
+              icon: copied ? Check : Copy,
+              label: copied ? 'Copied' : 'Copy text',
+              onClick: () => {
+                copyToClipboard(text)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 1600)
+              },
+            }
+          : null
+      }
+      reassurance="Nothing leaves this page — the note is yours to keep"
+    />
+  )
+}
+
+function PhoneCard({ c }) {
+  const number = c.phone || ''
+  return (
+    <ActionScanCard
+      accent={ACCENTS.phone}
+      icon={Phone}
+      eyebrow="Phone"
+      headline="Call this number"
+      value={number}
+      valueLabel="Number"
+      action={
+        number
+          ? { href: `tel:${number}`, icon: Phone, label: 'Call now' }
+          : null
+      }
+      reassurance="Opens your phone app — you place the call"
+      copyValue={number}
+      copyLabel="Tap to copy the number"
+    />
+  )
+}
+
+function SmsCard({ c }) {
+  const number = c.number || ''
+  return (
+    <ActionScanCard
+      accent={ACCENTS.sms}
+      icon={MessageSquare}
+      eyebrow="Text message"
+      headline={c.message ? 'Send this message' : 'Message this number'}
+      value={number}
+      valueLabel="To"
+      message={c.message}
+      messageLabel="Message"
+      action={
+        number
+          ? {
+              href: `sms:${number}${c.message ? `?body=${encodeURIComponent(c.message)}` : ''}`,
+              icon: MessageSquare,
+              label: 'Open Messages',
+            }
+          : null
+      }
+      reassurance="Opens your messaging app with this ready — nothing is sent until you send it"
+      copyValue={number}
+      copyLabel="Tap to copy the number"
+    />
+  )
+}
+
+function WhatsappCard({ c }) {
+  const digits = String(`${c.countryCode || ''}${c.phone || ''}`).replace(
+    /[^0-9]/g,
+    '',
+  )
+  const shown = [c.countryCode, c.phone].filter(Boolean).join(' ')
+  return (
+    <ActionScanCard
+      accent={ACCENTS.whatsapp}
+      icon={MessageCircle}
+      eyebrow="WhatsApp"
+      headline={c.message ? 'Send this on WhatsApp' : 'Chat on WhatsApp'}
+      value={shown}
+      valueLabel="To"
+      message={c.message}
+      messageLabel="Message"
+      action={
+        digits
+          ? {
+              href: `https://wa.me/${digits}${c.message ? `?text=${encodeURIComponent(c.message)}` : ''}`,
+              icon: MessageCircle,
+              label: 'Open WhatsApp',
+            }
+          : null
+      }
+      reassurance="Opens the chat with this ready — nothing is sent until you send it"
+      copyValue={shown}
+      copyLabel="Tap to copy the number"
+    />
+  )
+}
+
+function EmailCard({ c }) {
+  const to = c.to || ''
+  const params = []
+  if (c.subject) params.push(`subject=${encodeURIComponent(c.subject)}`)
+  if (c.body) params.push(`body=${encodeURIComponent(c.body)}`)
+  return (
+    <ActionScanCard
+      accent={ACCENTS.email}
+      icon={Mail}
+      eyebrow="Email"
+      headline={c.subject || 'Send an email'}
+      value={to}
+      valueLabel="To"
+      message={c.body}
+      messageLabel={c.subject ? `Subject: ${c.subject}` : 'Message'}
+      action={
+        to
+          ? {
+              href: `mailto:${to}${params.length ? `?${params.join('&')}` : ''}`,
+              icon: Mail,
+              label: 'Compose email',
+            }
+          : null
+      }
+      reassurance="Opens your mail app with this ready — nothing is sent until you send it"
+      copyValue={to}
+      copyLabel="Tap to copy the address"
+    />
   )
 }
 
@@ -499,6 +780,8 @@ function bodyFor(qr, slug) {
       return <EventCard c={c} />
     case 'text':
       return <TextCard c={c} />
+    case 'whatsapp':
+      return <WhatsappCard c={c} />
     case 'location':
       return (
         <SimpleActionCard
@@ -523,51 +806,11 @@ function bodyFor(qr, slug) {
         />
       )
     case 'email':
-      return (
-        <SimpleActionCard
-          icon={Mail}
-          title="Send an email"
-          rows={[
-            { icon: Mail, label: 'To', value: c.to },
-            { icon: MessageSquare, label: 'Subject', value: c.subject },
-          ]}
-          action={
-            c.to
-              ? { href: `mailto:${c.to}`, icon: Mail, label: 'Compose email' }
-              : null
-          }
-        />
-      )
+      return <EmailCard c={c} />
     case 'sms':
-      return (
-        <SimpleActionCard
-          icon={MessageSquare}
-          title="Send a message"
-          rows={[{ icon: Phone, label: 'To', value: c.number }]}
-          action={
-            c.number
-              ? {
-                  href: `sms:${c.number}`,
-                  icon: MessageSquare,
-                  label: 'Open Messages',
-                }
-              : null
-          }
-        />
-      )
+      return <SmsCard c={c} />
     case 'phone':
-      return (
-        <SimpleActionCard
-          icon={Phone}
-          title="Call this number"
-          rows={[{ icon: Phone, label: 'Number', value: c.phone }]}
-          action={
-            c.phone
-              ? { href: `tel:${c.phone}`, icon: Phone, label: 'Call now' }
-              : null
-          }
-        />
-      )
+      return <PhoneCard c={c} />
     default:
       return (
         <StateCard

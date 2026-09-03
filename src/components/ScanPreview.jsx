@@ -38,7 +38,7 @@ import {
   FaGithub,
   FaTelegram,
 } from 'react-icons/fa6'
-import { findType, formatEventWhen } from '../lib/qrTypes'
+import { findType, formatEventWhen, dynamicLandsOnPage } from '../lib/qrTypes'
 import { shortUrl } from '../lib/store'
 import QRView from './QRView'
 
@@ -61,7 +61,14 @@ const SOCIAL = {
 // Types where showing the actual QR is clearer than a landing-page mockup
 // (simple redirect, plain text, or a native OS action — no branded page).
 const QR_PREVIEW_TYPES = new Set(['url', 'text', 'wifi', 'phone', 'location'])
-export const previewsAsQR = (typeKey) => QR_PREVIEW_TYPES.has(typeKey)
+
+// …unless the code is dynamic and one of the types that now lands on our page.
+// Text and Phone sit in the set above because scanning a static one is a native
+// OS action with no page involved, which stopped being the whole story when
+// they gained a dynamic mode. Previewing a bare QR for a dynamic phone code
+// would hide the page the creator is actually making.
+export const previewsAsQR = (typeKey, dynamic = false) =>
+  QR_PREVIEW_TYPES.has(typeKey) && !(dynamic && dynamicLandsOnPage(typeKey))
 
 /* Mockup of what a person sees after scanning. Dynamic QRs route through our
    site (branded landing page); this previews that page so the creator knows
@@ -702,7 +709,8 @@ function QrCard({ record }) {
 }
 
 export default function ScanPreview({ record }) {
-  if (previewsAsQR(record?.typeKey)) return <QrCard record={record} />
+  if (previewsAsQR(record?.typeKey, record?.dynamic))
+    return <QrCard record={record} />
   const dyn = !!record?.dynamic
   return (
     <PhoneFrame>
