@@ -686,28 +686,34 @@ const nameText = (c) => {
     .trim()
   return t ? (t.length > 30 ? t.slice(0, 30) + '…' : t) : 'Text'
 }
-const nameWifi = (c) => `Wi-Fi: ${c.ssid || 'network'}`
+// Names carry no type prefix. Every screen that shows a name shows the type
+// beside it — an icon and a label in the list, a badge in the details dialog —
+// so "WhatsApp: +919843137477" spent its first eleven characters repeating the
+// word next to it and pushed the number that identifies the code out of a
+// narrow column. The fallbacks still name the type, because with no content
+// the type is the only thing there is to say.
+const nameWifi = (c) => (c.ssid || '').trim() || 'Wi-Fi network'
 const nameVcard = (c) => {
   const n = [c.firstName, c.lastName].filter(Boolean).join(' ').trim()
-  return n ? `Contact: ${n}` : c.org ? `Contact: ${c.org}` : 'Contact card'
+  return n || c.org || 'Contact card'
 }
-const nameEmail = (c) => 'Email: ' + ((c.to || '').trim() || 'recipient')
-const nameSms = (c) => `SMS: ${(c.number || '').trim() || 'No number'}`
-const namePhone = (c) => `Call ${(c.phone || '').trim() || 'number'}`
+const nameEmail = (c) => (c.to || '').trim() || 'Email'
+const nameSms = (c) => (c.number || '').trim() || 'SMS'
+const namePhone = (c) => (c.phone || '').trim() || 'Phone'
 const nameWhatsapp = (c) => {
   const d = String((c.countryCode || '') + (c.phone || '')).replace(
     /[^0-9]/g,
     '',
   )
-  return d ? 'WhatsApp: +' + d : 'WhatsApp'
+  return d ? '+' + d : 'WhatsApp'
 }
-const nameEvent = (c) => (c.title ? `Event: ${c.title}` : 'Calendar Event')
+const nameEvent = (c) => (c.title || '').trim() || 'Calendar event'
 const nameLocation = (c) => {
   const l = (c && c.label ? String(c.label) : '').trim()
-  if (l) return `Location: ${l}`
+  if (l) return l
   const lat = (c && c.lat != null ? String(c.lat) : '').trim()
   const lng = (c && c.lng != null ? String(c.lng) : '').trim()
-  return lat && lng ? `Location: ${lat}, ${lng}` : 'Location'
+  return lat && lng ? `${lat}, ${lng}` : 'Location'
 }
 const nameSocial = (c) => {
   const p = (c && c.platform ? String(c.platform) : 'social').toLowerCase()
@@ -731,16 +737,16 @@ const nameSocial = (c) => {
   return h ? label + ': @' + h : label + ' profile'
 }
 const nameGoogleReview = (c) =>
-  c.businessName ? `Review: ${c.businessName}` : 'Google Review'
+  (c.businessName || '').trim() || 'Google Review'
 const namePdf = (c) => {
   const u = (c.url || '').trim()
   if (!u) return 'PDF'
   try {
     const p = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(u) ? u : 'https://' + u)
     const file = p.pathname.split('/').filter(Boolean).pop()
-    return 'PDF: ' + (file ? decodeURIComponent(file) : p.hostname)
+    return file ? decodeURIComponent(file) : p.hostname
   } catch (e) {
-    return 'PDF: ' + u.replace(/^https?:\/\//i, '').slice(0, 40)
+    return u.replace(/^https?:\/\//i, '').slice(0, 40)
   }
 }
 const nameVideo = (c) => {
@@ -748,39 +754,35 @@ const nameVideo = (c) => {
   if (!raw) return 'Video'
   try {
     const u = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw)
-    return 'Video: ' + u.hostname.replace(/^www\./, '')
+    return u.hostname.replace(/^www\./, '')
   } catch (e) {
     return 'Video'
   }
 }
 const nameMp3 = (c) => {
   const t = (c.title || '').trim()
-  if (t) return 'Audio: ' + t
+  if (t) return t
   const u = (c.url || '').trim()
   if (!u) return 'Audio'
   const file = u.split('?')[0].split('#')[0].split('/').filter(Boolean).pop()
-  return 'Audio: ' + (file || u)
+  return file || u
 }
 const nameApp = (c) => {
   const n = (c.name || '').trim()
-  if (n) return 'App: ' + n
+  if (n) return n
   const u = (c.iosUrl || c.androidUrl || c.fallbackUrl || '').trim()
   if (!u) return 'App download'
   try {
-    return (
-      'App: ' +
-      new URL(/^https?:\/\//i.test(u) ? u : 'https://' + u).hostname.replace(
-        /^www\./,
-        '',
-      )
-    )
+    return new URL(
+      /^https?:\/\//i.test(u) ? u : 'https://' + u,
+    ).hostname.replace(/^www\./, '')
   } catch (e) {
     return 'App download'
   }
 }
 const nameLinktree = (c) => {
   const t = (c.title || '').trim()
-  if (t) return 'Links: ' + t
+  if (t) return t
   const n = Array.isArray(c.links)
     ? c.links.filter((l) => l && String(l.url || '').trim()).length
     : 0
@@ -789,21 +791,21 @@ const nameLinktree = (c) => {
 const nameCoupon = (c) => {
   const t = String(c.title || '').trim()
   const code = String(c.code || '').trim()
-  if (t && code) return `Coupon: ${t} (${code})`
-  if (t) return `Coupon: ${t}`
-  if (code) return `Coupon: ${code}`
+  if (t && code) return `${t} (${code})`
+  if (t) return t
+  if (code) return code
   return 'Coupon'
 }
 const nameInvitation = (c) => {
   const t = (c.title || '').trim()
-  if (t) return `Invitation: ${t}`
+  if (t) return t
   const u = (c.url || '').trim()
   if (!u) return 'Invitation'
   try {
     const h = new URL(
       /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(u) ? u : 'https://' + u,
     ).hostname.replace(/^www\./, '')
-    return `Invitation: ${h}`
+    return h
   } catch (e) {
     return 'Invitation'
   }
@@ -813,7 +815,7 @@ const nameFeedback = (c) => {
     const u = new URL(
       /^https?:\/\//i.test(c.url || '') ? c.url : 'https://' + (c.url || ''),
     )
-    return 'Feedback: ' + u.hostname.replace(/^www\./, '')
+    return u.hostname.replace(/^www\./, '')
   } catch (e) {
     return 'Feedback Form'
   }
