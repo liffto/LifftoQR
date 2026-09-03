@@ -14,6 +14,21 @@ class QrController:
         items = self.service.list_qrs(created_by=user.id)
         return JSONResponse(content=success_response(items))
 
+    def scan_tracking(self, user: User) -> JSONResponse:
+        """When unique-scan tracking began, for the dashboard's label.
+
+        Scans were a single counter until scan_events landed, so a unique
+        figure cannot speak for anything before the first recorded scan. The
+        dashboard says so rather than showing a small number beside a large
+        total and letting it look like a bug.
+        """
+        started = self.service.scan_tracking_started_at()
+        return JSONResponse(
+            content=success_response(
+                {"since": started.isoformat() if started else None}
+            )
+        )
+
     def get_qr(self, qr_id: int, user: User) -> JSONResponse:
         item = self.service.get_qr(qr_id, created_by=user.id)
         if item is None:

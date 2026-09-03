@@ -18,6 +18,7 @@ import {
   ExternalLink,
   LayoutGrid,
   List,
+  Users,
 } from 'lucide-react'
 import {
   setDraft,
@@ -29,10 +30,11 @@ import {
 } from '../lib/store'
 import { useQrs, useDeleteQr, useSetQrStatus } from '../hooks/useQrs'
 import { useQrScanCount } from '../hooks/useQrScanCount'
+import { useScanTracking } from '../hooks/useScanTracking'
 import { DOWNLOAD_FORMATS } from '../lib/qr'
 import { findType } from '../lib/qrTypes'
 import { destinationUrl } from '../lib/qrDestination'
-import { dashboardStats } from '../lib/dashboardStats'
+import { dashboardStats, trackingSince } from '../lib/dashboardStats'
 import {
   filterRecords,
   filtersContradict,
@@ -465,6 +467,14 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
                     </>
                   )}
                 </p>
+                {/* The detail view is where the split is worth spelling out.
+                    Shown only when there is a unique count, so codes that
+                    predate the events table say nothing rather than "0". */}
+                {row.uniqueScans > 0 && (
+                  <p className="mt-0.5 text-[10px] font-medium text-ink-faint">
+                    {row.uniqueScans.toLocaleString()} unique
+                  </p>
+                )}
               </div>
             )}
             <div className="bg-canvas rounded-[10px] px-3 py-2.5 text-center">
@@ -751,7 +761,17 @@ function QrRow({ row, onOpenModal }) {
       <td className="py-3.5 pr-4 text-sm font-bold text-ink">
         {isDynamic ? (
           row.scans > 0 ? (
-            row.scans.toLocaleString()
+            <>
+              {row.scans.toLocaleString()}
+              {/* Only when there is one. Every code scanned before the events
+                  table existed would otherwise carry a permanent "0 unique",
+                  which says nothing true about it. */}
+              {row.uniqueScans > 0 && (
+                <span className="block text-[11px] font-normal text-ink-faint">
+                  {row.uniqueScans.toLocaleString()} unique
+                </span>
+              )}
+            </>
           ) : (
             <span className="text-ink-faint font-normal">—</span>
           )
@@ -1062,8 +1082,19 @@ export default function Dashboard() {
   // subtitles this replaced could not be made real.
   // Not `total` — that name is taken further up by the count of the *filtered*
   // rows behind the table's footer. This one counts everything the account has.
-  const { total: totalCodes, totalScans, dynamicCount, codesSub, scansSub } =
-    dashboardStats(list)
+  const {
+    total: totalCodes,
+    totalScans,
+    uniqueScans,
+    dynamicCount,
+    codesSub,
+    scansSub,
+  } = dashboardStats(list)
+
+  // The date the unique figure can honestly speak from. Everything scanned
+  // before it was counted by a bare integer with no history behind it.
+  const { data: tracking } = useScanTracking()
+  const since = trackingSince(tracking?.since)
 
   const STATS = [
     {
@@ -1081,6 +1112,16 @@ export default function Dashboard() {
       icon: BarChart2,
       cls: 'bg-amber-50 text-amber-500 dark:bg-amber-400/15 dark:text-amber-300',
       ring: 'ring-amber-100 dark:ring-amber-400/20',
+    },
+    {
+      label: 'Unique Scans',
+      value: uniqueScans.toLocaleString(),
+      // Without the date this reads as a bug on any code that was scanned
+      // before there was anything recording who did the scanning.
+      sub: since || 'not counted yet',
+      icon: Users,
+      cls: 'bg-violet-50 text-violet-500 dark:bg-violet-400/15 dark:text-violet-300',
+      ring: 'ring-violet-100 dark:ring-violet-400/20',
     },
     {
       label: 'Dynamic QR',

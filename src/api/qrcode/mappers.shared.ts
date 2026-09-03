@@ -75,6 +75,7 @@ export function itemToBaseRecord<T extends {
   folder: string | null
   status: string
   scans: number
+  uniqueScans?: number
   editedOn: string | null
   content: unknown
   template: TemplateItem
@@ -92,6 +93,7 @@ export function itemToBaseRecord<T extends {
     folder: item.folder ?? 'Untitled',
     status: item.status,
     scans: item.scans ?? 0,
+    uniqueScans: item.uniqueScans ?? 0,
     editedOn: item.editedOn ?? '',
     design: templateToDesign(item.template),
   }

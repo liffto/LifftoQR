@@ -55,12 +55,23 @@ class QrService:
         self.repository = repository
 
     def list_qrs(self, created_by: int) -> list[dict[str, Any]]:
+        # Added here rather than to the thirteen per-type response schemas that
+        # _map_qr goes through: uniqueScans is the same derived number for every
+        # type, and threading it through each one would be thirteen chances to
+        # forget it on the fourteenth.
+        unique = self.repository.unique_scans_by_qr(created_by=created_by)
         items: list[dict[str, Any]] = []
         for qr in self.repository.list_all(created_by=created_by):
             mapped = self._map_qr(qr)
             if mapped is not None:
+                # Absent means no scan has been recorded for this code — which
+                # is every code that only ever ran before scan_events existed.
+                mapped["uniqueScans"] = unique.get(qr.id, 0)
                 items.append(mapped)
         return items
+
+    def scan_tracking_started_at(self):
+        return self.repository.scan_tracking_started_at()
 
     def get_qr(self, qr_id: int, created_by: int) -> dict[str, Any] | None:
         qr = self.repository.get_by_id(qr_id, created_by=created_by)
