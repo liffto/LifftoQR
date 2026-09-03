@@ -16,7 +16,11 @@ class ScanController:
         self.ws_manager = ws_manager
 
     async def scan(
-        self, slug: str, request_host: str | None = None
+        self,
+        slug: str,
+        request_host: str | None = None,
+        client_ip: str | None = None,
+        user_agent: str | None = None,
     ) -> RedirectResponse:
         qr = self.service.get_qr_by_slug(slug)
         if qr is None:
@@ -42,6 +46,7 @@ class ScanController:
 
         if qr.dynamic:
             new_scans = self.service.record_scan(slug)
+            self.service.record_scan_event(qr, ip=client_ip, user_agent=user_agent)
             self.service.notify_owner(qr)
             if new_scans is not None:
                 await self.ws_manager.broadcast(

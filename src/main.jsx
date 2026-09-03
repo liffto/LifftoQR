@@ -6,6 +6,7 @@ import QueryProvider from './providers/QueryProvider'
 import { AuthProvider } from './context/AuthContext'
 import { LoginModalProvider } from './context/LoginModalContext'
 import App from './App.jsx'
+import { initErrorTracking } from './lib/errorTracking'
 import './index.css'
 
 // GoogleOAuthProvider used to sit here, wrapping everything. It loads Google's
@@ -58,3 +59,7 @@ if (container.dataset.prerendered === '/' && window.location.pathname === '/') {
 } else {
   ReactDOM.createRoot(container).render(tree)
 }
+
+// Last, and idle-deferred inside — nothing about reporting errors is allowed to
+// delay showing the page. No-ops entirely unless VITE_SENTRY_DSN is set.
+initErrorTracking()

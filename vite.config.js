@@ -79,6 +79,18 @@ const manualChunks = {
 
 export default defineConfig(({ isSsrBuild }) => ({
   plugins: [react(), inlineStylesheet()],
+  // Sentry reads these at build time to drop code it will never run here. We
+  // report errors and nothing else — tracing, replay and the debug logger are
+  // all dead weight, and this is the documented way to make them not ship.
+  // Only has any effect when VITE_SENTRY_DSN is set; with no DSN the whole SDK
+  // is eliminated anyway.
+  define: {
+    __SENTRY_DEBUG__: false,
+    __SENTRY_TRACING__: false,
+    __RRWEB_EXCLUDE_IFRAME__: true,
+    __RRWEB_EXCLUDE_SHADOW_DOM__: true,
+    __SENTRY_EXCLUDE_REPLAY_WORKER__: true,
+  },
   build: {
     rollupOptions: {
       // The prerender pass (scripts/prerender.mjs) builds entry-server.jsx for

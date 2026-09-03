@@ -52,6 +52,17 @@ class Settings(BaseSettings):
     )
     frontend_url: str = PRODUCTION_APP_URL
 
+    # Error tracking. Empty means off, which is what local and CI want —
+    # nothing is initialised and no events leave the machine.
+    sentry_dsn: str = ""
+    # Fraction of requests traced for performance. Errors are always sent;
+    # this is only the timing data, which is what gets expensive.
+    sentry_traces_sample_rate: float = 0.0
+
+    # Shared secret for the scheduled-maintenance endpoint. Empty means the
+    # endpoint refuses to run at all, rather than running unauthenticated.
+    cron_secret: str = ""
+
     @classmethod
     def _normalize_url(cls, value: str) -> str:
         return value.rstrip("/") if value else value
