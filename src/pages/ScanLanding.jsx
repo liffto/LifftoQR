@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -25,11 +25,12 @@ import {
   Wifi,
 } from 'lucide-react'
 import { getPublicQr, vcardFileUrl } from '../api/qrcode/publicQr'
-import { copyToClipboard } from '../lib/store'
+import { copyToClipboard, defaultDesign } from '../lib/store'
 import {
   googleCalendarUrl,
   formatEventWhen,
   eventStatus,
+  encodeContent,
 } from '../lib/qrTypes'
 import { useAuth } from '../context/AuthContext'
 import { useLoginModal } from '../context/LoginModalContext'
@@ -49,7 +50,12 @@ const initials = (name) =>
 
 function Shell({ children }) {
   return (
-    <div className="min-h-screen bg-canvas px-4 py-6 sm:py-10">
+    // Centred rather than pinned to the top, because most of the time this is a
+    // phone and the card fills the screen, but opened on a laptop it was a thin
+    // strip stranded under a lot of empty grey. min-h-screen rather than a
+    // fixed height, so a long card (a contact with every field filled) grows
+    // the page and scrolls normally instead of being centred out of reach.
+    <div className="flex min-h-screen flex-col justify-center bg-canvas px-4 py-6 sm:py-10">
       <div className="mx-auto w-full max-w-[420px]">{children}</div>
       <p className="mt-6 text-center text-[11px] text-ink-faint">
         Powered by Liffto
@@ -507,6 +513,75 @@ function EditableMessage({ label, value, onChange, placeholder }) {
   )
 }
 
+/**
+ * Whether this is a machine with a mouse, which for these pages is the same
+ * question as "will tel: and sms: do anything".
+ *
+ * Both are handed to the OS, and on a desktop without a phone app paired there
+ * is nothing to hand them to — the click does nothing at all, with no error and
+ * no feedback. A big primary button that silently fails is worse than not
+ * offering it, so these pages ask first. mailto: and wa.me are left alone:
+ * those work on a desktop.
+ *
+ * hover + fine pointer rather than a user-agent string, because the question is
+ * about the input device rather than the brand of the machine.
+ */
+function useHasMouse() {
+  const [hasMouse, setHasMouse] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia?.('(hover: hover) and (pointer: fine)')
+    if (!mq) return undefined
+    const sync = () => setHasMouse(mq.matches)
+    sync()
+    mq.addEventListener?.('change', sync)
+    return () => mq.removeEventListener?.('change', sync)
+  }, [])
+  return hasMouse
+}
+
+// Only imported when a desktop actually renders it. qr-code-styling itself is
+// already in the shell's preload list — the landing page needs it — so this
+// saves the component rather than the library, but a phone still never parses
+// code it cannot reach.
+const QRViewLazy = lazy(() => import('../components/QRView'))
+
+/**
+ * The way out of a dead end: a code carrying the action itself, to be picked up
+ * on a phone.
+ *
+ * Someone reached this page on a laptop, which means it arrived as a link
+ * rather than a scan — forwarded, pasted, opened from a chat. The thing they
+ * want to do is a phone thing. Handing them a code to scan is the shortest
+ * route from where they are to where the action works, and because it encodes
+ * the action rather than this page's address, it carries whatever they typed in
+ * the message box with it.
+ */
+function ContinueOnPhone({ payload, caption }) {
+  if (!payload) return null
+  return (
+    <div className="rounded-[12px] border border-line bg-white p-4">
+      <div className="flex items-center gap-4">
+        <div className="shrink-0 rounded-[10px] border border-line/60 bg-white p-1.5">
+          <Suspense
+            fallback={<div className="h-[92px] w-[92px] rounded bg-canvas" />}
+          >
+            <QRViewLazy
+              record={{ typeKey: 'text', content: { text: payload }, design: defaultDesign() }}
+              size={92}
+            />
+          </Suspense>
+        </div>
+        <div className="min-w-0">
+          <p className="text-[13px] font-bold text-ink">Continue on your phone</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-ink-muted">
+            {caption}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ActionScanCard({
   accent,
   icon: Icon,
@@ -523,7 +598,12 @@ function ActionScanCard({
   reassurance,
   copyValue,
   copyLabel,
+  desktop,
 }) {
+  const hasMouse = useHasMouse()
+  // On a desktop the app link is dead for these types, so copying becomes the
+  // action rather than an afterthought, and the code below offers the phone.
+  const deskMode = hasMouse && desktop
   return (
     <>
       <Card className="animate-pop">
@@ -593,7 +673,8 @@ function ActionScanCard({
             app, a button when it is something this page does itself. Copying a
             note is still the action — it should not be demoted to a footnote
             just because it has no URL. */}
-        {action &&
+        {(!deskMode || !desktop.replacesAction) &&
+          action &&
           (action.onClick ? (
             <button
               type="button"
@@ -615,11 +696,29 @@ function ActionScanCard({
 
         {/* Says plainly that pressing the button does not send anything. It is
             the difference between a scanner acting and a scanner backing out. */}
-        {reassurance && (
+        {deskMode && desktop.action && (
+          <button
+            type="button"
+            onClick={desktop.action.onClick}
+            className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-[12px] text-[15px] font-bold text-white shadow-sm transition-opacity active:opacity-90"
+            style={{ background: accent.solid }}
+          >
+            <desktop.action.icon size={19} /> {desktop.action.label}
+          </button>
+        )}
+
+        {(deskMode ? desktop.reassurance : reassurance) && (
           <p className="flex items-center justify-center gap-1.5 text-center text-[11.5px] leading-relaxed text-ink-faint">
             <ShieldCheck size={13} className="shrink-0" />
-            {reassurance}
+            {deskMode ? desktop.reassurance : reassurance}
           </p>
+        )}
+
+        {deskMode && (
+          <ContinueOnPhone
+            payload={desktop.payload}
+            caption={desktop.caption}
+          />
         )}
 
         {copyValue && <CopyRow label={copyLabel} value={copyValue} />}
@@ -692,6 +791,12 @@ function TextCard({ c }) {
 
 function PhoneCard({ c }) {
   const number = c.phone || ''
+  const [copied, setCopied] = useState(false)
+  const copy = () => {
+    copyToClipboard(number)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1600)
+  }
   return (
     <ActionScanCard
       accent={ACCENTS.phone}
@@ -708,6 +813,19 @@ function PhoneCard({ c }) {
       reassurance="Opens your phone app — you place the call"
       copyValue={number}
       copyLabel="Tap to copy the number"
+      desktop={{
+        replacesAction: true,
+        action: number
+          ? {
+              icon: copied ? Check : Copy,
+              label: copied ? 'Number copied' : 'Copy number',
+              onClick: copy,
+            }
+          : null,
+        reassurance: 'A computer cannot place the call — copy it, or scan below',
+        payload: number ? encodeContent('phone', { phone: number }) : '',
+        caption: 'Point your camera at this and the call is ready to place.',
+      }}
     />
   )
 }
@@ -715,6 +833,12 @@ function PhoneCard({ c }) {
 function SmsCard({ c }) {
   const number = c.number || ''
   const [message, setMessage] = useState(c.message || '')
+  const [copied, setCopied] = useState(false)
+  const copy = () => {
+    copyToClipboard([number, message].filter(Boolean).join('\n'))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1600)
+  }
   return (
     <ActionScanCard
       accent={ACCENTS.sms}
@@ -740,6 +864,22 @@ function SmsCard({ c }) {
       reassurance="Opens your messaging app with this ready — nothing is sent until you send it"
       copyValue={number}
       copyLabel="Tap to copy the number"
+      desktop={{
+        replacesAction: true,
+        action: number
+          ? {
+              icon: copied ? Check : Copy,
+              label: copied ? 'Copied' : 'Copy number and message',
+              onClick: copy,
+            }
+          : null,
+        reassurance:
+          'A computer cannot send the text — copy it, or scan below to carry it across',
+        // Encodes the message as edited, so whatever is in the box travels to
+        // the phone with it.
+        payload: number ? encodeContent('sms', { number, message }) : '',
+        caption: 'Point your camera at this and the message is ready to send.',
+      }}
     />
   )
 }
