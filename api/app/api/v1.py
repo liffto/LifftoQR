@@ -20,6 +20,7 @@ from app.routes.qr_routes import router as qr_router
 from app.routes.sms_routes import router as sms_router
 from app.routes.social_media_routes import router as social_media_router
 from app.routes.text_routes import router as text_router
+from app.routes.user_template_routes import router as user_template_router
 from app.routes.vcard_routes import router as vcard_router
 from app.routes.video_routes import router as video_router
 from app.routes.website_routes import router as website_router
@@ -30,6 +31,7 @@ api_v1 = APIRouter()
 api_v1.include_router(auth_router)
 api_v1.include_router(public_router)
 api_v1.include_router(qr_router)
+api_v1.include_router(user_template_router)
 api_v1.include_router(website_router)
 api_v1.include_router(text_router)
 api_v1.include_router(wifi_router)

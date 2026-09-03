@@ -7,6 +7,7 @@ from app.auth.models_extras import TokenBlocklist, EmailVerification
 from app.rbac.models import Role, UserRole
 from app.models.qr import QR
 from app.models.template import Template
+from app.models.user_template import UserTemplate
 from app.models.text import Text
 from app.models.website import Website
 from app.models.wifi import Wifi
@@ -42,6 +43,7 @@ __all__ = [
     "UserRole",
     "QR",
     "Template",
+    "UserTemplate",
     "Text",
     "Website",
     "Wifi",
