@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -18,6 +18,7 @@ import {
   MapPin,
   MessageCircle,
   MessageSquare,
+  Pencil,
   Phone,
   QrCode,
   ShieldCheck,
@@ -219,7 +220,7 @@ function SaveContactButton({ slug, name }) {
 // Whoever scanned this card is a stranger to us, not the owner — so the CTA
 // routes through login when needed and lands them on the create flow after,
 // rather than dumping them on a sign-in wall with no way back.
-function CreateYourOwnButton() {
+function CreateYourOwnButton({ label = 'Create your own card' }) {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
   const { openLogin } = useLoginModal()
@@ -236,7 +237,7 @@ function CreateYourOwnButton() {
       onClick={go}
       className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] border border-line bg-white text-[15px] font-bold text-ink-soft active:bg-canvas"
     >
-      <QrCode size={17} className="text-primary" /> Create your own card
+      <QrCode size={17} className="text-primary" /> {label}
     </button>
   )
 }
@@ -458,7 +459,54 @@ function EventCard({ c }) {
  * That last one is the whole reason these types land here rather than firing
  * tel: or mailto: straight from the scan. A code that silently opens your phone
  * app is the sort of thing people learn not to scan.
+ *
+ * The message is editable, which is the part that surprises people. A prefilled
+ * message written by whoever printed the sticker is a guess at what the scanner
+ * wants to say; letting them adjust it before it reaches their app costs one
+ * textarea and turns a broadcast into their own message. The recipient stays
+ * fixed — that is the owner's decision, not the scanner's.
  */
+
+// Grows with what is typed, up to the cap in the class below. Without a cap a
+// long message pushes the primary button off the bottom of the phone, which is
+// a poor trade for a field nobody asked to be endless — past that height it
+// scrolls instead.
+function useAutoGrow(value) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [value])
+  return ref
+}
+
+function EditableMessage({ label, value, onChange, placeholder }) {
+  const ref = useAutoGrow(value)
+  return (
+    <div>
+      <div className="mb-1.5 flex items-baseline justify-between gap-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-faint">
+          {label}
+        </p>
+        <span className="flex items-center gap-1 text-[10px] font-medium text-ink-faint">
+          <Pencil size={10} /> Edit before sending
+        </span>
+      </div>
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={1}
+        aria-label={label}
+        className="max-h-[38vh] w-full resize-none overflow-y-auto rounded-[14px] rounded-bl-[4px] border border-line bg-canvas px-4 py-3 text-[14px] leading-relaxed text-ink outline-none transition focus:border-primary focus:bg-white placeholder:text-ink-faint"
+      />
+    </div>
+  )
+}
+
 function ActionScanCard({
   accent,
   icon: Icon,
@@ -468,6 +516,9 @@ function ActionScanCard({
   valueLabel,
   message,
   messageLabel,
+  editableMessage,
+  onMessageChange,
+  messagePlaceholder,
   action,
   reassurance,
   copyValue,
@@ -475,7 +526,7 @@ function ActionScanCard({
 }) {
   return (
     <>
-      <Card>
+      <Card className="animate-pop">
         <div
           className="px-5 pb-6 pt-7 text-center text-white"
           style={{ background: accent.gradient }}
@@ -506,22 +557,33 @@ function ActionScanCard({
             </div>
           )}
 
-          {/* Shown as a bubble because that is what it is: a draft, sitting in
-              an app, waiting for the scanner to press send. A plain grey field
-              reads like something already on its way. */}
-          {message && (
+          {editableMessage ? (
             <div className={value ? 'mt-4' : ''}>
-              {messageLabel && (
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-faint">
-                  {messageLabel}
-                </p>
-              )}
-              <div className="relative rounded-[14px] rounded-bl-[4px] bg-canvas px-4 py-3">
-                <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-ink">
-                  {message}
-                </p>
-              </div>
+              <EditableMessage
+                label={messageLabel}
+                value={message}
+                onChange={onMessageChange}
+                placeholder={messagePlaceholder}
+              />
             </div>
+          ) : (
+            message && (
+              <div className={value ? 'mt-4' : ''}>
+                {messageLabel && (
+                  <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-faint">
+                    {messageLabel}
+                  </p>
+                )}
+                {/* A bubble because that is what it is: a draft, sitting in an
+                    app, waiting to be sent. A plain grey field reads like
+                    something already on its way. */}
+                <div className="rounded-[14px] rounded-bl-[4px] bg-canvas px-4 py-3">
+                  <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-ink">
+                    {message}
+                  </p>
+                </div>
+              </div>
+            )
           )}
         </div>
       </Card>
@@ -561,6 +623,13 @@ function ActionScanCard({
         )}
 
         {copyValue && <CopyRow label={copyLabel} value={copyValue} />}
+
+        {/* The scanner is a stranger who has just seen the product work. This
+            is the only moment they are holding it, so it is the one place worth
+            asking — the same offer the contact card has always made. */}
+        <div className="pt-1">
+          <CreateYourOwnButton label="Create your own QR code" />
+        </div>
       </div>
     </>
   )
@@ -645,6 +714,7 @@ function PhoneCard({ c }) {
 
 function SmsCard({ c }) {
   const number = c.number || ''
+  const [message, setMessage] = useState(c.message || '')
   return (
     <ActionScanCard
       accent={ACCENTS.sms}
@@ -653,12 +723,15 @@ function SmsCard({ c }) {
       headline={c.message ? 'Send this message' : 'Message this number'}
       value={number}
       valueLabel="To"
-      message={c.message}
+      message={message}
       messageLabel="Message"
+      editableMessage
+      onMessageChange={setMessage}
+      messagePlaceholder="Write your message…"
       action={
         number
           ? {
-              href: `sms:${number}${c.message ? `?body=${encodeURIComponent(c.message)}` : ''}`,
+              href: `sms:${number}${message ? `?body=${encodeURIComponent(message)}` : ''}`,
               icon: MessageSquare,
               label: 'Open Messages',
             }
@@ -677,6 +750,7 @@ function WhatsappCard({ c }) {
     '',
   )
   const shown = [c.countryCode, c.phone].filter(Boolean).join(' ')
+  const [message, setMessage] = useState(c.message || '')
   return (
     <ActionScanCard
       accent={ACCENTS.whatsapp}
@@ -685,12 +759,15 @@ function WhatsappCard({ c }) {
       headline={c.message ? 'Send this on WhatsApp' : 'Chat on WhatsApp'}
       value={shown}
       valueLabel="To"
-      message={c.message}
+      message={message}
       messageLabel="Message"
+      editableMessage
+      onMessageChange={setMessage}
+      messagePlaceholder="Write your message…"
       action={
         digits
           ? {
-              href: `https://wa.me/${digits}${c.message ? `?text=${encodeURIComponent(c.message)}` : ''}`,
+              href: `https://wa.me/${digits}${message ? `?text=${encodeURIComponent(message)}` : ''}`,
               icon: MessageCircle,
               label: 'Open WhatsApp',
             }
@@ -705,9 +782,10 @@ function WhatsappCard({ c }) {
 
 function EmailCard({ c }) {
   const to = c.to || ''
+  const [body, setBody] = useState(c.body || '')
   const params = []
   if (c.subject) params.push(`subject=${encodeURIComponent(c.subject)}`)
-  if (c.body) params.push(`body=${encodeURIComponent(c.body)}`)
+  if (body) params.push(`body=${encodeURIComponent(body)}`)
   return (
     <ActionScanCard
       accent={ACCENTS.email}
@@ -716,8 +794,11 @@ function EmailCard({ c }) {
       headline={c.subject || 'Send an email'}
       value={to}
       valueLabel="To"
-      message={c.body}
+      message={body}
       messageLabel={c.subject ? `Subject: ${c.subject}` : 'Message'}
+      editableMessage
+      onMessageChange={setBody}
+      messagePlaceholder="Write your email…"
       action={
         to
           ? {
