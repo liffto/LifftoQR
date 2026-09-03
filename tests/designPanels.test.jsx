@@ -131,3 +131,34 @@ describe('the design page, split in two', () => {
     buttons.forEach((b) => expect(b).toBeInTheDocument())
   })
 })
+
+describe('the nudge on Customise QR', () => {
+  it('invites you in while nothing has been designed yet', async () => {
+    // The studio — logos, frames, gradients, corner styles — now sits behind a
+    // panel that starts closed, so a code arriving straight from the content
+    // step would never see it existed.
+    renderDesign()
+    await screen.findByText('Customise QR')
+    expect(panel('Customise QR').textContent).toMatch(/must try/i)
+  })
+
+  it('gives way once the design has been touched', async () => {
+    // A badge urging you to try what you have already tried is noise, so it
+    // steps aside for the name of whatever look is now in effect.
+    const draft = JSON.parse(localStorage.getItem('liffto.draft'))
+    draft.design = { ...defaultDesign(), bodyColor1: '#E11D48' }
+    localStorage.setItem('liffto.draft', JSON.stringify(draft))
+
+    renderDesign()
+    await screen.findByText('Customise QR')
+    expect(panel('Customise QR').textContent).not.toMatch(/must try/i)
+  })
+
+  it('does not put it on Edit details, which needs no encouragement', async () => {
+    // Whoever is here already knows what their code points to; it is the
+    // design half that goes unopened.
+    renderDesign()
+    await screen.findByText('Edit details')
+    expect(panel('Edit details').textContent).not.toMatch(/must try/i)
+  })
+})

@@ -16,6 +16,7 @@ import {
   QrCode,
   Grid2x2,
   ScanLine,
+  Sparkles,
   RotateCw,
   Info,
   Download,
@@ -687,6 +688,16 @@ export default function DesignQR() {
   // template in effect is derived from the design itself.
   const activeTemplate = findActiveTemplate(allTemplates, design, pickedTemplate)
 
+  // Whether anything in here has been touched yet. A code straight from the
+  // content step is still wearing every default, and the whole studio — logos,
+  // frames, gradients, corner styles — is behind a panel that now starts
+  // closed. Worth pointing at, but only until it has been opened and used:
+  // a badge urging you to try what you have already tried is just noise.
+  const untouchedDesign = (() => {
+    const base = defaultDesign()
+    return Object.keys(base).every((k) => design[k] === base[k])
+  })()
+
   // A saved-template list can grow without limit, so past a certain size
   // scrolling to find one stops being reasonable.
   const visibleTemplates = filterTemplates(allTemplates, templateQuery)
@@ -1012,7 +1023,11 @@ export default function DesignQR() {
             open={openPanel.design}
             onToggle={() => togglePanel('design')}
             badge={
-              activeTemplate ? (
+              untouchedDesign ? (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-primary">
+                  <Sparkles size={11} /> Must try
+                </span>
+              ) : activeTemplate ? (
                 <span className="truncate rounded-full bg-canvas px-2 py-0.5 text-[10px] font-semibold text-ink-muted">
                   {activeTemplate.label}
                 </span>
