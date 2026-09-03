@@ -6,6 +6,7 @@ from app.auth.models import User
 from app.auth.models_extras import TokenBlocklist, EmailVerification
 from app.rbac.models import Role, UserRole
 from app.models.qr import QR
+from app.models.scan_event import ScanEvent
 from app.models.template import Template
 from app.models.user_template import UserTemplate
 from app.models.text import Text
@@ -42,6 +43,7 @@ __all__ = [
     "Role",
     "UserRole",
     "QR",
+    "ScanEvent",
     "Template",
     "UserTemplate",
     "Text",

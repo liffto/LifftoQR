@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from app.auth.routers import router as auth_router
+from app.routes.maintenance_routes import router as maintenance_router
 from app.routes.app_routes import router as app_router
 from app.routes.audio_routes import router as audio_router
 from app.routes.coupon_routes import router as coupon_router
@@ -29,6 +30,7 @@ from app.routes.wifi_routes import router as wifi_router
 
 api_v1 = APIRouter()
 api_v1.include_router(auth_router)
+api_v1.include_router(maintenance_router)
 api_v1.include_router(public_router)
 api_v1.include_router(qr_router)
 api_v1.include_router(user_template_router)

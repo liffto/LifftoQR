@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -9,6 +10,8 @@ from starlette.requests import Request
 from sqlalchemy.exc import IntegrityError
 
 from app.config.settings import settings
+from app.db.schema_check import verify_schema_is_current
+from app.core.observability import init_error_tracking
 from app.core.exceptions import (
     integrity_error_handler,
     slug_already_exists_handler,
@@ -21,7 +24,28 @@ from app.routes.user_routes import router as user_router
 from app.routes.ws_routes import router as ws_router
 from app.api.v1 import api_v1
 
-app = FastAPI(title=settings.app_name, version="0.1.0", debug=settings.debug)
+# Before the app, so an error raised while building it is still reported.
+init_error_tracking()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Refuse to serve against a database this code has outrun.
+
+    Fails here, loudly and with the missing revisions named, rather than as a
+    mystery 500 from inside a query later. See app/db/schema_check.py — only a
+    confirmed mismatch stops the app, never a database it could not reach.
+    """
+    verify_schema_is_current()
+    yield
+
+
+app = FastAPI(
+    title=settings.app_name,
+    version="0.1.0",
+    debug=settings.debug,
+    lifespan=lifespan,
+)
 
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
 try:

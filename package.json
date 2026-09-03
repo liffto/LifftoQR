@@ -2,7 +2,7 @@
   "name": "liffto-qr",
   "private": true,
   "version": "1.0.0",
-  "description": "Liffto QR \u2014 design, customize, and manage dynamic & static QR codes (logos, gradients, frames, patterns) with a built-in dashboard.",
+  "description": "Liffto QR — design, customize, and manage dynamic & static QR codes (logos, gradients, frames, patterns) with a built-in dashboard.",
   "type": "module",
   "license": "MIT",
   "author": "Your Name <you@example.com>",
@@ -36,10 +36,13 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:client": "vite build"
+    "build:client": "vite build",
+    "migrate:prod": "bash scripts/migrate-prod.sh",
+    "migrate:local": "cd api && venv/bin/alembic upgrade head"
   },
   "dependencies": {
     "@react-oauth/google": "^0.13.5",
+    "@sentry/react": "^10.73.0",
     "@tanstack/react-query": "^5.101.2",
     "axios": "^1.18.1",
     "lucide-react": "^0.456.0",

@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { reportError } from '../lib/errorTracking'
 
 // Safety net: keeps a render error in one subtree (e.g. a QR preview) from
 // blanking the entire app. Shows a small recover affordance instead.
@@ -14,6 +15,9 @@ export default class ErrorBoundary extends Component {
 
   componentDidCatch(error, info) {
     console.error('ErrorBoundary caught:', error, info)
+    // The console line is for whoever has devtools open; this is for the errors
+    // nobody was watching. Queued if the SDK has not loaded yet.
+    reportError(error, { componentStack: info?.componentStack })
   }
 
   reset = () => {
