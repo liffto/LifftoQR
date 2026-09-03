@@ -154,6 +154,28 @@ describe('the nudge on Customise QR', () => {
     expect(panel('Customise QR').textContent).not.toMatch(/must try/i)
   })
 
+  it('leaves the card itself alone', async () => {
+    // Tinting the card was tried and looked washed out — the fill bled through
+    // every sub-section once the panel opened. The badge carries it alone.
+    renderDesign()
+    await screen.findByText('Customise QR')
+    const card = panel('Customise QR').closest('div')
+    expect(card.className).toMatch(/bg-white/)
+    expect(card.className).not.toMatch(/orange/)
+  })
+
+  it('animates, since a still badge is just one more thing on the page', async () => {
+    renderDesign()
+    await screen.findByText('Customise QR')
+    const badge = document.querySelector('.must-try-badge')
+    expect(badge).not.toBeNull()
+    // The pulse is a box-shadow rather than a transform on purpose: the badge
+    // sits inline in a heading, and anything resizing it nudges the words
+    // beside it on every cycle.
+    expect(badge.className).toMatch(/bg-primary/)
+    expect(badge.className).toMatch(/text-white/)
+  })
+
   it('does not put it on Edit details, which needs no encouragement', async () => {
     // Whoever is here already knows what their code points to; it is the
     // design half that goes unopened.

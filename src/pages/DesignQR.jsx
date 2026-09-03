@@ -442,8 +442,20 @@ function SaveTemplateModal({ design, onSave, onSkip }) {
  * exists to shorten a phone scroll and deliberately does nothing on a desktop;
  * this one is the structure of the page rather than a concession to a screen.
  */
-function Panel({ icon: Icon, title, desc, badge, open, onToggle, children }) {
+function Panel({
+  icon: Icon,
+  title,
+  desc,
+  badge,
+  open,
+  onToggle,
+  children,
+}) {
   return (
+    // The card stays white. Tinting it was tried and looked washed out: the
+    // fill bled through every inner section once the panel opened, so five
+    // sub-sections sat on a wash rather than on paper. The badge carries the
+    // attention on its own.
     <div className="overflow-hidden rounded-[10px] border border-line bg-white">
       <button
         type="button"
@@ -1024,8 +1036,12 @@ export default function DesignQR() {
             onToggle={() => togglePanel('design')}
             badge={
               untouchedDesign ? (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-primary">
-                  <Sparkles size={11} /> Must try
+                // Solid primary with white text — 5.53:1, so it reads at 10px.
+                // The pulse is what makes it findable: a still badge on a still
+                // card is one more thing on the page, and this one has to be
+                // noticed by someone who does not yet know the studio exists.
+                <span className="must-try-badge inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-white">
+                  <Sparkles size={11} className="must-try-spark" /> Must try
                 </span>
               ) : activeTemplate ? (
                 <span className="truncate rounded-full bg-canvas px-2 py-0.5 text-[10px] font-semibold text-ink-muted">
