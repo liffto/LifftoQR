@@ -41,6 +41,7 @@ import {
   isNarrowed,
 } from '../lib/dashboardFilters'
 import QrFilterMenu from '../components/QrFilterMenu'
+import PullToRefresh from '../components/PullToRefresh'
 import QRView from '../components/QRView'
 import Layout from '../components/Layout'
 import { Toggle } from '../components/ui'
@@ -1096,6 +1097,7 @@ export default function Dashboard() {
   const { data: tracking } = useScanTracking()
   const since = trackingSince(tracking?.since)
 
+
   const STATS = [
     {
       label: 'Total QR Codes',
@@ -1135,6 +1137,9 @@ export default function Dashboard() {
 
   return (
     <Layout breadcrumb="My QR Codes">
+      {/* Pull down at the top of the list to reload it. Self-contained so a
+          drag re-renders the indicator rather than every row on this page. */}
+      <PullToRefresh onRefresh={refetch} />
       {list
         .filter((row) => row.dynamic && row.slug)
         .map((row) => (
