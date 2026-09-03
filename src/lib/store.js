@@ -122,14 +122,20 @@ export const shortUrlAbsolute = (slug) =>
   slug ? `${SHORT_BASE_URL}/${slug}` : SHORT_BASE_URL
 
 // ---- templates -----------------------------------------------------------
+//
+// Saved templates now live on the account — see api/qrcode/userTemplates. What
+// is left here is only the old local copy, kept readable so anything saved
+// before the move can be lifted to the server on the next visit rather than
+// silently stranded in a browser nothing reads any more.
 
 export const getTemplates = () => read(KEYS.templates, [])
 
-export const saveUserTemplate = (tpl) => {
-  const list = getTemplates().filter((t) => t.label !== tpl.label)
-  const next = [tpl, ...list]
-  write(KEYS.templates, next)
-  return next
+export const clearLocalTemplates = () => {
+  try {
+    localStorage.removeItem(KEYS.templates)
+  } catch {
+    /* storage unavailable — nothing to clear */
+  }
 }
 
 // ---- clipboard helper ----------------------------------------------------

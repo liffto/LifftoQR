@@ -35,8 +35,6 @@ import {
   randomSlug,
   uid,
   todayISO,
-  getTemplates,
-  saveUserTemplate,
   copyToClipboard,
   SHORT_BASE_URL,
   shortUrlAbsolute,
@@ -50,6 +48,11 @@ import {
 } from '../lib/qr'
 import { findType, encodeContent, deriveContentName } from '../lib/qrTypes'
 import { findActiveTemplate, filterTemplates } from '../lib/templateMatch'
+import {
+  useUserTemplates,
+  useSaveUserTemplate,
+  useLiftLocalTemplates,
+} from '../hooks/useUserTemplates'
 import { compressImageFile } from '../lib/imageCompress'
 import { useSaveQr } from '../hooks/useSaveQr'
 import { useAuth } from '../context/AuthContext'
@@ -500,7 +503,13 @@ export default function DesignQR() {
   const [record, setRecord] = useState(() =>
     isApiMode ? fallbackRecord() : getDraft() || fallbackRecord(),
   )
-  const [userTemplates, setUserTemplates] = useState(() => getTemplates())
+  // Saved templates belong to the account now, not the browser. Only fetched
+  // once signed in — a guest designing a static code has none and no way to
+  // save one.
+  const { data: userTemplates = [] } = useUserTemplates(isAuthenticated)
+  const saveTemplateMutation = useSaveUserTemplate()
+  // Carries anything saved before the move up to the account, once.
+  useLiftLocalTemplates(isAuthenticated ? userTemplates : undefined)
 
   useEffect(() => {
     hydratedQrIdRef.current = null
@@ -690,12 +699,20 @@ export default function DesignQR() {
   }
 
   const handleSaveTemplate = (name) => {
-    const tpl = { label: name, design: { ...record.design } }
-    const updated = saveUserTemplate(tpl)
-    setUserTemplates(updated)
+    // Fire and forget: the studio moves on to the list either way, and the
+    // template appears there once the request lands. A failure surfaces as a
+    // toast rather than trapping someone on a modal after their code is saved.
+    saveTemplateMutation.mutate(
+      { label: name, design: { ...record.design } },
+      {
+        onError: (err) =>
+          toast.error(getApiErrorMessage(err, 'Could not save that template.')),
+      },
+    )
     setShowSaveTplModal(false)
     finishAndGoToList()
   }
+
 
   const handleSkipTemplate = () => {
     setShowSaveTplModal(false)
