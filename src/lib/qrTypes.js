@@ -99,6 +99,28 @@ const WITHDRAWN_TYPES = new Set([
 
 export const isOfferedType = (key) => !WITHDRAWN_TYPES.has(key)
 
+// Types whose dynamic codes land on our own page instead of redirecting.
+//
+// Each of these could be turned into a link — mailto:, sms:, tel:, wa.me — and
+// a redirect would drop the scanner into a mail client or a dialer without
+// showing them the address or the number first. Landing shows them what the
+// code holds and hands them a button, which is also the only way the scan is
+// worth counting.
+//
+// Must stay in step with ALWAYS_LANDING_TYPE_KEYS in
+// api/app/services/qr_destination.py, which is what actually decides it. This
+// copy exists so the create flow can describe the choice and preview the right
+// thing; the server has the final say.
+const LANDS_ON_PAGE_WHEN_DYNAMIC = new Set([
+  'text',
+  'email',
+  'sms',
+  'phone',
+  'whatsapp',
+])
+
+export const dynamicLandsOnPage = (key) => LANDS_ON_PAGE_WHEN_DYNAMIC.has(key)
+
 // What every type chooser lists. Derived rather than hand-written, so a type
 // added later is offered without anyone remembering to add it here, and a type
 // withdrawn later disappears from all three pickers at once.

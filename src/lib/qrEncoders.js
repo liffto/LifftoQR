@@ -848,7 +848,14 @@ export const ENCODERS = [
     subtitle: 'Plain text',
     kind: 'data',
     iconName: 'Type',
-    dynamicCapable: false,
+    dynamicCapable: true,
+    // Static by default — the code carries the message, the number or the
+    // address in its own pattern and needs no server. Turning it dynamic
+    // routes it through a short link instead, which is what buys the things a
+    // printed code cannot otherwise have: a destination you can correct after
+    // printing, a scan count, and an off switch. Scanning one lands on our own
+    // page rather than firing the action immediately — see
+    // ALWAYS_LANDING_TYPE_KEYS in the API for why.
     fields: [
       {
         key: 'text',
@@ -1028,7 +1035,14 @@ export const ENCODERS = [
     subtitle: 'Compose email',
     kind: 'data',
     iconName: 'Mail',
-    dynamicCapable: false,
+    dynamicCapable: true,
+    // Static by default — the code carries the message, the number or the
+    // address in its own pattern and needs no server. Turning it dynamic
+    // routes it through a short link instead, which is what buys the things a
+    // printed code cannot otherwise have: a destination you can correct after
+    // printing, a scan count, and an off switch. Scanning one lands on our own
+    // page rather than firing the action immediately — see
+    // ALWAYS_LANDING_TYPE_KEYS in the API for why.
     fields: [
       {
         key: 'to',
@@ -1060,7 +1074,14 @@ export const ENCODERS = [
     subtitle: 'Pre-filled text',
     kind: 'data',
     iconName: 'MessageSquare',
-    dynamicCapable: false,
+    dynamicCapable: true,
+    // Static by default — the code carries the message, the number or the
+    // address in its own pattern and needs no server. Turning it dynamic
+    // routes it through a short link instead, which is what buys the things a
+    // printed code cannot otherwise have: a destination you can correct after
+    // printing, a scan count, and an off switch. Scanning one lands on our own
+    // page rather than firing the action immediately — see
+    // ALWAYS_LANDING_TYPE_KEYS in the API for why.
     fields: [
       {
         key: 'number',
@@ -1086,7 +1107,14 @@ export const ENCODERS = [
     subtitle: 'Start a call',
     kind: 'data',
     iconName: 'Phone',
-    dynamicCapable: false,
+    dynamicCapable: true,
+    // Static by default — the code carries the message, the number or the
+    // address in its own pattern and needs no server. Turning it dynamic
+    // routes it through a short link instead, which is what buys the things a
+    // printed code cannot otherwise have: a destination you can correct after
+    // printing, a scan count, and an off switch. Scanning one lands on our own
+    // page rather than firing the action immediately — see
+    // ALWAYS_LANDING_TYPE_KEYS in the API for why.
     fields: [
       {
         key: 'phone',
