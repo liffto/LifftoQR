@@ -1,22 +1,51 @@
-import { Check, Sparkles, Infinity as InfinityIcon } from 'lucide-react'
+import { Check, Sparkles, Infinity as InfinityIcon, Mail } from 'lucide-react'
 import Layout from '../components/Layout'
+import {
+  RASTER_FORMATS,
+  DOWNLOAD_SIZE,
+  FRAME_STYLE_COUNT,
+  PATTERN_OPTIONS,
+} from '../lib/qr'
+import { SELECTABLE_QR_TYPES } from '../lib/qrTypes'
+
+const SUPPORT_EMAIL = 'support@liffto.com'
+
+// "PNG, JPEG or WEBP" — an Oxford-comma-free list for prose.
+const listFormats = (formats) =>
+  formats.length < 2
+    ? formats.join('')
+    : `${formats.slice(0, -1).join(', ')} or ${formats[formats.length - 1]}`
 
 // One account type, everything on. Listed as capabilities rather than tiers so
 // there is nothing here to compare, upgrade to, or be upsold into.
+//
+// Four of these used to be untrue: "API access", "White-label QR codes", "Bulk
+// creation" and "Priority support". None of them exist — there are no API keys
+// to issue, nothing removes branding, the create flow builds one code at a
+// time, and support is the same mailto for everyone. Worse, the Integration
+// page and the FAQ already said so in as many words, so the app was
+// contradicting itself in front of the people paying attention.
+//
+// The counts are read from the code that implements them, the way the FAQ reads
+// its download formats. A list of capabilities maintained by hand drifts from
+// the product the moment either changes, which is how this page got here.
 const INCLUDED = [
   'Unlimited QR codes',
   'Dynamic & static QR codes',
-  'Custom branding, logos & frames',
+  `${SELECTABLE_QR_TYPES.length} QR code types`,
+  `Logos, ${PATTERN_OPTIONS.length} patterns and ${FRAME_STYLE_COUNT} frames`,
   'Saved design templates',
-  'All download formats — PNG, SVG, JPG & more',
-  'Analytics & real-time scan tracking',
+  `${listFormats(RASTER_FORMATS)} at ${DOWNLOAD_SIZE}px, plus SVG vector`,
   'Editable destinations after printing',
-  'Contact cards with one-tap save',
-  'Bulk creation',
-  'API access',
-  'White-label QR codes',
-  'Priority support',
+  'Live scan counts, total and unique',
+  'Switch any dynamic code on or off',
+  'No ads, no watermarks, no credit card',
 ]
+
+// Said plainly rather than left for someone to discover. These are the things
+// people ask for that the answer is currently no to.
+// No articles — the sentence below supplies "no" in front of each.
+const NOT_YET = ['public API', 'bulk creation', 'white-label codes']
 
 export default function Payment() {
   return (
@@ -66,6 +95,23 @@ export default function Payment() {
             </li>
           ))}
         </ul>
+
+        {/* The other half of an honest capability list. Matches what the
+            Integration page and the FAQ already say, so the three pages agree. */}
+        <div className="mt-6 rounded-[10px] border border-line bg-canvas p-4">
+          <p className="text-sm font-medium text-ink">Not here yet</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
+            There is no {NOT_YET.slice(0, -1).join(', no ')} and no{' '}
+            {NOT_YET.at(-1)}. If one of those is what you need, say so — that is
+            what decides the order they get built in.
+          </p>
+          <a
+            href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Feature request')}`}
+            className="mt-3 inline-flex h-9 items-center gap-2 rounded-[10px] border border-line px-4 text-sm font-semibold text-ink-soft transition-colors hover:border-primary hover:text-primary"
+          >
+            <Mail size={15} /> {SUPPORT_EMAIL}
+          </a>
+        </div>
       </div>
     </Layout>
   )
