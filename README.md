@@ -105,7 +105,7 @@ API docs are served at `http://localhost:8000/docs`.
 | Variable                | Example                  | Description                                  |
 | ----------------------- | ------------------------ | -------------------------------------------- |
 | `VITE_APP_NAME`         | `Liffto QR`              | App name shown in the UI                     |
-| `VITE_SHORT_URL_DOMAIN` | `liffto-qr.vercel.app`   | Domain used for generated short links        |
+| `VITE_SHORT_URL_DOMAIN` | `qr-api.liffto.in`   | Domain used for generated short links        |
 | `VITE_BACKEND_API_URL`  | `http://localhost:8000`  | Backend origin                               |
 | `VITE_WS_BASE_URL`      | `ws://localhost:8000`    | WebSocket origin for live scan counts        |
 | `VITE_CLIENT_ID`        | `…apps.googleusercontent.com` | Google OAuth client ID (public)         |
