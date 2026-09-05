@@ -11,8 +11,8 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 # code. A localhost default would send every scanner to their own machine, so
 # production — where FRONTEND_URL is easy to forget — must default to this.
 # Local development overrides it via FRONTEND_URL in api/.env.
-PRODUCTION_APP_URL = "https://liffto-web-app.vercel.app"
-
+# PRODUCTION_APP_URL = "https://liffto-web-app.vercel.app"
+PRODUCTION_APP_URL = "https://qr.liffto.in"
 # Browser origins always allowed (even if FRONTEND_URL env is only localhost).
 DEFAULT_CORS_ORIGINS: tuple[str, ...] = (
     "http://localhost:5173",

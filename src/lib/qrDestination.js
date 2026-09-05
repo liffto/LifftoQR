@@ -26,7 +26,7 @@ import { isDynamicRecord } from './qrRecord'
 // attempt at this got wrong. Static records carry a url whatever their type,
 // and it is not always the content: a static Text code was found holding the
 // short URL for its own slug, so the dialog offered "Destination URL
-// https://liffto-qr.vercel.app/iLI2mv" for a code that encodes a line of text
+// https://qr-api.liffto.in/iLI2mv" for a code that encodes a line of text
 // and sends nobody there. The field passed every validity check available and
 // was still the wrong thing to show. Hence the type decides, and the url is
 // only consulted afterwards.
