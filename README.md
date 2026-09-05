@@ -194,7 +194,9 @@ cd api && pytest -q       # backend
 
 Frontend and backend deploy as **two separate Vercel projects** from this one repository — the web app (`liffto-web-app`), and the API (`liffto-qr`, which also serves the short links that QR codes point at).
 
-`.env.production` points the web build at `https://liffto-qr.vercel.app`. The website's `vercel.json` also proxies `/api/*` to that host as a fallback when the build has no `VITE_BACKEND_API_URL`.
+
+`.env.production` points the web build at `https://qr-api.liffto.in`. The website's `vercel.json` also proxies `/api/*` to that host as a fallback when the build has no `VITE_BACKEND_API_URL`.
+
 
 Two things Vercel will not do for you:
 

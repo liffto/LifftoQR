@@ -2,7 +2,8 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://liffto-qr.vercel.app/api/:path*"
+
+      "destination": "https://qr-api.liffto.in/api/:path*"
     },
     {
       "source": "/",

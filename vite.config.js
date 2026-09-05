@@ -105,7 +105,7 @@ export default defineConfig(({ isSsrBuild }) => ({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://liffto-qr.vercel.app',
+        target: 'https://qr-api.liffto.in',
         changeOrigin: true,
       },
     },
