@@ -192,12 +192,14 @@ cd api && pytest -q       # backend
 
 ## 📦 Deployment
 
-Frontend and backend deploy as **two separate Vercel projects** from this one repository — the web app, and the API (which also serves the short links that QR codes point at).
+Frontend and backend deploy as **two separate Vercel projects** from this one repository — the web app (`liffto-web-app`), and the API (`liffto-qr`, which also serves the short links that QR codes point at).
+
+`.env.production` points the web build at `https://liffto-qr.vercel.app`. The website's `vercel.json` also proxies `/api/*` to that host as a fallback when the build has no `VITE_BACKEND_API_URL`.
 
 Two things Vercel will not do for you:
 
 1. **Migrations don't run on deploy.** After any schema change, run `alembic upgrade head` against the production database yourself. Deploying code that expects a column you haven't added will break at runtime, not at build time.
-2. **Environment variables aren't inherited from this repo.** Set them on each project, `FRONTEND_URL` in particular.
+2. **Backend secrets aren't in this repo.** On the API project set `DATABASE_URL`, Google credentials, `JWT_SECRET_KEY`, and `FRONTEND_URL=https://liffto-web-app.vercel.app`.
 
 ## ⚠️ Known limitations
 
