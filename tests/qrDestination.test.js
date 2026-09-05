@@ -59,7 +59,7 @@ describe('the destination a saved QR offers to open', () => {
         stat({
           typeKey: 'text',
           name: 'dsftyuiuuiuydhfgh;liuyf',
-          url: 'https://liffto-qr.vercel.app/iLI2mv',
+          url: 'https://qr-api.liffto.in/iLI2mv',
           slug: 'iLI2mv',
         }),
       ),
@@ -95,7 +95,7 @@ describe('the destination a saved QR offers to open', () => {
     // held a real, openable address that the code does not encode.
     expect(
       destinationUrl(
-        stat({ typeKey: 'text', url: 'https://liffto-qr.vercel.app/iLI2mv' }),
+        stat({ typeKey: 'text', url: 'https://qr-api.liffto.in/iLI2mv' }),
       ),
     ).toBeNull()
     CONTENT_TYPES.forEach((typeKey) => {

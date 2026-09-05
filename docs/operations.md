@@ -95,11 +95,11 @@ run deletes nothing the second time.
 ```bash
 # See what would go, without deleting anything
 curl -H "Authorization: Bearer $CRON_SECRET" \
-  "https://liffto-qr.vercel.app/api/v1/maintenance/purge?dry_run=true"
+  "https:///api/v1/maintenance/purge?dry_run=true"
 
 # Actually delete
 curl -H "Authorization: Bearer $CRON_SECRET" \
-  "https://liffto-qr.vercel.app/api/v1/maintenance/purge"
+  "https://qr-api.liffto.in/api/v1/maintenance/purge"
 ```
 
 Set `CRON_SECRET` in the API's Vercel environment. **Without it the endpoint
