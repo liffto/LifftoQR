@@ -1,9 +1,20 @@
 import type { User } from '../types/auth'
 
+function isLocalBackendUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url.includes('://') ? url : `https://${url}`)
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
+  } catch {
+    return false
+  }
+}
+
 function resolveApiBaseUrl(): string {
   const backendUrl = import.meta.env.VITE_BACKEND_API_URL?.replace(/\/$/, '')
-  if (backendUrl) {
-    return backendUrl.endsWith('/api/v1') ? backendUrl.slice(0, -'/api/v1'.length) : backendUrl
+  if (backendUrl && !(import.meta.env.PROD && isLocalBackendUrl(backendUrl))) {
+    return backendUrl.endsWith('/api/v1')
+      ? backendUrl.slice(0, -'/api/v1'.length)
+      : backendUrl
   }
   return ''
 }
