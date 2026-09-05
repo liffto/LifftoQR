@@ -108,17 +108,21 @@ works because nobody set a variable is worse than housekeeping not happening.
 
 ### Scheduling it
 
-Vercel Cron sends `Authorization: Bearer $CRON_SECRET` automatically, so the
-endpoint needs nothing extra. Add this to the `vercel.json` of **whichever
-project deploys the API**:
+Scheduled daily at 04:00 UTC by [`api/vercel.json`](../api/vercel.json). Vercel
+Cron sends `Authorization: Bearer $CRON_SECRET` by itself, so the endpoint needs
+nothing extra — but only while that variable is set on the API project. Remove
+it and the cron starts getting 503s every morning, silently.
 
-```json
-{
-  "crons": [{ "path": "/api/v1/maintenance/purge", "schedule": "0 4 * * *" }]
-}
-```
+That file lives in `api/` rather than the repo root because the API project's
+Root Directory is `api`; Vercel looks for `vercel.json` there and nowhere else.
 
-This is not committed, because the API's Vercel project currently has no
-`vercel.json` and adding one could change how it builds — that is a change worth
-making deliberately, with the deploy watched. Run the `dry_run=true` call first;
-the first purge against production will delete more than a routine one.
+It contains **only** `crons`, deliberately. The project has no build overrides —
+Vercel detects FastAPI on its own — and adding `builds` or `functions` to this
+file would switch that zero-config detection off and change how the API is
+built. A `crons`-only file leaves detection alone.
+
+On Hobby, cron jobs run at most once a day and can fire up to an hour after the
+stated time. Nothing here is time-sensitive, so that is fine.
+
+Run the `dry_run=true` call before any first purge against a database that has
+never had one — it will remove far more than a routine run.
