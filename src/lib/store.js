@@ -112,7 +112,7 @@ export const formatDate = (iso) => {
 const rawShortDomain =
   (typeof import.meta !== 'undefined' &&
     import.meta.env?.VITE_SHORT_URL_DOMAIN) ||
-  'liffto-qr.vercel.app'
+  'qr-api.liffto.in'
 export const SHORT_HOST = String(rawShortDomain)
   .replace(/^https?:\/\//i, '')
   .replace(/\/$/, '')
