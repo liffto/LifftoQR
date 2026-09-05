@@ -23,9 +23,21 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
 }
 
+function isLocalBackendUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url.includes('://') ? url : `https://${url}`)
+    return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
+  } catch {
+    return false
+  }
+}
+
 function resolveApiBaseUrl(): string {
   const backendUrl = import.meta.env.VITE_BACKEND_API_URL?.replace(/\/$/, '')
-  if (backendUrl) {
+  // A production bundle that still points at localhost (wrong Vercel env) would
+  // never reach the API. Fall through to same-origin /api/v1 so vercel.json's
+  // rewrite to the API project can take over.
+  if (backendUrl && !(import.meta.env.PROD && isLocalBackendUrl(backendUrl))) {
     return backendUrl.endsWith('/api/v1') ? backendUrl : `${backendUrl}/api/v1`
   }
   return import.meta.env.VITE_API_URL || '/api/v1'
