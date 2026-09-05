@@ -59,7 +59,11 @@ except OSError:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    # Preview deployments: https://liffto-web-app-<hash>-<team>.vercel.app
+    # Preview deployments, which are still named after the Vercel *project*
+    # (liffto-web-app) even though production now serves from qr.liffto.in:
+    # https://liffto-web-app-<hash>-<team>.vercel.app. The bare
+    # liffto-web-app.vercel.app returns DEPLOYMENT_NOT_FOUND these days, so this
+    # looks stale and is not — deleting it would break CORS on every preview.
     allow_origin_regex=r"https://liffto-web-app[\w-]*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],

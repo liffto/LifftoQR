@@ -95,7 +95,7 @@ run deletes nothing the second time.
 ```bash
 # See what would go, without deleting anything
 curl -H "Authorization: Bearer $CRON_SECRET" \
-  "https:///api/v1/maintenance/purge?dry_run=true"
+  "https://qr-api.liffto.in/api/v1/maintenance/purge?dry_run=true"
 
 # Actually delete
 curl -H "Authorization: Bearer $CRON_SECRET" \

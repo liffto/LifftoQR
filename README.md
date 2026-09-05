@@ -105,7 +105,7 @@ API docs are served at `http://localhost:8000/docs`.
 | Variable                | Example                  | Description                                  |
 | ----------------------- | ------------------------ | -------------------------------------------- |
 | `VITE_APP_NAME`         | `Liffto QR`              | App name shown in the UI                     |
-| `VITE_SHORT_URL_DOMAIN` | `qr-api.liffto.in`   | Domain used for generated short links        |
+| `VITE_SHORT_URL_DOMAIN` | `qr-api.liffto.in`       | Domain used for generated short links        |
 | `VITE_BACKEND_API_URL`  | `http://localhost:8000`  | Backend origin                               |
 | `VITE_WS_BASE_URL`      | `ws://localhost:8000`    | WebSocket origin for live scan counts        |
 | `VITE_CLIENT_ID`        | `…apps.googleusercontent.com` | Google OAuth client ID (public)         |
@@ -198,10 +198,29 @@ Frontend and backend deploy as **two separate Vercel projects** from this one re
 `.env.production` points the web build at `https://qr-api.liffto.in`. The website's `vercel.json` also proxies `/api/*` to that host as a fallback when the build has no `VITE_BACKEND_API_URL`.
 
 
+**A variable set in the Vercel dashboard beats `.env.production`.** This is the
+trap that broke short links during the domain move: `.env.production` was
+updated to `qr-api.liffto.in`, but `VITE_SHORT_URL_DOMAIN` was still set to the
+old host on the website project, so the build kept baking the dead domain into
+every generated QR code. Nothing warns you — the committed file simply loses.
+After changing a `VITE_*` value here, check the dashboard for one shadowing it,
+then confirm against the deployed bundle rather than the source:
+
+```bash
+main=$(curl -s -H 'Cache-Control: no-cache' "https://qr.liffto.in/?cb=$(date +%s)" \
+  | grep -oE 'assets/index-[A-Za-z0-9_-]+\.js' | head -1)
+curl -s "https://qr.liffto.in/$main" | grep -oE 'qr-api\.liffto\.in|liffto-qr\.vercel\.app'
+```
+
+**Old domains have to keep resolving.** A printed QR code encodes whatever short
+host was current when it was generated and can never be changed, so retiring a
+domain kills every code already in the world. Keep `liffto-qr.vercel.app`
+aliased to the API project, or redirect it.
+
 Two things Vercel will not do for you:
 
 1. **Migrations don't run on deploy.** After any schema change, run `alembic upgrade head` against the production database yourself. Deploying code that expects a column you haven't added will break at runtime, not at build time.
-2. **Backend secrets aren't in this repo.** On the API project set `DATABASE_URL`, Google credentials, `JWT_SECRET_KEY`, and `FRONTEND_URL=https://liffto-web-app.vercel.app`.
+2. **Backend secrets aren't in this repo.** On the API project set `DATABASE_URL`, Google credentials, `JWT_SECRET_KEY`, and `FRONTEND_URL=https://qr.liffto.in`.
 
 ## ⚠️ Known limitations
 
