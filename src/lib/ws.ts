@@ -23,7 +23,7 @@ export function resolveWsBaseUrl(): string {
   if (import.meta.env.PROD) {
     const host = (
       import.meta.env.VITE_SHORT_URL_DOMAIN ||
-      'liffto-qr.vercel.app'
+      'qr-api.liffto.in'
     )
       .replace(/^https?:\/\//i, '')
       .replace(/\/$/, '')
