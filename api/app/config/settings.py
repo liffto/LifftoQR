@@ -16,8 +16,8 @@ PRODUCTION_APP_URL = "https://qr.liffto.in"
 # Browser origins always allowed (even if FRONTEND_URL env is only localhost).
 DEFAULT_CORS_ORIGINS: tuple[str, ...] = (
     "http://localhost:5173",
+    "http://localhost:4173",
     PRODUCTION_APP_URL,
-    "https://lifto-web-app.vercel.app",
 )
 
 
