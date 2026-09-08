@@ -27,7 +27,11 @@ class Settings(BaseSettings):
     # App
     app_name: str = "QR API"
     environment: str = "development"
-    debug: bool = True
+    # Off by default so production is safe without remembering to set it: debug
+    # feeds FastAPI's error pages (which leak tracebacks to clients) and SQL
+    # echo (which logs every statement). Local development turns it back on
+    # explicitly via DEBUG=true in api/.env.
+    debug: bool = False
     project_name: str = "QR Code Management API"
 
     # Database
