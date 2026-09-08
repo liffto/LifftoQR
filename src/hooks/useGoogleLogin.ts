@@ -7,6 +7,7 @@ import { CURRENT_USER_QUERY_KEY } from '../providers/QueryProvider'
 import { saveTokens } from '../services/session'
 import { takePendingRedirect } from '../lib/store'
 import { getApiErrorMessage } from '../utils/errors'
+import { prefetchDashboard } from '../lib/routePrefetch'
 
 export function useGoogleLogin() {
   const navigate = useNavigate()
@@ -15,6 +16,10 @@ export function useGoogleLogin() {
 
   return useMutation({
     mutationFn: async (idToken: string) => {
+      // Start fetching the dashboard chunk now, in parallel with the token
+      // exchange, so the navigate() in onSuccess lands on a loaded page rather
+      // than the blank Suspense fallback (the post-login white flash).
+      prefetchDashboard()
       const tokens = await googleLoginRequest(idToken)
       saveTokens(tokens.access_token, tokens.refresh_token)
 

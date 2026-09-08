@@ -3,6 +3,17 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './middleware/ProtectedRoute'
 import PublicRoute from './middleware/PublicRoute'
+import {
+  loadDashboard,
+  loadCreateUrl,
+  loadCreateDetails,
+  loadDesignQR,
+  loadPayment,
+  loadIntegration,
+  loadFAQ,
+  loadUserAccount,
+  loadNotifications,
+} from './lib/routePrefetch'
 
 // The landing page is the one thing that must never wait on a second round
 // trip, so it stays in the main bundle.
@@ -41,17 +52,21 @@ const page = (load) =>
 // yet every visitor was downloading both. Making this one lazy costs a scanner
 // nothing measurable: the page cannot render until getPublicQr comes back, and
 // the chunk is fetched in parallel with that request.
+// Signed-in page chunks are prefetched (not only routed to) to kill the white
+// flash on first navigation — see src/lib/routePrefetch.js. Their loaders are
+// imported from there so both the lazy() defs and the prefetch use one cached
+// import().
 const ScanLanding = page(() => import('./pages/ScanLanding'))
 const Login = page(() => import('./pages/Login'))
-const Dashboard = page(() => import('./pages/Dashboard'))
-const CreateUrl = page(() => import('./pages/CreateUrl'))
-const CreateDetails = page(() => import('./pages/CreateDetails'))
-const DesignQR = page(() => import('./pages/DesignQR'))
-const Payment = page(() => import('./pages/Payment'))
-const Integration = page(() => import('./pages/Integration'))
-const FAQ = page(() => import('./pages/FAQ'))
-const UserAccount = page(() => import('./pages/UserAccount'))
-const Notifications = page(() => import('./pages/Notifications'))
+const Dashboard = page(loadDashboard)
+const CreateUrl = page(loadCreateUrl)
+const CreateDetails = page(loadCreateDetails)
+const DesignQR = page(loadDesignQR)
+const Payment = page(loadPayment)
+const Integration = page(loadIntegration)
+const FAQ = page(loadFAQ)
+const UserAccount = page(loadUserAccount)
+const Notifications = page(loadNotifications)
 const Terms = page(() =>
   import('./pages/Legal').then((m) => ({ default: m.Terms })),
 )

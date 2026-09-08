@@ -27,6 +27,7 @@ import {
 } from '../hooks/useNotifications'
 import { timeAgo, dayBucket } from '../lib/timeAgo'
 import { clearDraft } from '../lib/store'
+import { prefetchSignedInRoutes } from '../lib/routePrefetch'
 import {
   getDisplayName,
   getInitials,
@@ -227,6 +228,13 @@ export default function Layout({ children, breadcrumb }) {
   const unreadCount = notifItems.filter((n) => !n.read).length
   const [theme, toggleTheme] = useTheme()
 
+  // The Layout only mounts for signed-in pages, so this is the right place to
+  // warm the sibling route chunks on idle — the first click of each nav icon is
+  // then instant instead of flashing the blank Suspense fallback.
+  useEffect(() => {
+    prefetchSignedInRoutes()
+  }, [])
+
   const handleCreate = () => {
     clearDraft()
     navigate('/create')
@@ -264,7 +272,7 @@ export default function Layout({ children, breadcrumb }) {
     <div className="flex min-h-screen bg-canvas">
       {/* ── SIDEBAR (icon rail, dark) ──────────────────────────── */}
       <aside
-        className="hidden md:flex w-[64px] shrink-0 sticky top-0 h-screen z-30 flex-col items-center py-5 gap-0"
+        className="hidden md:flex w-[64px] shrink-0 sticky top-0 h-screen z-30 flex-col items-center pt-[10px] pb-5 gap-0"
         style={{
           background:
             'linear-gradient(170deg, #131c35 0%, #0e1628 55%, #09101e 100%)',
