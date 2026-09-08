@@ -64,3 +64,19 @@ def test_case_and_whitespace_do_not_smuggle_a_weak_value_past_it():
     # the guard off in production.
     with pytest.raises(sc.WeakJWTSecretError):
         _run("Production", "changeme")
+
+
+def test_vercel_env_alone_marks_production_even_without_the_app_setting(monkeypatch):
+    # The important case: nobody set the app's ENVIRONMENT, but Vercel says this
+    # is a production deployment. The guard must still bite — that gap is how a
+    # placeholder reached production the first time.
+    monkeypatch.setenv("VERCEL_ENV", "production")
+    with pytest.raises(sc.WeakJWTSecretError):
+        _run("development", "super-secure-secret-key")
+
+
+def test_vercel_preview_with_a_weak_secret_is_allowed(monkeypatch):
+    # Preview deployments are not production; a weak secret there is not worth
+    # blocking a deploy over.
+    monkeypatch.setenv("VERCEL_ENV", "preview")
+    _run("development", "super-secure-secret-key")  # no raise

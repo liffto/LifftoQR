@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.config.settings import settings
 from app.db.schema_check import verify_schema_is_current
+from app.core.secret_check import verify_jwt_secret_is_strong
 from app.core.observability import init_error_tracking
 from app.core.exceptions import (
     integrity_error_handler,
@@ -30,12 +31,14 @@ init_error_tracking()
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Refuse to serve against a database this code has outrun.
+    """Refuse to serve in a state that is quietly broken.
 
-    Fails here, loudly and with the missing revisions named, rather than as a
-    mystery 500 from inside a query later. See app/db/schema_check.py — only a
-    confirmed mismatch stops the app, never a database it could not reach.
+    Two startup guards, both failing loudly here rather than as a mystery later:
+    a schema behind the code (app/db/schema_check.py), and a weak JWT secret in
+    production (app/core/secret_check.py) — a placeholder there means every
+    session token is forgeable.
     """
+    verify_jwt_secret_is_strong()
     verify_schema_is_current()
     yield
 

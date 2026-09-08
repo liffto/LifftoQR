@@ -22,6 +22,7 @@ always a strong secret.
 from __future__ import annotations
 
 import logging
+import os
 
 from app.config.settings import settings
 
@@ -54,19 +55,33 @@ def _is_weak(secret: str) -> bool:
     return secret.strip() in _KNOWN_WEAK or len(secret) < _MIN_LENGTH
 
 
+def _is_production() -> bool:
+    """Whether this process is serving production.
+
+    Two independent signals, either sufficient. VERCEL_ENV is set by Vercel
+    itself on production deployments (system env vars are enabled on this
+    project), so the guard is active there without anyone remembering to set
+    the app's own ENVIRONMENT — which is the failure mode that let a placeholder
+    secret reach production in the first place. The app-level setting is honoured
+    too, for non-Vercel hosts.
+    """
+    if settings.environment.strip().lower() == "production":
+        return True
+    if os.environ.get("VERCEL_ENV", "").strip().lower() == "production":
+        return True
+    return False
+
+
 def verify_jwt_secret_is_strong() -> None:
     """Raise WeakJWTSecretError if production has a weak JWT secret."""
     secret = settings.jwt_secret_key or ""
     if not _is_weak(secret):
         return
 
-    if settings.environment.strip().lower() != "production":
+    if not _is_production():
         # Local / CI: a throwaway secret is expected. Say so once at debug
         # level rather than blocking work.
-        log.debug(
-            "JWT secret is weak, allowed because environment=%r is not production",
-            settings.environment,
-        )
+        log.debug("JWT secret is weak, allowed because this is not production")
         return
 
     raise WeakJWTSecretError(
