@@ -375,6 +375,13 @@ function LinkTreePage({ c }) {
 function CouponPage({ c }) {
   return (
     <div className="flex h-full flex-col items-center justify-center px-5 pb-5 text-center">
+      {c.logo && (
+        <img
+          src={c.logo}
+          alt=""
+          className="mb-3 h-12 w-12 rounded-[12px] object-cover shadow-sm ring-1 ring-line"
+        />
+      )}
       <div className="w-full rounded-[16px] border-2 border-dashed border-primary/40 bg-surface p-5">
         <Ticket size={26} className="mx-auto text-primary" />
         <p className="mt-2 text-sm font-bold text-ink">

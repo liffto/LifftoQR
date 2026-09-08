@@ -62,6 +62,16 @@ const DARK_PANEL = 'bg-[#1F2430] text-white'
 const DARK_BTN =
   'bg-[#1F2430] text-white hover:bg-[#2A3142] dark:bg-white dark:text-[#1F2430] dark:hover:bg-white/90'
 
+// Demo imagery for the scan mockups, inline as data URIs so the prerendered
+// landing page pulls nothing over the network to draw them. An illustrated
+// avatar rather than a stock photo — self-contained, and it reads as "a real
+// person's card" without a licence or an extra request. The org/brand mark is
+// the small badge the contact and coupon pages overlay.
+const DEMO_AVATAR =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fbbf24'/%3E%3Cstop offset='1' stop-color='%23f97316'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='80' height='80' rx='40' fill='url(%23a)'/%3E%3Ccircle cx='40' cy='31' r='13' fill='%23fff'/%3E%3Cpath d='M17 71c1-15 11-23 23-23s22 8 23 23z' fill='%23fff'/%3E%3C/svg%3E"
+const DEMO_BRAND =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%231B59F5'/%3E%3Cpath d='M14 11v18h13' fill='none' stroke='%23fff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+
 // Sample records for the "what people see when they scan" mockups — rendered by
 // the same ScanPreview the create flow uses, so these are the real pages.
 const SCAN_DEMOS = [
@@ -83,6 +93,8 @@ const SCAN_DEMOS = [
         url: 'https://liffto.com',
         city: 'Chennai',
         country: 'India',
+        photo: DEMO_AVATAR,
+        logo: DEMO_BRAND,
       },
     },
   },
@@ -98,7 +110,10 @@ const SCAN_DEMOS = [
         title: '20% off your first order',
         code: 'WELCOME20',
         expiry: '2026-12-31',
-        details: 'Valid once per customer, in store or online.',
+        // The field is `description` everywhere else — the renderer reads that,
+        // so the old `details` key meant this line never showed.
+        description: 'Valid once per customer, in store or online.',
+        logo: DEMO_BRAND,
       },
     },
   },
