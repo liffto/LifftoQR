@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ChevronsUpDown,
+  ChevronLeft,
   ChevronDown,
   Search,
   Copy,
@@ -42,6 +43,7 @@ import {
 } from '../lib/dashboardFilters'
 import QrFilterMenu from '../components/QrFilterMenu'
 import PullToRefresh from '../components/PullToRefresh'
+import ScanGraph from '../components/ScanGraph'
 import QRView from '../components/QRView'
 import Layout from '../components/Layout'
 import { Toggle } from '../components/ui'
@@ -239,6 +241,7 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
   const [urlCopied, setUrlCopied] = useState(false)
   const [format, setFormat] = useState('PNG')
   const [fmtOpen, setFmtOpen] = useState(false)
+  const [showGraph, setShowGraph] = useState(false)
   const fmtWrapRef = useRef(null)
   const typeLabel = normaliseType(row.qrType)
   const isDynamic = Boolean(row.dynamic) || typeLabel === 'Dynamic QR'
@@ -326,16 +329,49 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
       <div className="bg-surface rounded-t-[10px] sm:rounded-[10px] shadow-2xl w-full max-w-[480px] max-h-[100dvh] sm:max-h-[min(720px,calc(100dvh-2rem))] flex flex-col animate-pop overflow-hidden">
         {/* ── Header ── */}
         <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-line">
-          <h2 className="font-bold text-ink text-[15px]">QR Details</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-[10px] flex items-center justify-center text-ink-faint hover:bg-canvas hover:text-ink transition-colors"
-          >
-            <X size={16} />
-          </button>
+          <div className="flex items-center gap-2 min-w-0">
+            {showGraph && (
+              <button
+                type="button"
+                onClick={() => setShowGraph(false)}
+                aria-label="Back to details"
+                className="w-8 h-8 -ml-1.5 rounded-[10px] flex items-center justify-center text-ink-faint hover:bg-canvas hover:text-ink transition-colors"
+              >
+                <ChevronLeft size={17} />
+              </button>
+            )}
+            <h2 className="font-bold text-ink text-[15px]">
+              {showGraph ? 'Scan analytics' : 'QR Details'}
+            </h2>
+          </div>
+          <div className="flex items-center gap-1">
+            {/* Analytics — dynamic codes only; static codes are not tracked. */}
+            {isDynamic && !showGraph && (
+              <button
+                type="button"
+                onClick={() => setShowGraph(true)}
+                aria-label="View scan analytics"
+                title="Scan analytics"
+                className="w-8 h-8 rounded-[10px] flex items-center justify-center text-ink-faint hover:bg-canvas hover:text-primary transition-colors"
+              >
+                <BarChart2 size={16} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-[10px] flex items-center justify-center text-ink-faint hover:bg-canvas hover:text-ink transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
+        {showGraph ? (
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+            <ScanGraph qrId={row.id} active={showGraph} />
+          </div>
+        ) : (
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
         {/* ── QR preview strip ── */}
         <div className="bg-gradient-to-b from-canvas to-white px-5 pt-6 pb-4 flex flex-col items-center gap-3 border-b border-line">
@@ -501,8 +537,11 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
           </div>
         </div>
         </div>
+        )}
 
-        {/* ── Actions ── */}
+        {/* ── Actions — hidden in the analytics view, which is about the
+            scans, not the code ── */}
+        {!showGraph && (
         <div className="shrink-0 border-t border-line bg-surface px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col sm:flex-row gap-2.5">
           {/* Download + format selector (split control) */}
           <div ref={fmtWrapRef} className="relative w-full sm:flex-1">
@@ -586,6 +625,7 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
             </button>
           </div>
         </div>
+        )}
       </div>
     </div>
   )

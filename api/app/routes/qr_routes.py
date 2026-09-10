@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 
 from app.auth.dependencies import get_current_user
@@ -30,6 +30,16 @@ def scan_tracking(
     controller: QrController = Depends(get_qr_controller),
 ) -> JSONResponse:
     return controller.scan_tracking(user)
+
+
+@router.get("/{qr_id}/scans")
+def scan_series(
+    qr_id: int,
+    days: int = Query(30, ge=1, le=365),
+    user: User = Depends(get_current_user),
+    controller: QrController = Depends(get_qr_controller),
+) -> JSONResponse:
+    return controller.scan_series(qr_id, days, user)
 
 
 @router.get("/{qr_id}")

@@ -70,6 +70,51 @@ class QrRepository:
         """
         return self.db.query(func.min(ScanEvent.created_at)).scalar()
 
+    def scan_series(self, qr_id: int, *, start, end):
+        """Daily scan totals and unique-visitor counts for one code, [start,end].
+
+        Grouped in the database by calendar day (UTC) rather than pulling every
+        row back and bucketing in Python — a busy code could have thousands of
+        events. Returns one row per day that actually had a scan; the caller
+        fills the empty days, since the gaps are part of the shape a chart wants
+        to show. `total` counts every scan (repeats included, matching the
+        headline number); `unique` is distinct visitor hashes that day.
+        """
+        day = func.date_trunc("day", ScanEvent.created_at)
+        rows = (
+            self.db.query(
+                day.label("day"),
+                func.count(ScanEvent.id).label("total"),
+                func.count(distinct(ScanEvent.visitor_hash)).label("unique"),
+            )
+            .filter(
+                ScanEvent.qr_id == qr_id,
+                ScanEvent.created_at >= start,
+                ScanEvent.created_at < end,
+            )
+            .group_by(day)
+            .order_by(day)
+            .all()
+        )
+        return [
+            {"day": r.day, "total": int(r.total), "unique": int(r.unique)}
+            for r in rows
+        ]
+
+    def unique_scans_in_range(self, qr_id: int, *, start, end) -> int:
+        """Distinct visitors for one code over a window. Not the sum of the
+        daily uniques — a device seen on two days is one visitor, not two."""
+        return (
+            self.db.query(func.count(distinct(ScanEvent.visitor_hash)))
+            .filter(
+                ScanEvent.qr_id == qr_id,
+                ScanEvent.created_at >= start,
+                ScanEvent.created_at < end,
+            )
+            .scalar()
+            or 0
+        )
+
     def get_by_id(self, qr_id: int, *, created_by: int) -> QR | None:
         return (
             self._with_content_options(self.db.query(QR))

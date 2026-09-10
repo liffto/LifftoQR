@@ -24,6 +24,30 @@ export async function getScanTracking(): Promise<{ since: string | null }> {
   return data.data
 }
 
+export interface ScanSeriesBucket {
+  date: string
+  scans: number
+  unique: number
+}
+export interface ScanSeries {
+  days: number
+  buckets: ScanSeriesBucket[]
+  totalScans: number
+  uniqueScans: number
+}
+
+/** Daily scan/unique counts for one code over the last `days`, for the graph. */
+export async function getScanSeries(
+  qrId: number,
+  days: number,
+): Promise<ScanSeries> {
+  const { data } = await api.get<ApiSuccessResponse<ScanSeries>>(
+    `/qrs/${qrId}/scans`,
+    { params: { days } },
+  )
+  return data.data
+}
+
 export async function deleteQr(qrId: number): Promise<void> {
   await api.delete(`/qrs/${qrId}`)
 }

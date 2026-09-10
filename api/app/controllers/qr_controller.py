@@ -29,6 +29,17 @@ class QrController:
             )
         )
 
+    def scan_series(self, qr_id: int, days: int, user: User) -> JSONResponse:
+        """Daily scan/unique counts for one of the user's codes, for the graph
+        in the QR details modal."""
+        series = self.service.scan_series(qr_id, created_by=user.id, days=days)
+        if series is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="QR not found",
+            )
+        return JSONResponse(content=success_response(series))
+
     def get_qr(self, qr_id: int, user: User) -> JSONResponse:
         item = self.service.get_qr(qr_id, created_by=user.id)
         if item is None:

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
 from app.models.qr import QR
@@ -72,6 +73,54 @@ class QrService:
 
     def scan_tracking_started_at(self):
         return self.repository.scan_tracking_started_at()
+
+    def scan_series(
+        self, qr_id: int, created_by: int, days: int = 30
+    ) -> dict[str, Any] | None:
+        """Daily scan/unique counts for one owned code over the last `days`.
+
+        Returns None when the code is not this user's, so the route can 404
+        rather than leak whether an id exists. Every day in the window gets a
+        bucket, including the zero ones — a chart with holes punched out reads
+        as missing data rather than as quiet days.
+        """
+        qr = self.repository.get_by_id(qr_id, created_by=created_by)
+        if qr is None:
+            return None
+
+        days = max(1, min(days, 365))
+        now = datetime.now(timezone.utc)
+        # End is the start of tomorrow so today's scans are included; start is
+        # midnight `days-1` days ago, so a 7-day window is 7 dated columns.
+        end = (now + timedelta(days=1)).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        start = end - timedelta(days=days)
+
+        rows = self.repository.scan_series(qr_id, start=start, end=end)
+        by_day = {r["day"].date().isoformat(): r for r in rows}
+
+        buckets = []
+        total_scans = 0
+        for i in range(days):
+            d = (start + timedelta(days=i)).date().isoformat()
+            hit = by_day.get(d)
+            scans = hit["total"] if hit else 0
+            buckets.append(
+                {"date": d, "scans": scans, "unique": hit["unique"] if hit else 0}
+            )
+            total_scans += scans
+
+        return {
+            "days": days,
+            "buckets": buckets,
+            "totalScans": total_scans,
+            # Unique across the whole window, not the sum of daily uniques — the
+            # same device on two days is one visitor, not two.
+            "uniqueScans": self.repository.unique_scans_in_range(
+                qr_id, start=start, end=end
+            ),
+        }
 
     def get_qr(self, qr_id: int, created_by: int) -> dict[str, Any] | None:
         qr = self.repository.get_by_id(qr_id, created_by=created_by)
