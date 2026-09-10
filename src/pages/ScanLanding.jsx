@@ -52,6 +52,26 @@ const initials = (name) =>
     .slice(0, 2)
     .toUpperCase() || '?'
 
+// A creator's image on the scanned page — a coupon's brand logo, a contact's
+// photo — is there to be looked at, not taken. Painting it as a CSS background
+// instead of an <img> removes every one-tap way to pull the file off the page:
+// there is nothing to drag out, no right-click "Save image as", and no mobile
+// long-press "Save/Copy image" menu, because there is no image element under
+// the finger. A screenshot still captures what is on screen — this is a
+// deterrent that matches the intent (the visitor sees the brand; the file is
+// not handed to them as a download), not real DRM. `size` is applied by the
+// caller's className, same as the <img> it replaces.
+function ViewOnlyImage({ src, className = '', title }) {
+  return (
+    <div
+      aria-hidden="true"
+      title={title}
+      className={`bg-cover bg-center bg-no-repeat ${className}`}
+      style={{ backgroundImage: `url("${src}")` }}
+    />
+  )
+}
+
 function Shell({ children }) {
   return (
     // Centred rather than pinned to the top, because most of the time this is a
@@ -266,10 +286,9 @@ function ContactCard({ c, slug }) {
         <div className="relative bg-gradient-to-br from-primary via-[#2563eb] to-[#7c3aed] px-5 pb-7 pt-6 text-center text-white">
           <div className="relative mx-auto h-24 w-24">
             {c.photo ? (
-              <img
+              <ViewOnlyImage
                 src={c.photo}
-                alt=""
-                className="h-24 w-24 rounded-full object-cover ring-4 ring-white/30"
+                className="h-24 w-24 rounded-full ring-4 ring-white/30"
               />
             ) : (
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-surface/20 text-3xl font-bold ring-4 ring-white/30">
@@ -277,10 +296,9 @@ function ContactCard({ c, slug }) {
               </div>
             )}
             {c.logo && (
-              <img
+              <ViewOnlyImage
                 src={c.logo}
-                alt=""
-                className="absolute -bottom-1 -right-1 h-9 w-9 rounded-[10px] border-2 border-surface bg-surface object-cover"
+                className="absolute -bottom-1 -right-1 h-9 w-9 rounded-[10px] border-2 border-surface bg-surface"
               />
             )}
           </div>
@@ -1015,10 +1033,9 @@ function CouponCard({ c }) {
     <>
       <Card className="p-5">
         {c.logo && (
-          <img
+          <ViewOnlyImage
             src={c.logo}
-            alt=""
-            className="mb-4 h-14 w-14 rounded-[16px] object-cover ring-1 ring-line"
+            className="mb-4 h-14 w-14 rounded-[16px] ring-1 ring-line"
           />
         )}
         <div className="rounded-[16px] border-2 border-dashed border-primary/40 bg-canvas p-5 text-center">
