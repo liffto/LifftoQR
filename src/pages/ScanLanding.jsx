@@ -248,6 +248,9 @@ function CreateYourOwnButton({ label = 'Create your own card' }) {
       className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] border border-line bg-surface text-[15px] font-bold text-ink-soft active:bg-canvas"
     >
       <QrCode size={17} className="text-primary" /> {label}
+      <span className="rounded-full bg-success/10 px-1.5 py-0.5 text-[11px] font-bold text-success">
+        Free
+      </span>
     </button>
   )
 }
