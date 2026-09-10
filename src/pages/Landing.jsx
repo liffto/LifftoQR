@@ -70,15 +70,17 @@ const DARK_PANEL = 'bg-[#1F2430] text-white'
 const DARK_BTN =
   'bg-[#1F2430] text-white hover:bg-[#2A3142] dark:bg-white dark:text-[#1F2430] dark:hover:bg-white/90'
 
-// Demo imagery for the scan mockups, inline as data URIs so the prerendered
-// landing page pulls nothing over the network to draw them. An illustrated
+// Demo imagery for the scan mockups, inline as a data URI so the prerendered
+// landing page pulls nothing over the network to draw it. An illustrated
 // avatar rather than a stock photo — self-contained, and it reads as "a real
-// person's card" without a licence or an extra request. The org/brand mark is
-// the small badge the contact and coupon pages overlay.
+// person's card" without a licence or an extra request.
+//
+// No brand/logo badge in these demos on purpose. The pitch is "no watermark";
+// stamping the Liffto mark onto a sample page made people read it as exactly
+// that — a watermark we force onto their pages. The logo is the visitor's own
+// company mark to upload, so the demo leaves that slot to them.
 const DEMO_AVATAR =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fbbf24'/%3E%3Cstop offset='1' stop-color='%23f97316'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='80' height='80' rx='40' fill='url(%23a)'/%3E%3Ccircle cx='40' cy='31' r='13' fill='%23fff'/%3E%3Cpath d='M17 71c1-15 11-23 23-23s22 8 23 23z' fill='%23fff'/%3E%3C/svg%3E"
-const DEMO_BRAND =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%231B59F5'/%3E%3Cpath d='M14 11v18h13' fill='none' stroke='%23fff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0VBRjBGRiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDQkRCRkYiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgZmlsbD0idXJsKCNiZykiLz4KICA8cGF0aCBkPSJNMTEgODBjMC0xNiAxMi0yNSAyOS0yNXMyOSA5IDI5IDI1eiIgZmlsbD0iIzNENUFGRSIvPgogIDxwYXRoIGQ9Ik00NSA1N3YtOUgzNXY5YTUgNSAwIDAgMCAxMCAweiIgZmlsbD0iI0U3QTg3RiIvPgogIDxjaXJjbGUgY3g9IjI0LjUiIGN5PSIzNCIgcj0iMy4yIiBmaWxsPSIjRjNDNEEwIi8+CiAgPGNpcmNsZSBjeD0iNTUuNSIgY3k9IjM0IiByPSIzLjIiIGZpbGw9IiNGM0M0QTAiLz4KICA8Y2lyY2xlIGN4PSI0MCIgY3k9IjMzIiByPSIxNiIgZmlsbD0iI0YzQzRBMCIvPgogIDxwYXRoIGQ9Ik0yMy41IDM0LjVjLTEtMTQgMzQtMTQgMzMgMCAuNS0zLS41LTYtMi04LTMtOC0yNi04LTI5IDAtMS41IDItMi41IDUtMiA4eiIgZmlsbD0iIzJFMkEyNiIvPgogIDxjaXJjbGUgY3g9IjMzLjgiIGN5PSIzMyIgcj0iMS44IiBmaWxsPSIjMkUyQTI2Ii8+CiAgPGNpcmNsZSBjeD0iNDYuMiIgY3k9IjMzIiByPSIxLjgiIGZpbGw9IiMyRTJBMjYiLz4KICA8cGF0aCBkPSJNMzQgMzkuNXE2IDUgMTIgMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjQzY3QjU0IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K"
 
 // Sample records for the "what people see when they scan" mockups — rendered by
 // the same ScanPreview the create flow uses, so these are the real pages.
@@ -102,7 +104,6 @@ const SCAN_DEMOS = [
         city: 'Chennai',
         country: 'India',
         photo: DEMO_AVATAR,
-        logo: DEMO_BRAND,
       },
     },
   },
@@ -121,7 +122,6 @@ const SCAN_DEMOS = [
         // The field is `description` everywhere else — the renderer reads that,
         // so the old `details` key meant this line never showed.
         description: 'Valid once per customer, in store or online.',
-        logo: DEMO_BRAND,
       },
     },
   },
