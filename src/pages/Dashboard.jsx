@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   ChevronsUpDown,
   ChevronLeft,
+  ChevronRight,
   ChevronDown,
   Search,
   Copy,
@@ -352,9 +353,9 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
                 onClick={() => setShowGraph(true)}
                 aria-label="View scan analytics"
                 title="Scan analytics"
-                className="w-8 h-8 rounded-[10px] flex items-center justify-center text-ink-faint hover:bg-canvas hover:text-primary transition-colors"
+                className="h-8 rounded-[10px] flex items-center gap-1.5 px-2.5 bg-primary/10 text-primary text-[12px] font-semibold hover:bg-primary/15 transition-colors"
               >
-                <BarChart2 size={16} />
+                <BarChart2 size={15} /> Analytics
               </button>
             )}
             <button
@@ -483,36 +484,46 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
           <div
             className={`grid gap-2 pt-1 ${isDynamic ? 'grid-cols-3' : 'grid-cols-1'}`}
           >
+            {/* The Scans tile is the way into the analytics graph — where you
+                look for the scan count is where you look for its history, so
+                the two live together. Tinted and interactive (not a plain stat)
+                so the graph is findable at a glance; the header icon is only a
+                secondary shortcut. */}
             {isDynamic && (
-              <div className="bg-canvas rounded-[10px] px-3 py-2.5 text-center">
-                <p className="text-[10px] font-bold text-ink-faint uppercase tracking-wide mb-1">
-                  Scans
+              <button
+                type="button"
+                onClick={() => setShowGraph(true)}
+                aria-label="View scan analytics"
+                className="group rounded-[10px] border border-primary/20 bg-primary/[0.06] px-3 py-2.5 text-center transition-colors hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              >
+                <p className="mb-1 flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wide text-primary">
+                  <BarChart2 size={11} /> Scans
                 </p>
                 <p className="text-sm font-bold text-ink">
                   {scansLoading ? (
-                    <span className="inline-flex items-center justify-center gap-1">
-                      <span
-                        className="inline-block h-3.5 w-8 rounded shimmer"
-                        aria-hidden
-                      />
-                      <span className="font-normal text-ink-faint"> scans</span>
-                    </span>
+                    <span
+                      className="inline-block h-3.5 w-10 rounded shimmer align-middle"
+                      aria-hidden
+                    />
+                  ) : resolvedScans > 0 ? (
+                    resolvedScans.toLocaleString()
                   ) : (
-                    <>
-                      {resolvedScans > 0 ? resolvedScans.toLocaleString() : '—'}
-                      <span className="font-normal text-ink-faint"> scans</span>
-                    </>
+                    '—'
                   )}
                 </p>
-                {/* The detail view is where the split is worth spelling out.
-                    Shown only when there is a unique count, so codes that
-                    predate the events table say nothing rather than "0". */}
-                {row.uniqueScans > 0 && (
-                  <p className="mt-0.5 text-[10px] font-medium text-ink-faint">
-                    {row.uniqueScans.toLocaleString()} unique
-                  </p>
-                )}
-              </div>
+                {/* Always a call to the graph. Shows the unique count when there
+                    is one (codes that predate the events table have none), and
+                    otherwise just invites the tap. */}
+                <p className="mt-0.5 inline-flex items-center gap-0.5 text-[10px] font-semibold text-primary">
+                  {row.uniqueScans > 0
+                    ? `${row.uniqueScans.toLocaleString()} unique`
+                    : 'View graph'}
+                  <ChevronRight
+                    size={10}
+                    className="transition-transform group-hover:translate-x-0.5"
+                  />
+                </p>
+              </button>
             )}
             <div className="bg-canvas rounded-[10px] px-3 py-2.5 text-center">
               <p className="text-[10px] font-bold text-ink-faint uppercase tracking-wide mb-1">
