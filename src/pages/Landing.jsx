@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
@@ -15,10 +15,18 @@ import {
   Zap,
   Menu,
   X,
+  Frame,
+  Printer,
 } from 'lucide-react'
 import { defaultDesign, getDraft } from '../lib/store'
 import { useLoginModal } from '../context/LoginModalContext'
-import { LOGO_OPTIONS, FRAME_STYLE_COUNT, PATTERN_OPTIONS } from '../lib/qr'
+import {
+  LOGO_OPTIONS,
+  FRAME_STYLE_COUNT,
+  PATTERN_OPTIONS,
+  DOWNLOAD_FORMATS,
+  DOWNLOAD_SIZE,
+} from '../lib/qr'
 import { startDraft, draftHasContent } from '../lib/qrDraft'
 import { useTheme } from '../hooks/useTheme'
 import { findType, SELECTABLE_QR_TYPES } from '../lib/qrTypes'
@@ -145,11 +153,87 @@ const STEP_TYPES = ['url', 'wifi', 'vcard', 'whatsapp', 'coupon', 'event'].map(
 
 // Product facts, not invented usage numbers.
 const STATS = [
-  { value: `${SELECTABLE_QR_TYPES.length}`, label: 'QR code types' },
-  { value: `${FRAME_STYLE_COUNT}`, label: 'Frame styles' },
-  { value: '4', label: 'Export formats' },
-  { value: '2048px', label: 'Print resolution' },
+  {
+    icon: LayoutGrid,
+    value: SELECTABLE_QR_TYPES.length,
+    suffix: '',
+    label: 'QR code types',
+    caption: 'Links, WiFi, contacts, coupons & more',
+  },
+  {
+    icon: Frame,
+    value: FRAME_STYLE_COUNT,
+    suffix: '',
+    label: 'Frame styles',
+    caption: 'Each with your own call-to-action',
+  },
+  {
+    icon: Download,
+    value: DOWNLOAD_FORMATS.length,
+    suffix: '',
+    label: 'Export formats',
+    caption: DOWNLOAD_FORMATS.join(' · '),
+  },
+  {
+    icon: Printer,
+    value: DOWNLOAD_SIZE,
+    suffix: 'px',
+    label: 'Print resolution',
+    caption: 'Sharp from a sticker to a storefront',
+  },
 ]
+
+// A number that races up to its value the first time it scrolls into view.
+//
+// Like Reveal, the animation is only ever an enhancement: the final value is
+// what renders by default, so the prerendered HTML is correct, a reduced-motion
+// visitor sees the number outright, and anything already on screen at mount is
+// left settled rather than snapped back to zero. Only a number arriving from
+// below the fold counts up.
+function CountUp({ value, suffix = '', duration = 1100 }) {
+  const ref = useRef(null)
+  const [display, setDisplay] = useState(value)
+
+  useEffect(() => {
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const el = ref.current
+    if (reduced || !el || typeof IntersectionObserver === 'undefined') return undefined
+
+    const rect = el.getBoundingClientRect()
+    if (rect.top < window.innerHeight && rect.bottom > 0) return undefined
+
+    let raf
+    let start
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return
+        io.disconnect()
+        setDisplay(0)
+        const tick = (t) => {
+          if (start == null) start = t
+          const p = Math.min(1, (t - start) / duration)
+          const eased = 1 - Math.pow(1 - p, 3) // easeOutCubic — fast, then settles
+          setDisplay(Math.round(value * eased))
+          if (p < 1) raf = requestAnimationFrame(tick)
+        }
+        raf = requestAnimationFrame(tick)
+      },
+      { threshold: 0.3 },
+    )
+    io.observe(el)
+    return () => {
+      io.disconnect()
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [value, duration])
+
+  return (
+    <span ref={ref} className="tabular-nums">
+      {display}
+      {suffix}
+    </span>
+  )
+}
 
 const FEATURES = [
   {
@@ -775,23 +859,27 @@ export default function Landing() {
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
                   What you get, precisely
                 </p>
+                <h3 className="mt-3 max-w-[20ch] text-[24px] sm:text-[30px] font-extrabold leading-[1.12] tracking-[-0.02em] text-white">
+                  Real range, print-ready quality.
+                </h3>
 
-                <div className="mt-8 grid grid-cols-2 gap-y-10 sm:grid-cols-4">
+                <div className="mt-9 grid grid-cols-2 gap-x-6 gap-y-9 sm:mt-11 sm:grid-cols-4 sm:gap-x-5">
                   {STATS.map((s) => (
-                    <div
-                      key={s.label}
-                      className="relative sm:px-8 sm:first:pl-0"
-                    >
-                      {/* accent rule instead of a plain divider */}
+                    <div key={s.label} className="relative">
                       <span
                         aria-hidden
-                        className="block h-[3px] w-9 rounded-full bg-gradient-to-r from-[#7BA8FF] to-[#6EE7E0]"
-                      />
-                      <p className="mt-5 text-[40px] sm:text-[46px] font-extrabold leading-none tracking-[-0.04em] text-white tabular-nums">
-                        {s.value}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-[11px] bg-white/[0.06] text-[#9DC0FF] ring-1 ring-white/10"
+                      >
+                        <s.icon size={17} strokeWidth={2} />
+                      </span>
+                      <p className="mt-4 text-[38px] sm:text-[44px] font-extrabold leading-none tracking-[-0.04em] text-white">
+                        <CountUp value={s.value} suffix={s.suffix} />
                       </p>
-                      <p className="mt-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-white/45">
+                      <p className="mt-2.5 text-[12px] font-bold uppercase tracking-[0.1em] text-white/55">
                         {s.label}
+                      </p>
+                      <p className="mt-1 text-[12px] leading-snug text-white/40">
+                        {s.caption}
                       </p>
                     </div>
                   ))}
@@ -930,7 +1018,7 @@ export default function Landing() {
                 onClick={goCreateFlow}
                 className={`h-[52px] px-7 rounded-[10px] font-semibold inline-flex items-center justify-center gap-2.5 transition-colors shrink-0 ${DARK_BTN}`}
               >
-                Start now <ArrowRight size={18} />
+                Start free <ArrowRight size={18} />
               </button>
             </div>
           </Reveal>
