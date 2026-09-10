@@ -7,6 +7,7 @@ import {
   CalendarPlus,
   CalendarX,
   Check,
+  ChevronRight,
   Clock,
   Copy,
   Download,
@@ -22,6 +23,8 @@ import {
   Phone,
   QrCode,
   ShieldCheck,
+  Smartphone,
+  Ticket,
   Wifi,
 } from 'lucide-react'
 import { getPublicQr, vcardFileUrl } from '../api/qrcode/publicQr'
@@ -998,6 +1001,134 @@ function StateCard({ icon: Icon, title, detail, spin }) {
   )
 }
 
+// Coupon, app and link-tree used to fall through to "no content to display"
+// when scanned — they were offered in the create flow and drawn in the preview,
+// but the real page had no renderer for them. These mirror the preview
+// (src/components/ScanPreview.jsx) with the real actions the page can offer.
+
+function CouponCard({ c }) {
+  return (
+    <>
+      <Card className="p-5">
+        {c.logo && (
+          <img
+            src={c.logo}
+            alt=""
+            className="mb-4 h-14 w-14 rounded-[16px] object-cover ring-1 ring-line"
+          />
+        )}
+        <div className="rounded-[16px] border-2 border-dashed border-primary/40 bg-canvas p-5 text-center">
+          <Ticket size={26} className="mx-auto text-primary" />
+          <p className="mt-2 text-base font-bold text-ink">
+            {c.title || 'Special offer'}
+          </p>
+          {c.code && (
+            <p className="mt-3 rounded-[10px] bg-primary/10 px-4 py-2.5 text-xl font-black tracking-[0.2em] text-primary">
+              {c.code}
+            </p>
+          )}
+          {c.expiry && (
+            <p className="mt-2 text-xs text-ink-muted">Expires {c.expiry}</p>
+          )}
+          {c.description && (
+            <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">
+              {c.description}
+            </p>
+          )}
+        </div>
+      </Card>
+
+      <div className="mt-4 space-y-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {c.code && <CopyRow label="Coupon code" value={c.code} />}
+        {c.url && (
+          <PrimaryAction href={c.url} icon={ExternalLink}>
+            Redeem now
+          </PrimaryAction>
+        )}
+        <CreateYourOwnButton label="Create your own coupon" />
+      </div>
+    </>
+  )
+}
+
+function AppCard({ c }) {
+  const hasStore = c.iosUrl || c.androidUrl
+  return (
+    <>
+      <Card className="p-5 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] bg-primary/10 text-primary">
+          <Smartphone size={28} />
+        </div>
+        <p className="mt-4 text-base font-bold text-ink">
+          {c.name || 'Get the app'}
+        </p>
+        <p className="mt-1 text-[13px] text-ink-muted">
+          Choose the store for your device
+        </p>
+      </Card>
+
+      <div className="mt-4 space-y-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {c.iosUrl && (
+          <PrimaryAction href={c.iosUrl} icon={ExternalLink}>
+            App Store
+          </PrimaryAction>
+        )}
+        {c.androidUrl && (
+          <PrimaryAction href={c.androidUrl} icon={ExternalLink}>
+            Google Play
+          </PrimaryAction>
+        )}
+        {c.fallbackUrl && !hasStore && (
+          <PrimaryAction href={c.fallbackUrl} icon={ExternalLink}>
+            Open
+          </PrimaryAction>
+        )}
+        <CreateYourOwnButton label="Create your own app link" />
+      </div>
+    </>
+  )
+}
+
+function LinkTreeCard({ c }) {
+  const links = (Array.isArray(c.links) ? c.links : []).filter(
+    (l) => l && l.url,
+  )
+  return (
+    <>
+      <Card className="p-5 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[#7c3aed] text-xl font-bold text-white">
+          {initials(c.title || 'Links')}
+        </div>
+        <p className="mt-3 text-base font-bold text-ink">
+          {c.title || 'My Links'}
+        </p>
+        <div className="mt-5 space-y-2.5">
+          {links.length ? (
+            links.map((l, i) => (
+              <a
+                key={i}
+                href={l.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between gap-3 rounded-[12px] bg-canvas px-4 py-3.5 text-sm font-semibold text-ink active:bg-line/40"
+              >
+                <span className="truncate">{l.label || l.url}</span>
+                <ChevronRight size={16} className="shrink-0 text-ink-faint" />
+              </a>
+            ))
+          ) : (
+            <p className="text-[13px] text-ink-muted">No links yet.</p>
+          )}
+        </div>
+      </Card>
+
+      <div className="mt-4 space-y-2.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <CreateYourOwnButton label="Create your own link page" />
+      </div>
+    </>
+  )
+}
+
 function bodyFor(qr, slug) {
   const c = qr.content || {}
   switch (qr.typeKey) {
@@ -1009,6 +1140,12 @@ function bodyFor(qr, slug) {
       return <EventCard c={c} />
     case 'text':
       return <TextCard c={c} />
+    case 'coupon':
+      return <CouponCard c={c} />
+    case 'app':
+      return <AppCard c={c} />
+    case 'linktree':
+      return <LinkTreeCard c={c} />
     case 'whatsapp':
       return <WhatsappCard c={c} />
     case 'location':
