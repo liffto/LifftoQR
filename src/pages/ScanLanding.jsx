@@ -28,6 +28,7 @@ import {
   Wifi,
 } from 'lucide-react'
 import { getPublicQr, vcardFileUrl } from '../api/qrcode/publicQr'
+import LinkIconChip from '../components/LinkIconChip'
 import { copyToClipboard, defaultDesign } from '../lib/store'
 import {
   googleCalendarUrl,
@@ -1110,9 +1111,12 @@ function LinkTreeCard({ c }) {
                 href={l.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between gap-3 rounded-[12px] bg-canvas px-4 py-3.5 text-sm font-semibold text-ink active:bg-line/40"
+                className="flex items-center gap-3 rounded-[12px] bg-canvas px-3.5 py-3 text-sm font-semibold text-ink active:bg-line/40"
               >
-                <span className="truncate">{l.label || l.url}</span>
+                <LinkIconChip iconKey={l.icon} size={34} />
+                <span className="min-w-0 flex-1 truncate text-left">
+                  {l.label || l.url}
+                </span>
                 <ChevronRight size={16} className="shrink-0 text-ink-faint" />
               </a>
             ))

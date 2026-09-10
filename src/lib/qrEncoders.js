@@ -1570,7 +1570,7 @@ export const defaultContent = (key) => {
   const t = findEncoder(key)
   const out = {}
   for (const f of t.fields) {
-    if (f.inputType === 'linklist') out[f.key] = [{ label: '', url: '' }]
+    if (f.inputType === 'linklist') out[f.key] = [{ label: '', url: '', icon: 'website' }]
     else
       out[f.key] =
         f.defaultValue != null

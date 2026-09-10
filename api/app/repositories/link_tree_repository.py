@@ -57,6 +57,7 @@ class LinkTreeRepository:
                 link_tree_id=link_tree.id,
                 label=link_payload.label,
                 url=link_payload.url,
+                icon=link_payload.icon,
                 display_order=link_payload.display_order or index,
                 created_by=payload.created_by,
             )
@@ -131,6 +132,7 @@ class LinkTreeRepository:
                         link_tree_id=link_tree.id,
                         label=link_payload.label,
                         url=link_payload.url,
+                        icon=link_payload.icon,
                         display_order=link_payload.display_order or index,
                         created_by=payload.updated_by,
                     )

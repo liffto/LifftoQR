@@ -1,6 +1,17 @@
-import { useState } from 'react'
-import { Plus, X, ChevronDown, ImagePlus, Eye, EyeOff } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import {
+  Plus,
+  X,
+  ChevronDown,
+  ImagePlus,
+  Eye,
+  EyeOff,
+  Check,
+  Search,
+} from 'lucide-react'
 import { compressImageFile } from '../lib/imageCompress'
+import { LINK_ICONS } from '../lib/linkIcons'
+import LinkIconChip from './LinkIconChip'
 import {
   COUNTRIES,
   digitsOnly,
@@ -52,6 +63,86 @@ const asInvalid = (cls) =>
     .replace('focus:ring-primary/10', 'focus:ring-danger/10')
 
 // Repeatable list of {label, url} rows (Link Tree)
+// Per-link icon picker: a chip that opens a searchable "icon + name" menu.
+// The last entry ("Other link") is the custom / globe fallback.
+function LinkIconPicker({ value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [q, setQ] = useState('')
+  const wrap = useRef(null)
+
+  useEffect(() => {
+    if (!open) return undefined
+    const onDown = (e) => {
+      if (wrap.current && !wrap.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+
+  const needle = q.trim().toLowerCase()
+  const matches = needle
+    ? LINK_ICONS.filter((i) => i.name.toLowerCase().includes(needle))
+    : LINK_ICONS
+
+  return (
+    <div ref={wrap} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Choose an icon for this link"
+        className="flex h-11 items-center gap-1 rounded-[10px] border border-line px-1.5 hover:border-primary/40 transition-colors"
+      >
+        <LinkIconChip iconKey={value} size={28} />
+        <ChevronDown size={13} className="text-ink-faint" />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-30 mt-1.5 w-60 rounded-[12px] border border-line bg-surface p-2 shadow-pop animate-pop">
+          <div className="relative">
+            <Search
+              size={14}
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
+            />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search icons…"
+              autoFocus
+              className="h-9 w-full rounded-[8px] border border-line bg-canvas pl-8 pr-2.5 text-sm text-ink outline-none focus:border-primary"
+            />
+          </div>
+          <div className="mt-2 max-h-56 space-y-0.5 overflow-y-auto">
+            {matches.map((i) => (
+              <button
+                key={i.key}
+                type="button"
+                onClick={() => {
+                  onChange(i.key)
+                  setOpen(false)
+                  setQ('')
+                }}
+                className={`flex w-full items-center gap-2.5 rounded-[8px] px-2 py-1.5 text-left transition-colors hover:bg-canvas ${
+                  value === i.key ? 'bg-primary/5' : ''
+                }`}
+              >
+                <LinkIconChip iconKey={i.key} size={26} />
+                <span className="flex-1 truncate text-sm text-ink">{i.name}</span>
+                {value === i.key && (
+                  <Check size={14} className="shrink-0 text-primary" />
+                )}
+              </button>
+            ))}
+            {matches.length === 0 && (
+              <p className="px-2 py-3 text-center text-xs text-ink-muted">
+                No icons match — the globe fits any custom link.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function LinkListField({ field, value, onChange }) {
   const rows = Array.isArray(value) ? value : []
   const setRow = (i, patch) =>
@@ -59,7 +150,8 @@ function LinkListField({ field, value, onChange }) {
       field.key,
       rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)),
     )
-  const addRow = () => onChange(field.key, [...rows, { label: '', url: '' }])
+  const addRow = () =>
+    onChange(field.key, [...rows, { label: '', url: '', icon: 'website' }])
   const removeRow = (i) =>
     onChange(
       field.key,
@@ -75,9 +167,10 @@ function LinkListField({ field, value, onChange }) {
       <div className="space-y-2.5">
         {rows.map((r, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="w-6 h-6 shrink-0 rounded-[10px] bg-canvas text-ink-faint text-xs font-bold flex items-center justify-center">
-              {i + 1}
-            </span>
+            <LinkIconPicker
+              value={r.icon || 'website'}
+              onChange={(icon) => setRow(i, { icon })}
+            />
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-2">
               <input
                 value={r.label || ''}

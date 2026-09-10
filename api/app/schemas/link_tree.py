@@ -8,6 +8,7 @@ from app.schemas.website import TemplateBase, TemplateItemResponse
 class LinkTreeLinkCreate(BaseModel):
     label: str = Field(min_length=1, max_length=255)
     url: str = Field(min_length=1, max_length=1000)
+    icon: str | None = Field(default=None, max_length=40)
     display_order: int | None = Field(default=None, ge=1)
 
 
@@ -62,6 +63,7 @@ class LinkTreeLinkResponse(BaseModel):
     link_tree_id: int
     label: str
     url: str
+    icon: str | None = None
     display_order: int = Field(serialization_alias="displayOrder")
 
 
@@ -129,6 +131,7 @@ class LinkTreeItemResponse(BaseModel):
                         link_tree_id=link.link_tree_id,
                         label=link.label,
                         url=link.url,
+                        icon=link.icon,
                         display_order=link.display_order,
                     )
                     for link in links

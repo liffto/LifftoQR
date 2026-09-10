@@ -11,7 +11,7 @@ export function recordToLinkTreeCreatePayload(record: {
   folder?: string
   status?: string
   scans?: number
-  content?: { title?: string; links?: Array<{ label?: string; url?: string; displayOrder?: number; display_order?: number }> }
+  content?: { title?: string; links?: Array<{ label?: string; url?: string; icon?: string | null; displayOrder?: number; display_order?: number }> }
   design: ReturnType<typeof defaultDesign>
 }) {
   return {
@@ -21,6 +21,7 @@ export function recordToLinkTreeCreatePayload(record: {
       links: (record.content?.links || []).map((link, index) => ({
         label: link.label || '',
         url: link.url || '',
+        icon: link.icon || null,
         display_order: link.displayOrder ?? link.display_order ?? index + 1,
       })),
     },
@@ -36,7 +37,7 @@ export function recordToLinkTreeUpdatePayload(record: {
   folder?: string
   status?: string
   scans?: number
-  content?: { title?: string; links?: Array<{ label?: string; url?: string; displayOrder?: number; display_order?: number }> }
+  content?: { title?: string; links?: Array<{ label?: string; url?: string; icon?: string | null; displayOrder?: number; display_order?: number }> }
   design: ReturnType<typeof defaultDesign>
 }) {
   return recordToLinkTreeCreatePayload(record)

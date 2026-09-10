@@ -40,6 +40,7 @@ import {
 } from 'react-icons/fa6'
 import { findType, formatEventWhen, dynamicLandsOnPage } from '../lib/qrTypes'
 import { shortUrl } from '../lib/store'
+import LinkIconChip from './LinkIconChip'
 import QRView from './QRView'
 
 // Brand identity per social platform (for the scan preview).
@@ -361,9 +362,12 @@ function LinkTreePage({ c }) {
         {(links.length ? links : [{ label: 'Your first link' }]).map((l, i) => (
           <div
             key={i}
-            className="flex items-center justify-between rounded-[12px] bg-surface px-4 py-3 text-sm font-semibold text-ink shadow-sm"
+            className="flex items-center gap-2.5 rounded-[12px] bg-surface px-3 py-2.5 text-sm font-semibold text-ink shadow-sm"
           >
-            <span className="truncate">{l.label || host(l.url) || 'Link'}</span>
+            <LinkIconChip iconKey={l.icon} size={30} />
+            <span className="min-w-0 flex-1 truncate">
+              {l.label || host(l.url) || 'Link'}
+            </span>
             <ChevronRight size={15} className="shrink-0 text-ink-faint" />
           </div>
         ))}

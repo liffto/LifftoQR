@@ -9,6 +9,7 @@ import type {
 export interface LinkTreeLinkPayload {
   label: string
   url: string
+  icon?: string | null
   display_order?: number
 }
 
@@ -17,6 +18,7 @@ export interface LinkTreeLinkItem {
   link_tree_id: number
   label: string
   url: string
+  icon?: string | null
   displayOrder: number
 }
 
