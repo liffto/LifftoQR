@@ -10,6 +10,7 @@ class CouponContentCreate(BaseModel):
     expiry: date | None = None
     description: str | None = None
     url: str | None = Field(default=None, max_length=1000)
+    logo: str | None = None
 
 
 class CouponCreate(BaseModel):
@@ -32,6 +33,7 @@ class CouponContentUpdate(BaseModel):
     expiry: date | None = None
     description: str | None = None
     url: str | None = Field(default=None, max_length=1000)
+    logo: str | None = None
 
 
 class CouponUpdate(BaseModel):
@@ -58,6 +60,7 @@ class CouponContentResponse(BaseModel):
     expiry: str | None
     description: str | None
     url: str | None
+    logo: str | None = None
 
 
 class CouponItemResponse(BaseModel):
@@ -120,6 +123,7 @@ class CouponItemResponse(BaseModel):
                 expiry=expiry,
                 description=qr.coupon.description,
                 url=qr.coupon.url,
+                logo=qr.coupon.logo,
             ),
             template=TemplateItemResponse(
                 id=qr.template.id,

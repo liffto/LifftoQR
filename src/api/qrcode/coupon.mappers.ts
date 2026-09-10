@@ -11,7 +11,7 @@ export function recordToCouponCreatePayload(record: {
   folder?: string
   status?: string
   scans?: number
-  content?: { title?: string; code?: string; expiry?: string | null; description?: string | null; url?: string | null }
+  content?: { title?: string; code?: string; expiry?: string | null; description?: string | null; url?: string | null; logo?: string | null }
   design: ReturnType<typeof defaultDesign>
 }) {
   return {
@@ -22,6 +22,7 @@ export function recordToCouponCreatePayload(record: {
       expiry: record.content?.expiry ?? null,
       description: record.content?.description ?? null,
       url: record.content?.url ?? null,
+      logo: record.content?.logo ?? null,
     },
   }
 }
@@ -35,7 +36,7 @@ export function recordToCouponUpdatePayload(record: {
   folder?: string
   status?: string
   scans?: number
-  content?: { title?: string; code?: string; expiry?: string | null; description?: string | null; url?: string | null }
+  content?: { title?: string; code?: string; expiry?: string | null; description?: string | null; url?: string | null; logo?: string | null }
   design: ReturnType<typeof defaultDesign>
 }) {
   return recordToCouponCreatePayload(record)

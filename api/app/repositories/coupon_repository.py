@@ -48,6 +48,7 @@ class CouponRepository:
             expiry=payload.content.expiry,
             description=payload.content.description,
             url=payload.content.url,
+            logo=payload.content.logo,
             created_by=payload.created_by,
         )
         content.qr_id = qr.id
@@ -108,6 +109,7 @@ class CouponRepository:
                     expiry=content.expiry,
                     description=content.description,
                     url=content.url,
+                    logo=content.logo,
                     created_by=payload.updated_by,
                 )
                 self.db.add(row)
@@ -122,6 +124,9 @@ class CouponRepository:
                     qr.coupon.description = content.description
                 if content.url is not None:
                     qr.coupon.url = content.url
+                if content.logo is not None:
+                    # "" clears the logo; None means "leave it as it was".
+                    qr.coupon.logo = content.logo or None
                 if payload.updated_by is not None:
                     qr.coupon.updated_by = payload.updated_by
 

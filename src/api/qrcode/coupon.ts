@@ -14,6 +14,7 @@ export interface CouponContent {
   expiry: string | null
   description: string | null
   url: string | null
+  logo: string | null
 }
 
 export interface CouponContentPayload {
@@ -22,6 +23,7 @@ export interface CouponContentPayload {
   expiry?: string | null
   description?: string | null
   url?: string | null
+  logo?: string | null
 }
 
 export interface CouponCreatePayload extends QrCreatePayloadBase {

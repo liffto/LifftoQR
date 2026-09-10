@@ -1468,6 +1468,12 @@ export const ENCODERS = [
     note: 'Scanning opens a branded coupon page people can show at checkout. Always a Dynamic QR.',
     fields: [
       {
+        key: 'logo',
+        label: 'Brand logo (optional)',
+        inputType: 'image',
+        half: true,
+      },
+      {
         key: 'title',
         label: 'Offer title',
         inputType: 'text',

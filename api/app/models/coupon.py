@@ -20,6 +20,10 @@ class Coupon(Base):
     expiry = Column(Date, nullable=True)
     description = Column(SqlText, nullable=True)
     url = Column(String(1000), nullable=True)
+    # A brand mark for the coupon page, stored as a compressed image data URL —
+    # hence Text, not a short String. Optional; the page falls back to the
+    # ticket glyph when it is absent.
+    logo = Column(SqlText, nullable=True)
 
     created_by = Column(Integer, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
