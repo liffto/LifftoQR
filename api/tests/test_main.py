@@ -25,7 +25,7 @@ def test_create_user() -> None:
 
 
 def test_hash_password_supports_long_passwords() -> None:
-    password = "karthik@123456" * 6
+    password = "test-password@123456" * 6
     hashed = hash_password(password)
 
     assert hashed

@@ -89,8 +89,8 @@ POST /api/v1/locations
 POST /api/v1/social-media
 
 {
-  "name": "Instagram: @karthik",
-  "url": "https://www.zenmatrix.com",
+  "name": "Instagram: @acme",
+  "url": "https://www.example.com",
   "slug": "soc001",
   "dynamic": true,
   "qr_type": "Dynamic QR",
@@ -99,8 +99,8 @@ POST /api/v1/social-media
   "scans": 0,
   "content": {
     "platform": "instagram",
-    "handle": "karthik",
-    "url": "www.zenmatrix.com"
+    "handle": "acme",
+    "url": "www.example.com"
   },
   "template": {
     "logo": null,
@@ -122,7 +122,7 @@ POST /api/v1/social-media
 POST /api/v1/google-reviews
 
 {
-  "name": "Review: Karthik",
+  "name": "Review: Acme Cafe",
   "url": "https://www.google.com",
   "slug": "gr001",
   "dynamic": true,
@@ -132,7 +132,7 @@ POST /api/v1/google-reviews
   "scans": 0,
   "content": {
     "url": "www.google.com",
-    "businessName": "Karthik"
+    "businessName": "Acme Cafe"
   },
   "template": {
     "logo": null,
@@ -248,7 +248,7 @@ POST /api/v1/audios
 POST /api/v1/apps
 
 {
-  "name": "App: Karthik",
+  "name": "App: Acme",
   "url": "https://yourapp.com",
   "slug": "app001",
   "dynamic": true,
@@ -260,7 +260,7 @@ POST /api/v1/apps
     "iosUrl": "apps.apple.com",
     "androidUrl": "play.google.com",
     "fallbackUrl": "yourapp.com",
-    "name": "Karthik"
+    "name": "Acme"
   },
   "template": {
     "logo": null,
@@ -294,7 +294,7 @@ POST /api/v1/link-trees
     "title": "Link tree",
     "links": [
       { "label": "link1", "url": "https://google.com" },
-      { "label": "link2", "url": "https://zenmatrix.com" }
+      { "label": "link2", "url": "https://example.com" }
     ]
   },
   "template": {
@@ -330,7 +330,7 @@ POST /api/v1/coupons
     "code": "sav20",
     "expiry": "2026-07-24",
     "description": "20 % discount",
-    "url": "www.karthik.in"
+    "url": "www.example.com"
   },
   "template": {
     "logo": null,
@@ -384,8 +384,8 @@ POST /api/v1/invitations
 POST /api/v1/feedbacks
 
 {
-  "name": "Feedback: zenmatrix.in",
-  "url": "https://www.zenmatrix.in?karthik=sddd",
+  "name": "Feedback: example.in",
+  "url": "https://www.example.in?ref=sample",
   "slug": "fb001",
   "dynamic": false,
   "qr_type": "Static QR",
@@ -393,8 +393,8 @@ POST /api/v1/feedbacks
   "status": true,
   "scans": 0,
   "content": {
-    "url": "www.zenmatrix.in",
-    "prefillKey": "karthik",
+    "url": "www.example.in",
+    "prefillKey": "ref",
     "prefillValue": "sddd"
   },
   "template": {
@@ -454,7 +454,7 @@ POST /api/v1/events
 POST /api/v1/whatsapp
 
 {
-  "name": "WhatsApp: Karthik",
+  "name": "WhatsApp: Acme",
   "url": "",
   "slug": "wa001",
   "dynamic": true,
@@ -486,7 +486,7 @@ POST /api/v1/whatsapp
 
 POST /api/v1/phones
 {
-  "name": "Phone: Karthik",
+  "name": "Phone: Ada",
   "url": "",
   "slug": "ph001",
   "dynamic": false,
@@ -551,7 +551,7 @@ POST /api/v1/sms
 POST /api/v1/emails
 
 {
-  "name": "Email: Karthik",
+  "name": "Email: Ada",
   "url": "",
   "slug": "em001",
   "dynamic": false,
@@ -560,7 +560,7 @@ POST /api/v1/emails
   "status": true,
   "scans": 0,
   "content": {
-    "to": "karthik@example.com",
+    "to": "ada@example.com",
     "subject": "Hello from QR",
     "body": "I scanned your email QR code."
   },
@@ -584,7 +584,7 @@ POST /api/v1/emails
 POST /api/v1/vcards
 
 {
-  "name": "vCard: Karthik Eswaran",
+  "name": "vCard: Ada Lovelace",
   "url": "",
   "slug": "vc001",
   "dynamic": true,
@@ -595,14 +595,14 @@ POST /api/v1/vcards
   "content": {
     "photo": null,
     "logo": null,
-    "first_name": "Karthik",
-    "last_name": "Eswaran",
-    "org": "Zenmatrix",
+    "first_name": "Ada",
+    "last_name": "Lovelace",
+    "org": "Example Corp",
     "title": "Chartered Accountant",
     "phone": "+919876543210",
     "work_phone": "+914212345678",
-    "email": "karthik@zenmatrix.com",
-    "url": "https://www.zenmatrix.com",
+    "email": "ada@example.com",
+    "url": "https://www.example.com",
     "street": "Main Street",
     "city": "Tiruppur",
     "state": "Tamil Nadu",
@@ -673,7 +673,7 @@ POST /api/v1/texts
   "status": true,
   "scans": 0,
   "content": {
-    "text": "Welcome to Zenmatrix. Thank you for scanning!"
+    "text": "Welcome to Example Corp. Thank you for scanning!"
   },
   "template": {
     "logo": null,
@@ -695,8 +695,8 @@ POST /api/v1/texts
 POST /api/v1/websites
 
 {
-  "name": "Website: Zenmatrix",
-  "url": "https://www.zenmatrix.com",
+  "name": "Website: Example Corp",
+  "url": "https://www.example.com",
   "slug": "web001",
   "dynamic": true,
   "qr_type": "Dynamic QR",
@@ -704,7 +704,7 @@ POST /api/v1/websites
   "status": true,
   "scans": 0,
   "content": {
-    "url": "https://www.zenmatrix.com"
+    "url": "https://www.example.com"
   },
   "template": {
     "logo": null,

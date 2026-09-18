@@ -9,8 +9,8 @@ describe('the name a code gets from its content', () => {
     // pushed the number that identifies the code out of a narrow column.
     const cases = [
       ['whatsapp', { countryCode: '+91', phone: '9843137477' }, '+919843137477'],
-      ['pdf', { url: 'https://zenmatrix.in' }, 'zenmatrix.in'],
-      ['pdf', { url: 'https://zenmatrix.in/brochure.pdf' }, 'brochure.pdf'],
+      ['pdf', { url: 'https://example.in' }, 'example.in'],
+      ['pdf', { url: 'https://example.in/brochure.pdf' }, 'brochure.pdf'],
       ['wifi', { ssid: 'VEDANS' }, 'VEDANS'],
       ['email', { to: 'hello@liffto.com' }, 'hello@liffto.com'],
       ['sms', { number: '+91 98400 12345' }, '+91 98400 12345'],
