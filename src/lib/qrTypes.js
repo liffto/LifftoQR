@@ -46,27 +46,48 @@ const ICONS = {
 }
 
 // Soft icon tints per type so the grid reads visually, not as a wall of grey.
+// The icon tile behind each type.
+//
+// Every literal needs a dark half. A fixed -50 background is a near-white that
+// stays near-white whatever the theme, so on the dark dashboard these read as
+// holes punched in the page rather than as tinted tiles. The pair is a -400 at
+// 15% behind a -300: the alpha composites over whatever surface is behind it,
+// so one value works on canvas and on a card.
+//
+// Light is untouched. It was never the broken half, and leaving it alone means
+// it cannot regress.
+//
+// url and wifi are alpha tints of the brand colour, so the tile follows the
+// theme on its own — but the glyph does not. Measured on the dark surface,
+// primary-on-primary/10 is 2.80:1, under the 3:1 a glyph needs; stepping the
+// glyph up its own ramp to primary-300 fixes it without touching the brand
+// colour, which stays #1B59F5. (The same pair is used in ~32 other places and
+// measures the same there — see the note in the commit.)
 const TINTS = {
-  url: 'bg-primary/10 text-primary',
-  text: 'bg-slate-100 text-slate-600',
-  wifi: 'bg-primary/10 text-primary',
-  vcard: 'bg-indigo-50 text-indigo-600',
-  email: 'bg-rose-50 text-rose-600',
-  sms: 'bg-emerald-50 text-emerald-600',
-  phone: 'bg-emerald-50 text-emerald-600',
-  whatsapp: 'bg-green-50 text-[#25D366]',
-  event: 'bg-amber-50 text-amber-600',
-  location: 'bg-red-50 text-red-500',
-  social: 'bg-pink-50 text-pink-600',
-  'google-review': 'bg-amber-50 text-amber-500',
-  pdf: 'bg-red-50 text-red-500',
-  video: 'bg-violet-50 text-violet-600',
-  mp3: 'bg-fuchsia-50 text-fuchsia-600',
-  app: 'bg-sky-50 text-sky-600',
-  linktree: 'bg-teal-50 text-teal-600',
-  coupon: 'bg-orange-50 text-orange-600',
-  invitation: 'bg-purple-50 text-purple-600',
-  feedback: 'bg-cyan-50 text-cyan-600',
+  url: 'bg-primary/10 text-primary dark:text-primary-300',
+  text: 'bg-slate-100 text-slate-600 dark:bg-slate-400/15 dark:text-slate-300',
+  wifi: 'bg-primary/10 text-primary dark:text-primary-300',
+  vcard: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-400/15 dark:text-indigo-300',
+  email: 'bg-rose-50 text-rose-600 dark:bg-rose-400/15 dark:text-rose-300',
+  sms: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-300',
+  phone: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-300',
+  // The WhatsApp green is the brand's own and stays put in both themes; only
+  // the tile behind it needs the dark half.
+  whatsapp: 'bg-green-50 text-[#25D366] dark:bg-green-400/15',
+  event: 'bg-amber-50 text-amber-600 dark:bg-amber-400/15 dark:text-amber-300',
+  location: 'bg-red-50 text-red-500 dark:bg-red-400/15 dark:text-red-300',
+  social: 'bg-pink-50 text-pink-600 dark:bg-pink-400/15 dark:text-pink-300',
+  'google-review':
+    'bg-amber-50 text-amber-500 dark:bg-amber-400/15 dark:text-amber-300',
+  pdf: 'bg-red-50 text-red-500 dark:bg-red-400/15 dark:text-red-300',
+  video: 'bg-violet-50 text-violet-600 dark:bg-violet-400/15 dark:text-violet-300',
+  mp3: 'bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-400/15 dark:text-fuchsia-300',
+  app: 'bg-sky-50 text-sky-600 dark:bg-sky-400/15 dark:text-sky-300',
+  linktree: 'bg-teal-50 text-teal-600 dark:bg-teal-400/15 dark:text-teal-300',
+  coupon: 'bg-orange-50 text-orange-600 dark:bg-orange-400/15 dark:text-orange-300',
+  invitation:
+    'bg-purple-50 text-purple-600 dark:bg-purple-400/15 dark:text-purple-300',
+  feedback: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-400/15 dark:text-cyan-300',
 }
 
 export const QR_TYPES = ENCODERS.map((t) => ({

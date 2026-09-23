@@ -244,7 +244,7 @@ const FEATURES = [
   },
   {
     icon: RefreshCw,
-    tint: 'bg-violet-50 text-violet-500',
+    tint: 'bg-violet-50 text-violet-500 dark:bg-violet-400/15 dark:text-violet-300',
     title: 'Edit it after you print',
     body: 'Dynamic codes route through a short link you control, so a printed QR can point somewhere new at any time. No reprinting, no new sticker.',
   },
@@ -256,19 +256,19 @@ const FEATURES = [
   },
   {
     icon: LayoutGrid,
-    tint: 'bg-amber-50 text-amber-500',
+    tint: 'bg-amber-50 text-amber-500 dark:bg-amber-400/15 dark:text-amber-300',
     title: `${SELECTABLE_QR_TYPES.length} QR code types`,
     body: 'Links, Wi-Fi, contact cards, WhatsApp, email and SMS, coupons, events, app stores and a link tree — each with a guided form.',
   },
   {
     icon: Download,
-    tint: 'bg-rose-50 text-rose-500',
+    tint: 'bg-rose-50 text-rose-500 dark:bg-rose-400/15 dark:text-rose-300',
     title: 'Print-ready exports',
     body: 'High-resolution PNG, JPEG and WEBP, or SVG vector that stays razor sharp from business card to billboard.',
   },
   {
     icon: BookmarkPlus,
-    tint: 'bg-teal-50 text-teal-600',
+    tint: 'bg-teal-50 text-teal-600 dark:bg-teal-400/15 dark:text-teal-300',
     title: 'Templates & organisation',
     body: 'Save a look as a template to reuse across codes, then search, filter and manage everything from a card or table view.',
   },

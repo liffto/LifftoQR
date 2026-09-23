@@ -588,7 +588,7 @@ export default function UserAccount() {
                   <button
                     type="button"
                     onClick={() => toggleNotif(key)}
-                    className={`shrink-0 w-10 h-6 rounded-full transition-colors relative ${notifs[key] ? 'bg-primary' : 'bg-gray-200'}`}
+                    className={`shrink-0 w-10 h-6 rounded-full transition-colors relative ${notifs[key] ? 'bg-primary' : 'bg-ink-faint/40'}`}
                     aria-pressed={notifs[key]}
                   >
                     <span

@@ -293,7 +293,7 @@ function EventPage({ c }) {
   return (
     <div className="flex h-full flex-col px-5 pb-5">
       <div className="flex-1">
-        <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-amber-50 text-amber-600">
+        <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-amber-50 text-amber-600 dark:bg-amber-400/15 dark:text-amber-300">
           <Calendar size={26} />
         </div>
         <p className="mt-4 text-lg font-bold leading-tight text-ink">
@@ -320,12 +320,16 @@ function EventPage({ c }) {
 function LocationPage({ c }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="relative flex-1 bg-gradient-to-br from-emerald-100 via-sky-100 to-emerald-50">
+      {/* A stand-in for a map. The light tones are the illustration, so they
+          get a muted dark half rather than being left to glow on a dark page. */}
+      <div className="relative flex-1 bg-gradient-to-br from-emerald-100 via-sky-100 to-emerald-50 dark:from-emerald-900/40 dark:via-sky-900/40 dark:to-emerald-900/20">
         <div
           className="absolute inset-0 opacity-40"
           style={{
+            // Taken from the ink token rather than a fixed #0002: a near-black
+            // grid drawn over a dark map is not there at all.
             backgroundImage:
-              'linear-gradient(#0002 1px,transparent 1px),linear-gradient(90deg,#0002 1px,transparent 1px)',
+              'linear-gradient(rgb(var(--c-ink) / 0.13) 1px,transparent 1px),linear-gradient(90deg,rgb(var(--c-ink) / 0.13) 1px,transparent 1px)',
             backgroundSize: '22px 22px',
           }}
         />
@@ -707,7 +711,9 @@ function QrCard({ record }) {
       </p>
       <span
         className={`mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-          dyn ? 'bg-primary/10 text-primary' : 'bg-emerald-50 text-emerald-600'
+          dyn
+            ? 'bg-primary/10 text-primary'
+            : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-300'
         }`}
       >
         <span

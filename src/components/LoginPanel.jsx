@@ -55,7 +55,7 @@ export default function LoginPanel({ compact = false, onContinueAsGuest }) {
       </p>
 
       {error && (
-        <div className="mb-5 flex items-start gap-2.5 rounded-[10px] border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700">
+        <div className="mb-5 flex items-start gap-2.5 rounded-[10px] border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>{error}</span>
         </div>
@@ -83,7 +83,7 @@ export default function LoginPanel({ compact = false, onContinueAsGuest }) {
           />
         </GoogleOAuthProvider>
       ) : (
-        <div className="flex items-start gap-2.5 rounded-[10px] border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-800">
+        <div className="flex items-start gap-2.5 rounded-[10px] border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
           <span>
             Sign-in isn&apos;t configured in this build — VITE_CLIENT_ID is

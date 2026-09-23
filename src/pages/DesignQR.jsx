@@ -98,25 +98,25 @@ const LOGO_ICONS = {
   google: {
     Icon: FaGoogle,
     color: 'text-[#4285F4]',
-    bg: 'bg-blue-50',
+    bg: 'bg-blue-50 dark:bg-blue-400/15',
     label: 'Google',
   },
   maps: {
     Icon: MapPin,
     color: 'text-[#34A853]',
-    bg: 'bg-green-50',
+    bg: 'bg-green-50 dark:bg-green-400/15',
     label: 'Maps',
   },
   whatsapp: {
     Icon: FaWhatsapp,
     color: 'text-[#25D366]',
-    bg: 'bg-green-50',
+    bg: 'bg-green-50 dark:bg-green-400/15',
     label: 'WhatsApp',
   },
   instagram: {
     Icon: FaInstagram,
     color: 'text-[#E63B66]',
-    bg: 'bg-pink-50',
+    bg: 'bg-pink-50 dark:bg-pink-400/15',
     label: 'Instagram',
   },
 }

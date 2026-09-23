@@ -398,7 +398,9 @@ function EventCard({ c }) {
       <Card className="p-5">
         <div
           className={`flex h-14 w-14 items-center justify-center rounded-[16px] ${
-            ended ? 'bg-canvas text-ink-faint' : 'bg-amber-50 text-amber-600'
+            ended
+              ? 'bg-canvas text-ink-faint'
+              : 'bg-amber-50 text-amber-600 dark:bg-amber-400/15 dark:text-amber-300'
           }`}
         >
           <Calendar size={26} />
