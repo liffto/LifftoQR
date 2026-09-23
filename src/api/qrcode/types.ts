@@ -51,6 +51,8 @@ export interface QrItemBase {
   /** The folder this code is filed in. Both null means unfiled. */
   folderId?: number | null
   folderName?: string | null
+  /** ISO timestamp of when the code was created. */
+  createdAt?: string | null
   status: string
   scans: number
   /** Distinct devices that have scanned this code. Only covers scans since

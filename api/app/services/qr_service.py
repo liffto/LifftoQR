@@ -75,6 +75,13 @@ class QrService:
                 # rather than an absence it has to guess at.
                 mapped["folderId"] = qr.folder_id
                 mapped["folderName"] = qr.folder_ref.name if qr.folder_ref else None
+                # When the code was made. edited_on is a date and only says
+                # when it last changed, so the details panel had no way to
+                # answer "when did I create this?". Full timestamp, not a date:
+                # two codes made the same afternoon are otherwise identical.
+                mapped["createdAt"] = (
+                    qr.created_at.isoformat() if qr.created_at else None
+                )
                 items.append(mapped)
         return items
 

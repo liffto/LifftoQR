@@ -108,6 +108,28 @@ export const formatDate = (iso) => {
   }
 }
 
+/**
+ * Date *and* time, for when a code was created.
+ *
+ * The time is the point: two codes made the same afternoon show the same date
+ * and are otherwise indistinguishable. Returns an em dash rather than
+ * "Invalid Date" for a missing value — a code created before the field
+ * existed has none, and that is not an error to show someone.
+ */
+export const formatDateTime = (iso) => {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '—'
+  return d.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+}
+
 // Short-link host for Dynamic QRs (display + encode). Override via VITE_SHORT_URL_DOMAIN.
 const rawShortDomain =
   (typeof import.meta !== 'undefined' &&

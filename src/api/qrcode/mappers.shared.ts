@@ -75,6 +75,7 @@ export function itemToBaseRecord<T extends {
   folder: string | null
   folderId?: number | null
   folderName?: string | null
+  createdAt?: string | null
   status: string
   scans: number
   uniqueScans?: number
@@ -97,6 +98,7 @@ export function itemToBaseRecord<T extends {
     // draws, not a folder called "Untitled" that nobody made.
     folderId: item.folderId ?? null,
     folderName: item.folderName ?? null,
+    createdAt: item.createdAt ?? null,
     status: item.status,
     scans: item.scans ?? 0,
     uniqueScans: item.uniqueScans ?? 0,

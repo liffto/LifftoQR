@@ -30,6 +30,7 @@ import {
   shortUrl,
   randomSlug,
   formatDate,
+  formatDateTime,
   copyToClipboard,
 } from '../lib/store'
 import { useQrs, useDeleteQr, useSetQrStatus } from '../hooks/useQrs'
@@ -250,6 +251,7 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
   const [format, setFormat] = useState('PNG')
   const [fmtOpen, setFmtOpen] = useState(false)
   const [showGraph, setShowGraph] = useState(false)
+  const [moving, setMoving] = useState(false)
   const fmtWrapRef = useRef(null)
   const typeLabel = normaliseType(row.qrType)
   const isDynamic = Boolean(row.dynamic) || typeLabel === 'Dynamic QR'
@@ -397,7 +399,10 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
         ) : (
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
         {/* ── QR preview strip ── */}
-        <div className="bg-gradient-to-b from-canvas to-white px-5 pt-6 pb-4 flex flex-col items-center gap-3 border-b border-line">
+        {/* to-surface, not to-white. A literal white is not a token and does
+            not flip, so in dark mode this stayed a white slab with the code's
+            name and type — both ink — written invisibly across it. */}
+        <div className="bg-gradient-to-b from-canvas to-surface px-5 pt-6 pb-4 flex flex-col items-center gap-3 border-b border-line">
           <div className="w-[164px] h-[164px] rounded-[10px] bg-white shadow-md border border-line flex items-center justify-center overflow-hidden">
             <QRView ref={qrRef} record={row} size={148} />
           </div>
@@ -568,6 +573,40 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
               </div>
             )}
           </div>
+
+          {/* Where it is filed, and when it was made — the two things this
+              panel could not answer. The chip closes the panel on its way to
+              the folder, or it would sit over the page it just opened. */}
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <div className="flex items-center justify-between gap-2 rounded-[10px] bg-canvas px-3 py-2.5">
+              <div className="min-w-0">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-ink-faint">
+                  Folder
+                </p>
+                {row.folderName ? (
+                  <FolderChip row={row} onNavigate={onClose} />
+                ) : (
+                  <p className="text-[13px] text-ink-muted">Not in a folder</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setMoving(true)}
+                className="shrink-0 rounded-[10px] px-2 py-1 text-[12px] font-semibold text-primary transition-colors hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
+                {row.folderName ? 'Change' : 'Add'}
+              </button>
+            </div>
+
+            <div className="rounded-[10px] bg-canvas px-3 py-2.5">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-ink-faint">
+                Created
+              </p>
+              <p className="text-[13px] font-semibold text-ink">
+                {formatDateTime(row.createdAt)}
+              </p>
+            </div>
+          </div>
         </div>
         </div>
         )}
@@ -660,6 +699,12 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
         </div>
         )}
       </div>
+
+      {/* Stacks over this panel rather than replacing it, so closing the move
+          dialog returns you to the code you were looking at. */}
+      {moving && (
+        <MoveToFolderModal row={row} onClose={() => setMoving(false)} />
+      )}
     </div>
   )
 }
