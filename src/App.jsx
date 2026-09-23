@@ -13,6 +13,7 @@ import {
   loadFAQ,
   loadUserAccount,
   loadNotifications,
+  loadFolders,
 } from './lib/routePrefetch'
 
 // The landing page is the one thing that must never wait on a second round
@@ -59,6 +60,7 @@ const page = (load) =>
 const ScanLanding = page(() => import('./pages/ScanLanding'))
 const Login = page(() => import('./pages/Login'))
 const Dashboard = page(loadDashboard)
+const Folders = page(loadFolders)
 const CreateUrl = page(loadCreateUrl)
 const CreateDetails = page(loadCreateDetails)
 const DesignQR = page(loadDesignQR)
@@ -104,6 +106,25 @@ export default function App() {
           />
           <Route
             path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          {/* Folders. The grid of them, and one folder's contents — which is
+              the dashboard list with one more filter, rendered by the same
+              component so the two lists cannot drift apart. */}
+          <Route
+            path="/folders"
+            element={
+              <ProtectedRoute>
+                <Folders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/folders/:folderId"
             element={
               <ProtectedRoute>
                 <Dashboard />

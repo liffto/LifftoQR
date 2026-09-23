@@ -24,6 +24,7 @@ export const loadIntegration = () => import('../pages/Integration')
 export const loadFAQ = () => import('../pages/FAQ')
 export const loadUserAccount = () => import('../pages/UserAccount')
 export const loadNotifications = () => import('../pages/Notifications')
+export const loadFolders = () => import('../pages/Folders')
 
 const SIGNED_IN_LOADERS = [
   loadDashboard,
@@ -35,6 +36,7 @@ const SIGNED_IN_LOADERS = [
   loadFAQ,
   loadUserAccount,
   loadNotifications,
+  loadFolders,
 ]
 
 let signedInPrefetched = false

@@ -46,7 +46,11 @@ export interface QrItemBase {
   slug: string
   dynamic: boolean
   qrType: string
+  /** @deprecated The old free-text label. Superseded by folderId/folderName. */
   folder: string | null
+  /** The folder this code is filed in. Both null means unfiled. */
+  folderId?: number | null
+  folderName?: string | null
   status: string
   scans: number
   /** Distinct devices that have scanned this code. Only covers scans since

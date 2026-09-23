@@ -73,6 +73,8 @@ export function itemToBaseRecord<T extends {
   dynamic: boolean
   qrType: string
   folder: string | null
+  folderId?: number | null
+  folderName?: string | null
   status: string
   scans: number
   uniqueScans?: number
@@ -91,6 +93,10 @@ export function itemToBaseRecord<T extends {
     dynamic: item.dynamic,
     qrType: item.qrType,
     folder: item.folder ?? 'Untitled',
+    // Null rather than a placeholder name: unfiled is a state the dashboard
+    // draws, not a folder called "Untitled" that nobody made.
+    folderId: item.folderId ?? null,
+    folderName: item.folderName ?? null,
     status: item.status,
     scans: item.scans ?? 0,
     uniqueScans: item.uniqueScans ?? 0,

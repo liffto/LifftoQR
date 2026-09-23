@@ -5,6 +5,7 @@ import {
   Award,
   Code2,
   HelpCircle,
+  FolderOpen,
   LogOut,
   Bell,
   Plus,
@@ -83,13 +84,26 @@ function BottomTab({ icon: Icon, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 transition-colors ${
-        active ? 'text-primary' : 'text-ink-faint'
-      }`}
       aria-label={label}
+      aria-current={active ? 'page' : undefined}
+      className="group relative flex min-w-0 flex-1 flex-col items-center gap-1 py-2"
     >
-      <Icon size={21} strokeWidth={active ? 2.4 : 1.9} />
-      <span className="text-[10px] font-semibold leading-none">{label}</span>
+      {/* A tinted tile behind the icon, not colour alone: a 10px label going
+          from grey to blue is not legible at a glance on a phone. */}
+      <span
+        className={`flex h-7 w-full max-w-[54px] items-center justify-center rounded-[10px] transition-colors ${
+          active ? 'bg-primary/10 text-primary' : 'text-ink-faint group-active:bg-canvas'
+        }`}
+      >
+        <Icon size={19} strokeWidth={active ? 2.4 : 1.9} />
+      </span>
+      <span
+        className={`max-w-full truncate px-0.5 text-[10px] font-semibold leading-none ${
+          active ? 'text-primary' : 'text-ink-faint'
+        }`}
+      >
+        {label}
+      </span>
     </button>
   )
 }
@@ -102,6 +116,7 @@ const NAV_ITEMS = [
     icon: LayoutGrid,
     path: '/dashboard',
   },
+  { label: 'Folders', short: 'Folders', icon: FolderOpen, path: '/folders' },
   { label: 'Subscription', short: 'Plans', icon: Award, path: '/payment' },
   { label: 'Integration', short: 'Connect', icon: Code2, path: '/integration' },
   { label: 'FAQ', short: 'Help', icon: HelpCircle, path: '/faq' },
@@ -299,7 +314,7 @@ export default function Layout({ children, breadcrumb }) {
               key={path}
               icon={icon}
               label={label}
-              active={pathname === path}
+              active={pathname === path || pathname.startsWith(`${path}/`)}
               onClick={() => navigate(path)}
             />
           ))}
@@ -415,51 +430,50 @@ export default function Layout({ children, breadcrumb }) {
         </header>
 
         {/* PAGE CONTENT */}
-        <div className="p-4 sm:p-6 pb-24 md:pb-6 flex-1 overflow-y-auto">
+        <div className="p-4 sm:p-6 pb-32 md:pb-6 flex-1 overflow-y-auto">
           {children}
         </div>
       </main>
 
-      {/* ── MOBILE BOTTOM NAV (with center Create FAB) ──────────── */}
+      {/* ── MOBILE BOTTOM NAV — destinations only ───────────────────
+          The bar holds places, not verbs. Create used to sit in the middle of
+          it, lifted half out: that cost a destination slot, overlapped the tabs
+          either side, and put an action in a row of locations. It is a corner
+          FAB now, below.
+
+          Mapped once. It was built as "first two items, the button, the rest",
+          which slices the same list twice — a destination added in the middle
+          lands in neither slice and silently disappears with nothing failing. */}
       <nav
+        aria-label="Main"
         className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-line flex items-stretch px-1"
         style={{
           boxShadow: '0 -2px 14px rgb(var(--c-shadow) / 0.4)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        {NAV_ITEMS.slice(0, 2).map(({ short, icon, path }) => (
+        {NAV_ITEMS.map(({ short, icon, path }) => (
           <BottomTab
             key={path}
             icon={icon}
             label={short}
-            active={pathname === path}
-            onClick={() => navigate(path)}
-          />
-        ))}
-
-        {/* Center Create FAB */}
-        <div className="flex-1 flex justify-center">
-          <button
-            type="button"
-            onClick={handleCreate}
-            aria-label="Create QR"
-            className="-mt-5 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/40 border-4 border-surface active:scale-95 transition-transform"
-          >
-            <Plus size={24} strokeWidth={2.5} />
-          </button>
-        </div>
-
-        {NAV_ITEMS.slice(2).map(({ short, icon, path }) => (
-          <BottomTab
-            key={path}
-            icon={icon}
-            label={short}
-            active={pathname === path}
+            active={pathname === path || pathname.startsWith(`${path}/`)}
             onClick={() => navigate(path)}
           />
         ))}
       </nav>
+
+      {/* Create — a floating action, clear of the bar and the home indicator. */}
+      <button
+        type="button"
+        onClick={handleCreate}
+        aria-label="Create QR"
+        title="Create QR"
+        className="md:hidden fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/40 transition-transform active:scale-95"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 72px)' }}
+      >
+        <Plus size={24} strokeWidth={2.5} />
+      </button>
     </div>
   )
 }

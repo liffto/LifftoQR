@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   ChevronsUpDown,
   ChevronLeft,
@@ -21,6 +22,7 @@ import {
   LayoutGrid,
   List,
   Users,
+  FolderOpen,
 } from 'lucide-react'
 import {
   setDraft,
@@ -31,6 +33,11 @@ import {
   copyToClipboard,
 } from '../lib/store'
 import { useQrs, useDeleteQr, useSetQrStatus } from '../hooks/useQrs'
+import { getScanSeries } from '../api/qrcode/qr'
+import { useFolders } from '../hooks/useFolders'
+import FolderChip from '../components/FolderChip'
+import MoveToFolderModal from '../components/MoveToFolderModal'
+import FolderPageHeader from '../components/FolderPageHeader'
 import { useQrScanCount } from '../hooks/useQrScanCount'
 import { useScanTracking } from '../hooks/useScanTracking'
 import { DOWNLOAD_FORMATS } from '../lib/qr'
@@ -252,6 +259,21 @@ function QrModal({ row, onClose, onDelete, onEdit, onToggleStatus, onClone }) {
   const { scanCount, connectionStatus } = useQrScanCount(
     isDynamic ? row.slug : null,
   )
+
+  // Opening a code strongly signals its analytics are next, so start that
+  // fetch now rather than when someone is already waiting on it — the seconds
+  // spent reading this panel buy the round trip, which on a cold backend can
+  // be most of a minute. The key matches useScanSeries exactly, range
+  // included; a key that differs by one argument warms nothing.
+  const queryClient = useQueryClient()
+  useEffect(() => {
+    if (!isDynamic || typeof row.id !== 'number') return
+    queryClient.prefetchQuery({
+      queryKey: ['scan-series', row.id, 30],
+      queryFn: () => getScanSeries(row.id, 30),
+      staleTime: 60 * 1000,
+    })
+  }, [isDynamic, row.id, queryClient])
   const scansLoading =
     isDynamic &&
     scanCount === null &&
@@ -653,6 +675,7 @@ function ActionMenu({ row }) {
   const navigate = useNavigate()
   const deleteMutation = useDeleteQr()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [moving, setMoving] = useState(false)
   const [menuPos, setMenuPos] = useState(null)
   const menuWrapRef = useRef(null)
   const menuBtnRef = useRef(null)
@@ -675,7 +698,7 @@ function ActionMenu({ row }) {
   }, [menuOpen])
 
   const MENU_W = 176 // w-44
-  const MENU_H = 122 // ~3 items + divider
+  const MENU_H = 158 // ~4 items + divider
   const toggleMenu = (e) => {
     e.stopPropagation()
     if (!menuOpen && menuBtnRef.current) {
@@ -740,6 +763,17 @@ function ActionMenu({ row }) {
           >
             <Copy size={14} className="text-ink-faint" /> Clone
           </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setMenuOpen(false)
+              setMoving(true)
+            }}
+            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas hover:text-ink"
+          >
+            <FolderOpen size={14} className="text-ink-faint" /> Move to folder
+          </button>
           <div className="my-1 border-t border-line" />
           <button
             type="button"
@@ -748,6 +782,11 @@ function ActionMenu({ row }) {
           >
             <Trash2 size={14} /> Delete
           </button>
+        </div>
+      )}
+      {moving && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <MoveToFolderModal row={row} onClose={() => setMoving(false)} />
         </div>
       )}
     </div>
@@ -783,6 +822,9 @@ function QrRow({ row, onOpenModal }) {
                 <CopySlugButton slug={row.slug} />
               </div>
             )}
+            {/* The folder is named where the code is, and the name goes there
+                — rather than making someone go up a level and find it again. */}
+            <FolderChip row={row} className="mt-1" />
           </div>
         </div>
       </td>
@@ -895,6 +937,7 @@ function QrCard({ row, onOpenModal }) {
           ) : (
             <TypeBadge type={typeLabel} short />
           )}
+          <FolderChip row={row} />
         </div>
       </div>
       <button
@@ -930,7 +973,10 @@ function QrGridCard({ row, onOpenModal }) {
       role="button"
       tabIndex={0}
       aria-label={`View details for ${row.name || 'QR code'}`}
-      className="group flex flex-col rounded-[10px] border border-line bg-surface p-4 cursor-pointer transition-all hover:border-primary/30 hover:shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      // h-full so the card fills its grid row and can push Download to the
+      // floor: cards vary in height (a short URL line, a folder chip), and
+      // without this the button sits at a different height in every card.
+      className="group flex h-full flex-col rounded-[10px] border border-line bg-surface p-4 cursor-pointer transition-all hover:border-primary/30 hover:shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       {/* Top: content type + actions menu */}
       <div className="flex items-center justify-between gap-2">
@@ -960,6 +1006,11 @@ function QrGridCard({ row, onOpenModal }) {
             <CopySlugButton slug={row.slug} />
           </div>
         )}
+        {row.folderName && (
+          <div className="mt-1.5 flex justify-center">
+            <FolderChip row={row} />
+          </div>
+        )}
       </div>
 
       {/* Meta: mode (Dynamic/Static) · status · scans — status/scans are Dynamic-only */}
@@ -976,17 +1027,21 @@ function QrGridCard({ row, onOpenModal }) {
         )}
       </div>
 
-      {/* Download */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          qrRef.current?.download('PNG', row.name || 'qr-code')
-        }}
-        className="mt-3 h-9 rounded-[10px] border border-line text-ink-soft text-xs font-bold flex items-center justify-center gap-1.5 hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-colors"
-      >
-        <Download size={14} /> Download
-      </button>
+      {/* Download. The gap lives on this wrapper, never on the h-9 button —
+          Tailwind is border-box, so padding there would eat the button's
+          height and push its icon and label off-centre. */}
+      <div className="mt-auto shrink-0 pt-3">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            qrRef.current?.download('PNG', row.name || 'qr-code')
+          }}
+          className="h-9 w-full rounded-[10px] border border-line text-ink-soft text-xs font-bold flex items-center justify-center gap-1.5 hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-colors"
+        >
+          <Download size={14} /> Download
+        </button>
+      </div>
     </div>
   )
 }
@@ -1011,7 +1066,25 @@ function SkeletonCard() {
 /* ─── Dashboard page ─────────────────────────────────────────────────── */
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { data: list = [], isLoading, isError, refetch } = useQrs()
+  const { data: allCodes = [], isLoading, isError, refetch } = useQrs()
+
+  // This page is also /folders/:folderId. Same component on purpose: a folder
+  // is this list with one more filter on it, and a second copy of the rows,
+  // cards, table and details panel would drift from this one within a release.
+  // Declared here, above the effect whose dependency array names it — a const
+  // read from its own temporal dead zone throws on every render, which is a
+  // blank page rather than a stale value.
+  const { folderId: folderParam } = useParams()
+  const folderId = folderParam ? Number(folderParam) : null
+  const inFolder = folderId !== null && Number.isFinite(folderId)
+  const { data: folders = [], isLoading: foldersLoading } = useFolders(inFolder)
+  const folder = inFolder ? folders.find((f) => f.id === folderId) : null
+
+  const list = useMemo(
+    () => (inFolder ? allCodes.filter((r) => r.folderId === folderId) : allCodes),
+    [allCodes, inFolder, folderId],
+  )
+
   const deleteMutation = useDeleteQr()
   const statusMutation = useSetQrStatus()
   const [query, setQuery] = useState('')
@@ -1043,7 +1116,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     setVisibleCount(BATCH)
-  }, [query, filter, status])
+  }, [query, filter, status, folderId])
 
   const criteria = { query, type: filter, status }
   const derived = filterRecords(list, criteria)
@@ -1187,7 +1260,7 @@ export default function Dashboard() {
   ]
 
   return (
-    <Layout breadcrumb="My QR Codes">
+    <Layout breadcrumb={inFolder ? folder?.name || 'Folder' : 'My QR Codes'}>
       {/* Pull down at the top of the list to reload it. Self-contained so a
           drag re-renders the indicator rather than every row on this page. */}
       <PullToRefresh onRefresh={refetch} />
@@ -1196,7 +1269,21 @@ export default function Dashboard() {
         .map((row) => (
           <QrScanSubscriber key={row.slug} slug={row.slug} />
         ))}
+
+      {/* In a folder the page says which folder, and what can be done to it.
+          The account-wide stats are hidden rather than recalculated: a tile
+          labelled "Total QR Codes" showing one folder's count is a figure
+          someone will read as the whole account and act on. */}
+      {inFolder && (
+        <FolderPageHeader
+          folder={folder}
+          count={list.length}
+          loading={foldersLoading}
+        />
+      )}
+
       {/* Stats — stacked on mobile, single bar on desktop */}
+      {!inFolder && (
       <div className="bg-surface rounded-[10px] shadow-card flex flex-col divide-y divide-line sm:flex-row sm:divide-y-0 sm:divide-x mb-5">
         {STATS.map(({ label, value, sub, icon: Icon, cls }) => (
           <div
@@ -1224,6 +1311,7 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+      )}
 
       {/* Create QR — mobile only (desktop has it in the top bar) */}
       <button
