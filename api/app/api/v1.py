@@ -10,6 +10,7 @@ from app.routes.coupon_routes import router as coupon_router
 from app.routes.email_routes import router as email_router
 from app.routes.event_routes import router as event_router
 from app.routes.feedback_routes import router as feedback_router
+from app.routes.folder_routes import router as folder_router
 from app.routes.google_review_routes import router as google_review_router
 from app.routes.invitation_routes import router as invitation_router
 from app.routes.link_tree_routes import router as link_tree_router
@@ -33,6 +34,7 @@ api_v1.include_router(auth_router)
 api_v1.include_router(maintenance_router)
 api_v1.include_router(public_router)
 api_v1.include_router(qr_router)
+api_v1.include_router(folder_router)
 api_v1.include_router(user_template_router)
 api_v1.include_router(website_router)
 api_v1.include_router(text_router)

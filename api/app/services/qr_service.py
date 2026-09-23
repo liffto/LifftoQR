@@ -68,6 +68,13 @@ class QrService:
                 # Absent means no scan has been recorded for this code — which
                 # is every code that only ever ran before scan_events existed.
                 mapped["uniqueScans"] = unique.get(qr.id, 0)
+                # Folder travels with the code for the same reason uniqueScans
+                # does: it is the same two fields for every type, and adding it
+                # to each per-type schema would be twenty chances to miss one.
+                # Both null means unfiled, which is a state the dashboard draws
+                # rather than an absence it has to guess at.
+                mapped["folderId"] = qr.folder_id
+                mapped["folderName"] = qr.folder_ref.name if qr.folder_ref else None
                 items.append(mapped)
         return items
 

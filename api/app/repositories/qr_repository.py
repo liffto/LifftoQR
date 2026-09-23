@@ -31,6 +31,9 @@ class QrRepository:
             joinedload(QR.coupon),
             joinedload(QR.invitation),
             joinedload(QR.feedback),
+            # The list puts each code's folder name on its row, so loading it
+            # with the code keeps that one query rather than one per row.
+            joinedload(QR.folder_ref),
         )
 
     def list_all(self, *, created_by: int) -> list[QR]:

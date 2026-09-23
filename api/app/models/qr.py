@@ -1,4 +1,13 @@
-from sqlalchemy import Boolean, Column, Date, DateTime, Integer, String, func
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    func,
+)
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
@@ -15,7 +24,19 @@ class QR(Base):
     slug = Column(String(100), nullable=False, unique=True, index=True)
     dynamic = Column(Boolean, nullable=False, default=False)
     qr_type = Column(String(100), nullable=False)
+    # Superseded by folder_id. Kept so the column can be dropped in a later
+    # migration, once no deployed build still writes it — removing it in the
+    # same release would 500 every create from the build that is still up.
+    # Nothing reads it any more; folder_ref is the source of truth.
     folder = Column(String(100), nullable=True)
+    # SET NULL, not CASCADE: deleting a folder unfiles its codes, it does not
+    # delete them.
+    folder_id = Column(
+        Integer,
+        ForeignKey("folders.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     status = Column(Boolean, nullable=False, default=True)
     scans = Column(Integer, nullable=False, default=0)
     edited_on = Column(Date, nullable=True)
@@ -29,6 +50,10 @@ class QR(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+    # Named folder_ref rather than folder because the legacy string column
+    # above still owns that attribute until it is dropped.
+    folder_ref = relationship("Folder", back_populates="qrs", foreign_keys=[folder_id])
 
     website = relationship(
         "Website",
