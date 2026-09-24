@@ -3,6 +3,7 @@ import { Check, ArrowRight } from 'lucide-react'
 import { SELECTABLE_QR_TYPES, findType, defaultContent } from '../lib/qrTypes'
 import { Toggle } from './ui'
 import DynamicQRInfo from './DynamicQRInfo'
+import MustTryBadge from './MustTryBadge'
 
 // Starting a QR is two pieces that can be placed together (the in-app step 1)
 // or apart (the landing page puts the URL card in the hero and the type grid
@@ -113,25 +114,59 @@ export function UrlQuickStart({ onStart, stacked = false }) {
   )
 }
 
+// Which type the badge points at, and the flag that retires it.
+//
+// A contact card is the type that most changes someone's mind about what this
+// product is, and the one a visitor who came to shorten a link would never
+// think to look for. The badge is bounded by the thing it points at, which is
+// the only reason a looping pulse is allowed at all: the moment someone starts
+// a contact card it has done its job and never comes back. localStorage rather
+// than the account, because this grid is used logged-out too.
+const MUST_TRY_KEY = 'vcard'
+const MUST_TRY_SEEN = 'liffto.triedContactCard'
+
+const hasTriedMustTry = () => {
+  try {
+    return localStorage.getItem(MUST_TRY_SEEN) === '1'
+  } catch {
+    // Private mode, or storage blocked. Showing the badge is the harmless
+    // side of this: the worst case is a returning visitor sees a nudge twice.
+    return false
+  }
+}
+
 // `bare` drops the surrounding card + divider heading, for hosts that supply
 // their own section framing.
 export function QrTypeGrid({ onStart, bare = false }) {
+  const [tried, setTried] = useState(hasTriedMustTry)
+
+  const retireBadge = () => {
+    setTried(true)
+    try {
+      localStorage.setItem(MUST_TRY_SEEN, '1')
+    } catch {
+      /* ignore storage failures */
+    }
+  }
+
   const grid = (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
       {SELECTABLE_QR_TYPES.map((t) => {
         const Icon = t.Icon
+        const showBadge = !tried && t.key === MUST_TRY_KEY
         return (
           <button
             key={t.key}
             type="button"
-            onClick={() =>
+            onClick={() => {
+              if (t.key === MUST_TRY_KEY) retireBadge()
               onStart(
                 t.key,
                 defaultContent(t.key),
                 t.dynamicCapable,
                 '/create/details',
               )
-            }
+            }}
             className="flex items-center gap-2.5 rounded-[10px] border border-line bg-surface p-3 text-left transition-all hover:border-primary/40 hover:bg-canvas hover:shadow-sm"
           >
             <span
@@ -142,8 +177,11 @@ export function QrTypeGrid({ onStart, bare = false }) {
             <span className="min-w-0">
               {/* Title wraps rather than truncates — at mobile widths the
                   2-column grid is too narrow for names like "Contact Card". */}
-              <span className="block text-[13px] font-semibold text-ink leading-snug">
-                {t.label}
+              <span className="flex items-center gap-1.5">
+                <span className="min-w-0 text-[13px] font-semibold text-ink leading-snug">
+                  {t.label}
+                </span>
+                {showBadge && <MustTryBadge />}
               </span>
               <span className="block text-[11px] text-ink-muted truncate">
                 {t.subtitle}

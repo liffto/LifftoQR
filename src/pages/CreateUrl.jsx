@@ -9,13 +9,12 @@ import {
   setDraft,
 } from '../lib/store'
 import {
-  SELECTABLE_QR_TYPES,
   findType,
-  defaultContent,
   deriveContentName,
   encodeContent,
   isValidWebsiteUrl,
 } from '../lib/qrTypes'
+import { QrTypeGrid } from '../components/QrQuickStart'
 import Logo from '../components/Logo'
 import { Toggle } from '../components/ui'
 import DynamicQRInfo from '../components/DynamicQRInfo'
@@ -185,39 +184,13 @@ export default function CreateUrl() {
             <div className="h-px flex-1 bg-line" />
           </div>
 
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {SELECTABLE_QR_TYPES.map((t) => {
-              const Icon = t.Icon
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() =>
-                    buildAndGo(
-                      t.key,
-                      defaultContent(t.key),
-                      t.dynamicCapable,
-                      '/create/details',
-                    )
-                  }
-                  className="flex items-center gap-2.5 rounded-[10px] border border-line p-3 text-left transition-all hover:border-primary/40 hover:bg-canvas hover:shadow-sm"
-                >
-                  <span
-                    className={`w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 ${t.tint}`}
-                  >
-                    <Icon size={17} />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-[13px] font-semibold text-ink truncate">
-                      {t.label}
-                    </span>
-                    <span className="block text-[11px] text-ink-muted truncate">
-                      {t.subtitle}
-                    </span>
-                  </span>
-                </button>
-              )
-            })}
+          {/* The shared grid, in this page's own framing. This was a second
+              hand-copied grid, and it had already drifted: the shared one
+              wraps a long type name, this copy still truncated, so "Contact
+              Card" lost its end on a narrow screen. A badge added to one of
+              them would likewise only have appeared in one place. */}
+          <div className="mt-4">
+            <QrTypeGrid onStart={buildAndGo} bare />
           </div>
         </div>
       </main>

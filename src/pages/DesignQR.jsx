@@ -16,7 +16,6 @@ import {
   QrCode,
   Grid2x2,
   ScanLine,
-  Sparkles,
   RotateCw,
   Info,
   Download,
@@ -66,6 +65,7 @@ import {
 } from '../hooks/useQrScanCount'
 import { getApiErrorMessage } from '../utils/errors'
 import TypeFields from '../components/TypeFields'
+import MustTryBadge from '../components/MustTryBadge'
 import QRView from '../components/QRView'
 import { Toggle, ColorField, Checkbox } from '../components/ui'
 import Logo from '../components/Logo'
@@ -1040,9 +1040,7 @@ export default function DesignQR() {
                 // The pulse is what makes it findable: a still badge on a still
                 // card is one more thing on the page, and this one has to be
                 // noticed by someone who does not yet know the studio exists.
-                <span className="must-try-badge inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-white">
-                  <Sparkles size={11} className="must-try-spark" /> Must try
-                </span>
+                <MustTryBadge />
               ) : activeTemplate ? (
                 <span className="truncate rounded-full bg-canvas px-2 py-0.5 text-[10px] font-semibold text-ink-muted">
                   {activeTemplate.label}
