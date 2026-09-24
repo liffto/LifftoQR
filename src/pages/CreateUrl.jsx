@@ -92,7 +92,7 @@ export default function CreateUrl() {
             <div className="min-w-0">
               <div className="font-semibold text-ink">Website URL</div>
               <div className="text-xs text-ink-muted">
-                Open a lin— the quickest way to start
+                Open a link — the quickest way to start
               </div>
             </div>
           </div>
@@ -101,7 +101,7 @@ export default function CreateUrl() {
             <p className="text-sm text-ink-muted leading-relaxed">
               Scanning this QR will{' '}
               <span className="font-medium text-ink-soft">open your link</span>.
-              Paste a URL and continue, or pick another type below.
+              Paste the address and keep going, or pick another type below.
             </p>
 
             <div className="mt-4">

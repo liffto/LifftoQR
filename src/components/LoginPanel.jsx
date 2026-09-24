@@ -50,8 +50,12 @@ export default function LoginPanel({ compact = false, onContinueAsGuest }) {
       <p
         className={`mt-1.5 text-sm text-ink-muted ${compact ? 'mb-5' : 'mb-7'}`}
       >
-        Sign in with Google to manage your QR codes. New here? The same button
-        creates your account.
+        {/* Most people meet this dialog mid-code, having just chosen a dynamic
+            one, so the question in their head is not "how do I sign in" — it
+            is "why are you stopping me". Answer that first. */}
+        An account is what keeps a code editable and counts its scans. One tap
+        with Google — no password to invent, and the same button works whether
+        you have been here before or not.
       </p>
 
       {error && (

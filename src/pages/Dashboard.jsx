@@ -1492,10 +1492,13 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="font-bold text-ink mb-1">
-                  Couldn&apos;t load your QR codes
+                  We couldn&apos;t load your codes
                 </p>
                 <p className="text-sm text-ink-muted max-w-[240px] mx-auto leading-relaxed">
-                  Something went wrong fetching your library. Please try again.
+                  {/* Says the one thing someone actually wants to know here:
+                      the codes are fine, this screen isn't. */}
+                  Nothing has happened to them — this is a connection problem
+                  on our side of the glass.
                 </p>
               </div>
               <button
@@ -1516,7 +1519,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="font-bold text-ink mb-1">
-                  {narrowed ? 'No matching QR codes' : 'No QR codes yet'}
+                  {narrowed ? 'Nothing matches that' : 'No codes here yet'}
                 </p>
                 <p className="text-sm text-ink-muted max-w-[240px] mx-auto leading-relaxed">
                   {/* Static + a status can never match, and saying "try
@@ -1525,8 +1528,8 @@ export default function Dashboard() {
                   {impossible
                     ? 'Static codes carry their content in the pattern, so there is no redirect to switch on or off — only dynamic codes have a status.'
                     : narrowed
-                      ? 'Try adjusting your search or filter'
-                      : 'Create your first QR code to get started'}
+                      ? 'Try a shorter search, or clear a filter.'
+                      : 'Your first one takes about a minute.'}
                 </p>
               </div>
               {!narrowed && (

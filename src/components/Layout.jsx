@@ -349,13 +349,24 @@ export default function Layout({ children, breadcrumb }) {
           className="h-[60px] bg-surface shrink-0 sticky top-0 z-20 flex items-center justify-between px-4 sm:px-6"
           style={{ borderBottom: '1px solid rgb(var(--c-line))' }}
         >
-          {/* Left — greeting */}
+          {/* Left — greeting, then where you are.
+
+              The second line used to read "Welcome to Liffto QR Generator",
+              which is a sentence for someone's first second here and dead
+              weight on every visit after it — you do not need welcoming to a
+              place you open daily, and it never changed to say anything else.
+              The breadcrumb the pages already pass belongs in that slot: it is
+              the one thing that is different each time you look. It was being
+              accepted as a prop and rendered nowhere, so "My QR Codes" and the
+              folder you had opened were both being thrown away. The date is the
+              fallback for pages that name nothing. */}
           <div className="flex flex-col justify-center gap-2">
             <p className="text-[14px] font-bold text-ink leading-none">
               {greeting}
+              {firstName && firstName !== 'User' ? `, ${firstName}` : ''}
             </p>
             <p className="text-[12px] text-ink-faint leading-none">
-              Welcome to Liffto QR Generator
+              {breadcrumb || today}
             </p>
           </div>
 

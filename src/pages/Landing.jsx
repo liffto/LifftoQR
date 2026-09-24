@@ -248,8 +248,8 @@ const FEATURES = [
   {
     icon: BarChart2,
     tint: 'bg-success/10 text-success',
-    title: 'See what gets scanned',
-    body: 'Track scans per code from one dashboard, and switch any dynamic code Active or Inactive the moment a campaign ends.',
+    title: 'Watch it get scanned',
+    body: 'Every dynamic code counts its own scans, and the number moves on your dashboard as it happens. Switch one off the moment a campaign ends.',
   },
   {
     icon: LayoutGrid,
@@ -260,36 +260,36 @@ const FEATURES = [
   {
     icon: Download,
     tint: 'bg-rose-50 text-rose-500 dark:bg-rose-400/15 dark:text-rose-300',
-    title: 'Print-ready exports',
-    body: 'High-resolution PNG, JPEG and WEBP, or SVG vector that stays razor sharp from business card to billboard.',
+    title: 'Files a printer will accept',
+    body: `PNG, JPEG and WEBP at ${DOWNLOAD_SIZE}px, or SVG vector that stays sharp from a business card to a shop front. No watermark on any of them.`,
   },
   {
     icon: BookmarkPlus,
     tint: 'bg-teal-50 text-teal-600 dark:bg-teal-400/15 dark:text-teal-300',
-    title: 'Templates & organisation',
-    body: 'Save a look as a template to reuse across codes, then search, filter and manage everything from a card or table view.',
+    title: 'Get your second code out faster',
+    body: 'Save any design as a template and the next code wears it in one click. File them into folders, then search and filter from a table or a wall of cards.',
   },
 ]
 
 const STEPS = [
   {
     title: 'Pick a type, add your content',
-    body: `Start with a link right here, or choose from ${SELECTABLE_QR_TYPES.length} types. Each one has a guided form and shows what people see when they scan.`,
+    body: `Start with a link right here, or choose from ${SELECTABLE_QR_TYPES.length} types. Every one has a guided form, and shows you the scan page while you fill it in.`,
   },
   {
-    title: 'Make it yours',
-    body: 'Drop in your logo, pick colours, a pattern and a frame with a call-to-action. The preview updates as you go.',
+    title: 'Make it look like you',
+    body: 'Your logo in the middle, your colours, a pattern, and a frame that tells people what to do. The preview keeps up with every change.',
   },
   {
-    title: 'Download and manage',
-    body: 'Export print-ready files, then track scans and change where dynamic codes point — all from your dashboard.',
+    title: 'Download it, and keep control',
+    body: 'Take the print-ready files. Then change where a dynamic code points, pause it, or watch its scans — from the same dashboard, for as long as you want.',
   },
 ]
 
 const FAQS = [
   {
     q: 'What is the difference between a dynamic and a static QR code?',
-    a: 'A static code has the destination baked into the pattern — once printed it can never change. A dynamic code encodes a short link we host, so you can update where it points, track scans, and switch it on or off at any time without reprinting.',
+    a: 'A static code carries the destination inside the pattern itself, so once it is printed it can never change. A dynamic code carries a short link we host instead — the pattern stays the same forever while you change where it leads, count its scans, or switch it off. If what you are printing might ever need to point somewhere else, make it dynamic.',
   },
   {
     q: 'Do I need an account to create a QR code?',
@@ -305,7 +305,7 @@ const FAQS = [
   },
   {
     q: 'What does it cost?',
-    a: 'Nothing. Every feature is free on every account — unlimited codes, dynamic QR, analytics and all download formats. There are no plans to compare and no credit card required.',
+    a: 'Nothing, and there is no paid tier waiting for you further in. Unlimited codes, dynamic QR, scan counts and every download format are on for every account. There is no card field anywhere in the product, and nothing we make is stamped with our name.',
   },
 ]
 
@@ -610,7 +610,7 @@ export default function Landing() {
               <Reveal>
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/10 ring-1 ring-inset ring-white/15 px-3.5 py-1.5 text-[12px] font-semibold text-white/85 backdrop-blur">
                   <Zap size={12} className="text-[#7BE3DC]" />
-                  Free — every feature unlocked
+                  Free — including the parts others charge for
                 </span>
 
                 <h1 className="mt-7 text-[36px] leading-[1.05] sm:text-[48px] lg:text-[56px] lg:leading-[1.03] font-extrabold tracking-[-0.035em] text-white">
@@ -618,7 +618,7 @@ export default function Landing() {
                   <br />
                   you can{' '}
                   <span className="bg-gradient-to-r from-[#7BA8FF] via-[#6EE7E0] to-[#7BA8FF] bg-clip-text text-transparent">
-                    edit after
+                    change after
                   </span>
                   <br />
                   you print
@@ -628,20 +628,25 @@ export default function Landing() {
                     when it was typed and silently stopped being true the moment
                     the list changed. */}
                 <p className="mt-7 max-w-md text-[16px] sm:text-[17px] text-white/60 leading-relaxed">
-                  Design codes that match your brand, point them anywhere, and
-                  track every scan — for links, Wi-Fi, contact cards, events and{' '}
-                  {SELECTABLE_QR_TYPES.length - 4} more types.
+                  Put your logo in the middle, change where it points long after
+                  it is printed, and watch the scans arrive — for links, Wi-Fi,
+                  contact cards, events and {SELECTABLE_QR_TYPES.length - 4}{' '}
+                  more types.
                 </p>
 
-                {/* Every one of these is verifiable in the codebase: no ad or
-                    tracker scripts ship, and nothing is stamped onto the
-                    downloaded code. */}
+                {/* Four negatives rather than three and a feature: the whole
+                    claim of this page is what we do not do to you, and a list
+                    that breaks its own rhythm at the last item stops sounding
+                    like a promise. Every one is verifiable in the codebase —
+                    no ad or tracker scripts ship, nothing is stamped onto the
+                    downloaded code, and there is no billing path at all (see
+                    Payment.jsx, which is a page explaining that). */}
                 <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2.5 text-[13px] text-white/55">
                   {[
-                    'No ads',
                     'No watermark',
+                    'No ads',
                     'No credit card',
-                    'Print-ready files',
+                    'No trial timer',
                   ].map((t) => (
                     <span key={t} className="inline-flex items-center gap-2">
                       <Check size={14} className="text-[#6EE7E0]" />
@@ -701,13 +706,18 @@ export default function Landing() {
                 <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
                   The studio
                 </span>
+                {/* "One engine, endless looks" was the one unverifiable boast
+                    on a page that otherwise counts everything. The honest
+                    version is also the better hook: these are not screenshots
+                    of codes, they are codes, drawn in the browser as you read
+                    this — which is the proof that the studio is real. */}
                 <h2 className="mt-3 text-[26px] sm:text-[32px] leading-[1.12] font-extrabold tracking-[-0.02em] text-ink">
-                  One engine, endless looks
+                  None of these are pictures
                 </h2>
               </div>
               <p className="text-[14px] text-ink-muted leading-relaxed sm:max-w-[300px] sm:text-right">
-                Every code below is real, rendered right now — patterns,
-                corners, gradients and logos, all yours to change.
+                Every code on this wall is being drawn right now, by the same
+                studio you are about to use. Scan one.
               </p>
             </div>
           </Reveal>
@@ -721,13 +731,21 @@ export default function Landing() {
       <section id="create" className="scroll-mt-[72px]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-16 sm:py-20">
           <div className="max-w-[620px]">
+            {/* This is a nav destination ("QR types"), so it cannot open with
+                "Or" — arriving here from the menu landed you mid-sentence.
+
+                And the count is counted. "Twenty-plus types" was the only
+                hardcoded number on a page that reads every other figure from
+                the code, and it had drifted into being untrue: the grid below
+                offers {SELECTABLE_QR_TYPES.length}. A number typed by hand is
+                a number that goes stale the next time the list changes. */}
             <h2 className="text-[26px] sm:text-[32px] leading-[1.12] font-extrabold tracking-[-0.02em] text-ink">
-              Or choose a QR code type
+              Pick what the code should do
             </h2>
             <p className="mt-4 text-[15px] sm:text-base text-ink-muted leading-relaxed">
-              Twenty-plus types, each with a guided form and a preview of what
-              people see when they scan. We’ll carry your work through sign-in
-              so nothing gets lost.
+              {SELECTABLE_QR_TYPES.length} types, each with a guided form and a
+              preview of exactly what people see when they scan. Start one now —
+              we’ll carry it through sign-in so nothing gets lost.
             </p>
           </div>
 
@@ -746,15 +764,16 @@ export default function Landing() {
                 A code is only half of it
               </h2>
               <p className="mt-5 max-w-md text-[15px] sm:text-base text-ink-muted leading-relaxed">
-                For contact cards, coupons, events and more, scanning opens a
-                branded page we build for you — no app to install, nothing for
-                your customer to type. It’s the part most QR generators skip.
+                Scan a contact card, a coupon or an event and a branded page
+                opens — one we build and host for you. No app to install,
+                nothing for your customer to type. It’s the half most QR
+                generators leave you to solve yourself.
               </p>
               <ul className="mt-7 space-y-3">
                 {[
                   'One tap to save a contact or redeem an offer',
-                  'Looks designed on every phone',
-                  'Change what it says without reprinting',
+                  'Laid out for a phone, because that is what scans it',
+                  'Change what it says without reprinting a thing',
                 ].map((t) => (
                   <li
                     key={t}
@@ -821,9 +840,10 @@ export default function Landing() {
               Print once. Change your mind later.
             </h2>
             <p className="mt-4 text-[15px] sm:text-base text-ink-muted leading-relaxed">
-              Try it — switch the destination and watch the code stay exactly
-              the same. That is a dynamic QR: the pattern points at a short link
-              we host, so the sticker on your window never goes out of date.
+              Switch the destination below and watch the pattern not move. That
+              is a dynamic code: it points at a short link we host, not at your
+              URL — so the sticker in your window can outlive the page it was
+              printed for.
             </p>
           </div>
 
@@ -853,11 +873,15 @@ export default function Landing() {
               />
 
               <div className="relative">
+                {/* The flex worth making here is not the size of the numbers,
+                    it is where they come from: every one is read from the
+                    product at build time, so none of them can be rounded up in
+                    a marketing meeting. Say that, because nobody else can. */}
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
-                  What you get, precisely
+                  Counted, not claimed
                 </p>
                 <h3 className="mt-3 max-w-[20ch] text-[24px] sm:text-[30px] font-extrabold leading-[1.12] tracking-[-0.02em] text-white">
-                  Real range, print-ready quality.
+                  Every number here is read from the product.
                 </h3>
 
                 <div className="mt-9 grid grid-cols-2 gap-x-6 gap-y-9 sm:mt-11 sm:grid-cols-4 sm:gap-x-5">
@@ -1129,13 +1153,17 @@ export default function Landing() {
                 <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
                   Pricing
                 </span>
+                {/* "Everything is free" invites the obvious next thought —
+                    so what's the catch — and then leaves it hanging. Name the
+                    catch people are actually braced for (ads, a watermark, your
+                    codes as leverage) and say it isn't there. */}
                 <h2 className="mt-3 text-[26px] sm:text-[32px] leading-[1.12] font-extrabold tracking-[-0.02em] text-ink">
-                  Everything is free
+                  There is no paid plan
                 </h2>
                 <p className="mt-4 max-w-sm text-[15px] text-ink-muted leading-relaxed">
-                  There are no plans to compare and nothing to upgrade. Every
-                  feature is unlocked on every account — no limits, no credit
-                  card.
+                  Not a free tier — the whole product. No trial to run out, no
+                  feature held back, nothing to upgrade to. We don’t sell ads,
+                  and we don’t put our name on your code.
                 </p>
                 <div className="mt-8 flex items-end gap-3">
                   <span className="text-[56px] leading-none font-extrabold tracking-[-0.03em] text-ink">
@@ -1153,7 +1181,11 @@ export default function Landing() {
                     'Unlimited QR codes',
                     'Dynamic & static codes',
                     'Custom branding, logos & frames',
-                    'Scan tracking',
+                    // Not "Scan tracking" — that word promises a breakdown by
+                    // time, place and device, and the FAQ two sections down
+                    // correctly says no such thing is recorded. A count is
+                    // what this is, so a count is what it should be called.
+                    'Live scan counts',
                     'All download formats',
                     'Saved design templates',
                   ].map((f) => (
@@ -1173,7 +1205,7 @@ export default function Landing() {
                   onClick={goCreateFlow}
                   className="mt-8 w-full h-[52px] rounded-[10px] bg-primary text-white font-semibold hover:bg-primary-600 transition-colors shadow-sm shadow-primary/25"
                 >
-                  Get started free
+                  Create your first code
                 </button>
               </div>
             </div>
@@ -1188,7 +1220,7 @@ export default function Landing() {
       >
         <div className="max-w-[860px] mx-auto px-5 sm:px-8 py-16 sm:py-24">
           <h2 className="text-[26px] sm:text-[32px] leading-[1.12] font-extrabold tracking-[-0.02em] text-ink">
-            Questions? We’ll answer them here
+            The questions we get most
           </h2>
           <div className="mt-10 divide-y divide-line border-y border-line">
             {FAQS.map((f) => (
@@ -1215,10 +1247,11 @@ export default function Landing() {
           <div className="grid lg:grid-cols-12 gap-10 items-center">
             <div className="lg:col-span-8">
               <h2 className="text-[32px] sm:text-[44px] leading-[1.04] font-extrabold tracking-[-0.03em] text-white">
-                Make your first QR code in about a minute
+                Your first code takes about a minute
               </h2>
               <p className="mt-4 max-w-md text-[15px] text-white/60 leading-relaxed">
-                No credit card, no trial timer. Every feature is unlocked, free.
+                No card. No trial. Nothing to upgrade to later. Start with a
+                static code and you don’t even need an account.
               </p>
             </div>
             <div className="lg:col-span-4 flex lg:justify-end">
@@ -1243,8 +1276,8 @@ export default function Landing() {
             <div className="max-w-xs">
               <Logo />
               <p className="mt-4 text-[13px] text-ink-muted leading-relaxed">
-                Design, publish and manage branded QR codes — dynamic or static
-                — from one place.
+                Branded QR codes you can change after they’re printed. Free,
+                with no watermark and no account needed to start.
               </p>
             </div>
             <div className="flex gap-12 sm:gap-20">

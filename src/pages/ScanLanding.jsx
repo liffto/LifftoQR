@@ -1259,11 +1259,17 @@ export default function ScanLanding() {
       <Shell>
         <StateCard
           icon={QrCode}
-          title={gone ? 'This QR code is inactive' : 'QR code not found'}
+          /* The only page here whose reader is not a customer of ours — it is
+             whoever pointed a phone at a sticker and got nothing. They cannot
+             fix it and they did not break it, so the copy says so instead of
+             filing a status report at them. */
+          title={
+            gone ? 'This code has been switched off' : 'Nothing at this code'
+          }
           detail={
             gone
-              ? 'Its owner has turned it off.'
-              : 'The code may have been deleted or the link mistyped.'
+              ? 'Whoever made it has paused it for now. Nothing you did caused this.'
+              : 'It may have been removed, or the scan may have picked it up wrong. Worth one more try.'
           }
         />
       </Shell>

@@ -24,15 +24,15 @@ const CATEGORIES = [
     items: [
       {
         q: 'What is the difference between Static and Dynamic QR codes?',
-        a: 'Static QR codes encode the destination URL directly into the pattern — once printed they cannot be changed. Dynamic QR codes store a short redirect URL so you can update the destination, track scan analytics, and even redirect to different pages at any time without reprinting.',
+        a: 'A static code holds the destination inside the pattern itself, so the moment it is printed it is fixed. A dynamic code holds a short link we host — the pattern never changes while you change where it leads, count its scans, or switch it off. If what you are printing might ever need to point somewhere else, make it dynamic.',
       },
       {
         q: 'Do QR codes expire?',
-        a: 'Static QR codes never expire because the data is embedded in the image. Dynamic QR codes are tied to your account — they remain active as long as your account is active.',
+        a: 'Static codes never expire; the data is in the image, so it works with or without us. Dynamic codes run through your account and stay live for as long as it does.',
       },
       {
         q: 'What happens if I delete a Dynamic QR code?',
-        a: 'Deleting a Dynamic QR code deactivates the short redirect URL immediately. Anyone who scans the printed QR code after deletion will see an error page. This action cannot be undone, so duplicate the record first if you need a backup.',
+        a: 'The short link stops working straight away, and anything already printed goes with it — a scan then lands on an error page. There is no undo, so if the code is out in the world, duplicate it before you delete it.',
       },
     ],
   },
@@ -50,7 +50,7 @@ const CATEGORIES = [
       },
       {
         q: 'Can I customise the design and colours of my QR code?',
-        a: 'Yes — in the Design step you can change foreground/background colours, corner styles, dot patterns, add your brand logo in the centre, and apply a frame with a call-to-action label.',
+        a: 'Yes. In the Design step you can set the body and background colours or run a gradient across them, change the dot pattern and the corner style, drop your logo into the middle, and wrap the whole thing in a frame with your own call to action. Save the result as a template and the next code can wear it in one click.',
       },
     ],
   },
@@ -61,7 +61,7 @@ const CATEGORIES = [
     items: [
       {
         q: 'How many QR codes can I create?',
-        a: 'As many as you like — there is no limit. Dynamic QR codes, analytics and every download format are included too. Liffto is free, with no plans to compare and nothing to upgrade.',
+        a: 'As many as you want. There is no cap, no paid tier further in, and no card field anywhere in the product — dynamic codes, scan counts and every download format are simply on.',
       },
     ],
   },
@@ -72,13 +72,16 @@ const CATEGORIES = [
     items: [
       {
         q: 'How do I track how many times my QR code was scanned?',
-        // Was: "Detailed analytics (time, location, device) are available on
-        // Pro and Enterprise plans." Nothing about that was true. A scan
-        // increments a single counter on the code — no row is written per
-        // scan, so there is no time, location or device to report even in
-        // principle. And the answer two above this one says Liffto is free with
-        // no plans, so the page was contradicting itself.
-        a: 'Dynamic QR codes count their scans. The total for each one is on your dashboard and updates live as it happens. Individual scans are not recorded, so there is no breakdown by time, location or device.',
+        // Rewritten twice, both times because the product moved and this did
+        // not. It first claimed time/location/device breakdowns behind "Pro
+        // and Enterprise plans", which never existed. It was then corrected to
+        // "individual scans are not recorded" — true at the time, and false
+        // since scan_event landed: every scan now writes a row with a
+        // timestamp, a device type and a browser, which is what feeds the
+        // 30-day graph and the unique count. Location is still the thing we
+        // genuinely do not collect, and the visitor id is a one-way hash, so
+        // the honest boundary is "this device", not "this person".
+        a: 'Dynamic codes record every scan. On the dashboard you get a running total that moves as it happens, a unique count, and a day-by-day graph of the last 30 days. What we do not collect is location — and the id behind the unique count is a one-way hash of the device, so it tells you "a returning device", never who. Device type and browser are stored but not shown yet.',
       },
       {
         q: 'Can I use the API to create QR codes programmatically?',
@@ -131,10 +134,10 @@ export default function FAQ() {
           </div>
           <div>
             <h2 className="font-bold text-ink text-lg">
-              Frequently Asked Questions
+              Questions, answered straight
             </h2>
             <p className="text-sm text-ink-soft mt-0.5">
-              Can't find an answer?{' '}
+              Not covered here?{' '}
               <a
                 href="mailto:support@liffto.com"
                 className="text-primary hover:underline"

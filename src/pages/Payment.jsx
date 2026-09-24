@@ -61,12 +61,16 @@ export default function Payment() {
             Every feature unlocked
           </div>
 
+          {/* Same claim as the landing page's pricing section, in the same
+              words. Someone who read it there and finds it rephrased here
+              starts wondering which version is the real one. */}
           <h2 className="text-2xl font-extrabold leading-tight sm:text-3xl">
-            Liffto is free
+            There is no paid plan
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/80">
-            There are no plans to compare and nothing to upgrade. Every feature
-            below is already active on your account — no limits, no credit card.
+            Not a free tier — the whole product. Everything below is already on
+            for your account, with no trial to run out and nothing to upgrade
+            to. We don’t sell ads, and we don’t put our name on your code.
           </p>
         </div>
       </div>
