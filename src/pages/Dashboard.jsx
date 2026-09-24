@@ -210,7 +210,7 @@ function ViewToggle({ view, onChange, className = '' }) {
   )
 }
 
-function SkeletonRow() {
+function SkeletonRow({ showFolder = true }) {
   return (
     <tr className="border-b border-line">
       <td className="py-3.5 pl-4 pr-4">
@@ -225,6 +225,13 @@ function SkeletonRow() {
       <td className="py-3.5 pr-4">
         <div className="h-6 w-24 rounded-full shimmer" />
       </td>
+      {/* Has to track the real row's column count, or the placeholder shifts
+          every cell right of it and the table twitches when the data lands. */}
+      {showFolder && (
+        <td className="py-3.5 pr-4">
+          <div className="h-5 w-20 rounded-full shimmer" />
+        </td>
+      )}
       <td className="py-3.5 pr-4">
         <div className="h-3.5 w-16 shimmer rounded" />
       </td>
@@ -839,7 +846,7 @@ function ActionMenu({ row }) {
 }
 
 /* ─── Table row ──────────────────────────────────────────────────────── */
-function QrRow({ row, onOpenModal }) {
+function QrRow({ row, onOpenModal, showFolder = true }) {
   const qrRef = useRef(null)
   const typeLabel = normaliseType(row.qrType)
   const isDynamic = isDynamicRow(row)
@@ -867,9 +874,6 @@ function QrRow({ row, onOpenModal }) {
                 <CopySlugButton slug={row.slug} />
               </div>
             )}
-            {/* The folder is named where the code is, and the name goes there
-                — rather than making someone go up a level and find it again. */}
-            <FolderChip row={row} className="mt-1" />
           </div>
         </div>
       </td>
@@ -881,6 +885,21 @@ function QrRow({ row, onOpenModal }) {
           <TypeBadge type={typeLabel} />
         </div>
       </td>
+
+      {/* Folder — its own column rather than a chip tucked under the name.
+          A table is read down a column, so "which of these are in Marketing?"
+          was a question you had to answer by scanning a stack of name cells
+          and hunting for a chip that is only there on some of them. Suppressed
+          inside a folder, where the answer is the same on every row. */}
+      {showFolder && (
+        <td className="py-3.5 pr-4">
+          {row.folderName ? (
+            <FolderChip row={row} />
+          ) : (
+            <span className="text-ink-faint">—</span>
+          )}
+        </td>
+      )}
 
       {/* Edited on */}
       <td className="py-3.5 pr-4 text-xs text-ink-muted">
@@ -1545,6 +1564,7 @@ export default function Dashboard() {
                     {[
                       { label: 'Name', cls: 'pl-4' },
                       { label: 'Type', cls: '' },
+                      ...(inFolder ? [] : [{ label: 'Folder', cls: '' }]),
                       { label: 'Edited On', cls: '' },
                       { label: 'Status', cls: '' },
                       { label: 'Scans', cls: '' },
@@ -1571,12 +1591,15 @@ export default function Dashboard() {
                       key={row.id}
                       row={row}
                       onOpenModal={setSelectedRow}
+                      showFolder={!inFolder}
                     />
                   ))}
                   {loadingMore &&
                     Array.from({
                       length: Math.min(3, total - visibleCount),
-                    }).map((_, i) => <SkeletonRow key={`sk-${i}`} />)}
+                    }).map((_, i) => (
+                      <SkeletonRow key={`sk-${i}`} showFolder={!inFolder} />
+                    ))}
                 </tbody>
               </table>
             </div>

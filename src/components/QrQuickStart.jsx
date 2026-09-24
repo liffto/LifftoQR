@@ -167,7 +167,16 @@ export function QrTypeGrid({ onStart, bare = false }) {
                 '/create/details',
               )
             }}
-            className="flex items-center gap-2.5 rounded-[10px] border border-line bg-surface p-3 text-left transition-all hover:border-primary/40 hover:bg-canvas hover:shadow-sm"
+            // The recommended tile is warm where the rest are white, which is
+            // the part that works at a glance — a 13px spark is only legible
+            // once you are already looking at the right tile, so the tile has
+            // to be what catches the eye and the spark what explains it. It
+            // reverts with the badge, so the grid is even again afterwards.
+            className={`flex items-center gap-2.5 rounded-[10px] border p-3 text-left transition-all hover:border-primary/40 hover:bg-canvas hover:shadow-sm ${
+              showBadge
+                ? 'border-amber-300 bg-amber-50/60 dark:border-amber-400/40 dark:bg-amber-400/10'
+                : 'border-line bg-surface'
+            }`}
           >
             <span
               className={`w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 ${t.tint}`}
@@ -181,7 +190,7 @@ export function QrTypeGrid({ onStart, bare = false }) {
                 <span className="min-w-0 text-[13px] font-semibold text-ink leading-snug">
                   {t.label}
                 </span>
-                {showBadge && <MustTryBadge />}
+                {showBadge && <MustTryBadge compact />}
               </span>
               <span className="block text-[11px] text-ink-muted truncate">
                 {t.subtitle}

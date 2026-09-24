@@ -31,6 +31,7 @@ import { clearDraft } from '../lib/store'
 import { prefetchSignedInRoutes } from '../lib/routePrefetch'
 import {
   getDisplayName,
+  getFirstName,
   getInitials,
   resolvePictureUrl,
 } from '../utils/userDisplay'
@@ -237,6 +238,12 @@ export default function Layout({ children, breadcrumb }) {
 
   const { user, logout } = useAuth()
   const displayName = getDisplayName(user)
+  // The chip shows the first name; the full name stays as the image's alt text
+  // and the button's accessible name, so nothing is lost to a screen reader.
+  // A long surname pushed the chip into the Create QR button on narrow
+  // laptops, and "Kavuthamraj Senthilkumar" is not the useful half — the header
+  // is saying "this is your account", which a first name says just as well.
+  const firstName = getFirstName(user) || displayName
   const initials = getInitials(user)
   const pictureUrl = resolvePictureUrl(user?.picture, user?.pictureCacheKey)
   const { data: notifItems = [] } = useNotifications()
@@ -398,6 +405,7 @@ export default function Layout({ children, breadcrumb }) {
             <button
               type="button"
               onClick={() => navigate('/account')}
+              aria-label={`Account — ${displayName}`}
               className="flex items-center gap-2 h-9 pl-1.5 pr-1.5 sm:pr-3 rounded-[10px] border border-line hover:bg-canvas transition-colors"
             >
               {pictureUrl ? (
@@ -413,7 +421,7 @@ export default function Layout({ children, breadcrumb }) {
                 </div>
               )}
               <span className="hidden sm:block text-xs font-semibold text-ink-soft leading-none">
-                {displayName}
+                {firstName}
               </span>
             </button>
 

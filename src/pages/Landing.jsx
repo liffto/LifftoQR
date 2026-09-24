@@ -40,6 +40,7 @@ import StepStyleDemo from '../components/StepStyleDemo'
 import QRView from '../components/QRView'
 import LazyMount from '../components/LazyMount'
 import Reveal from '../components/Reveal'
+import { DEMO_PORTRAIT, DEMO_COMPANY_MARK } from '../assets/demoImages'
 
 // The scan demos sit most of a page down, and the component brings react-icons
 // with it for the brand marks — a whole icon set the visible part of this page
@@ -70,20 +71,14 @@ const DARK_PANEL = 'bg-[#1F2430] text-white'
 const DARK_BTN =
   'bg-[#1F2430] text-white hover:bg-[#2A3142] dark:bg-white dark:text-[#1F2430] dark:hover:bg-white/90'
 
-// Demo imagery for the scan mockups, inline as a data URI so the prerendered
-// landing page pulls nothing over the network to draw it. An illustrated
-// avatar rather than a stock photo — self-contained, and it reads as "a real
-// person's card" without a licence or an extra request.
-//
-// No brand/logo badge in these demos on purpose. The pitch is "no watermark";
-// stamping the Liffto mark onto a sample page made people read it as exactly
-// that — a watermark we force onto their pages. The logo is the visitor's own
-// company mark to upload, so the demo leaves that slot to them.
-const DEMO_AVATAR =
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MCA4MCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0VBRjBGRiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDQkRCRkYiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgZmlsbD0idXJsKCNiZykiLz4KICA8cGF0aCBkPSJNMTEgODBjMC0xNiAxMi0yNSAyOS0yNXMyOSA5IDI5IDI1eiIgZmlsbD0iIzNENUFGRSIvPgogIDxwYXRoIGQ9Ik00NSA1N3YtOUgzNXY5YTUgNSAwIDAgMCAxMCAweiIgZmlsbD0iI0U3QTg3RiIvPgogIDxjaXJjbGUgY3g9IjI0LjUiIGN5PSIzNCIgcj0iMy4yIiBmaWxsPSIjRjNDNEEwIi8+CiAgPGNpcmNsZSBjeD0iNTUuNSIgY3k9IjM0IiByPSIzLjIiIGZpbGw9IiNGM0M0QTAiLz4KICA8Y2lyY2xlIGN4PSI0MCIgY3k9IjMzIiByPSIxNiIgZmlsbD0iI0YzQzRBMCIvPgogIDxwYXRoIGQ9Ik0yMy41IDM0LjVjLTEtMTQgMzQtMTQgMzMgMCAuNS0zLS41LTYtMi04LTMtOC0yNi04LTI5IDAtMS41IDItMi41IDUtMiA4eiIgZmlsbD0iIzJFMkEyNiIvPgogIDxjaXJjbGUgY3g9IjMzLjgiIGN5PSIzMyIgcj0iMS44IiBmaWxsPSIjMkUyQTI2Ii8+CiAgPGNpcmNsZSBjeD0iNDYuMiIgY3k9IjMzIiByPSIxLjgiIGZpbGw9IiMyRTJBMjYiLz4KICA8cGF0aCBkPSJNMzQgMzkuNXE2IDUgMTIgMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjQzY3QjU0IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K"
-
 // Sample records for the "what people see when they scan" mockups — rendered by
 // the same ScanPreview the create flow uses, so these are the real pages.
+//
+// An invented person at an invented company, not anyone real: a landing page is
+// an advert, and a name on it reads as a claim about who uses this. That goes
+// for us too — the contact demo used to carry the founder's own name, number and
+// email, which put a real personal phone number on a public marketing page and
+// made the sample card read as "here is our card" rather than "here is yours".
 const SCAN_DEMOS = [
   {
     label: 'Contact card',
@@ -94,16 +89,18 @@ const SCAN_DEMOS = [
       dynamic: true,
       slug: 'k4Rm2p',
       content: {
-        firstName: 'Kavuthamraj',
-        lastName: 'GS',
-        org: 'Liffto',
-        title: 'Product & Design',
-        phone: '+91 98400 00000',
-        email: 'hello@liffto.com',
-        url: 'https://liffto.com',
-        city: 'Chennai',
-        country: 'India',
-        photo: DEMO_AVATAR,
+        firstName: 'Marcus',
+        lastName: 'Hale',
+        org: 'Northpine',
+        title: 'Head of Partnerships',
+        // Ofcom's range reserved for drama, so the demo cannot dial a stranger.
+        phone: '+44 20 7946 0958',
+        email: 'marcus@northpine.co',
+        url: 'https://northpine.co',
+        city: 'London',
+        country: 'United Kingdom',
+        photo: DEMO_PORTRAIT,
+        logo: DEMO_COMPANY_MARK,
       },
     },
   },
