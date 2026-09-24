@@ -1309,7 +1309,20 @@ export default function Dashboard() {
       {/* Pull down at the top of the list to reload it. Self-contained so a
           drag re-renders the indicator rather than every row on this page. */}
       <PullToRefresh onRefresh={refetch} />
-      {list
+      {/* Live scan counts, for the rows on screen only.
+
+          This used to subscribe to the whole list, which is one socket per
+          dynamic code — eighteen on the busiest account — opened on every
+          dashboard load. Each one is its own TLS handshake, and a row nobody
+          has scrolled to does not need a live number.
+
+          "Visible" here is the rendered page (the paginated slice), not what
+          is strictly inside the viewport. Tying it to the viewport would open
+          and close sockets on every scroll, and a handshake per scroll is
+          worse than the few sockets it would save. This way the cost is
+          proportional to what has actually been loaded: eight to begin with,
+          growing only when someone deliberately scrolls for more. */}
+      {visible
         .filter((row) => row.dynamic && row.slug)
         .map((row) => (
           <QrScanSubscriber key={row.slug} slug={row.slug} />

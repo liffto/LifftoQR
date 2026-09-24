@@ -53,82 +53,90 @@ export function useQrScanCount(slug: string | null | undefined) {
   const [scanCount, setScanCount] = useState<number | null>(null)
   const [connectionStatus, setConnectionStatus] =
     useState<QrScanConnectionStatus>('disconnected')
-  const reconnectAttemptRef = useRef(0)
-  const unmountedRef = useRef(false)
-  const socketRef = useRef<WebSocket | null>(null)
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Held in a ref so it does not have to be an effect dependency. It is stable
+  // for the life of the provider, but naming it in the deps meant any change
+  // of identity would tear the socket down and build it again.
+  const queryClientRef = useRef(queryClient)
+  queryClientRef.current = queryClient
 
   useEffect(() => {
-    unmountedRef.current = false
-
     if (!slug) {
       setScanCount(null)
       setConnectionStatus('disconnected')
-      return () => {
-        unmountedRef.current = true
-      }
+      return undefined
     }
 
-    const clearReconnectTimer = () => {
-      if (reconnectTimerRef.current) {
-        clearTimeout(reconnectTimerRef.current)
-        reconnectTimerRef.current = null
-      }
-    }
+    // Per effect run, deliberately: this used to be a ref shared across runs
+    // and reset to false at the top of each one. React mounts an effect twice
+    // in development, so the first run's socket closed *after* the second run
+    // had already reset the flag — its onclose therefore did not bail out, it
+    // scheduled a reconnect. That reconnect closed the live socket, whose
+    // onclose scheduled another, and so on: a permanent reconnect loop at one
+    // per second per code, which on a dashboard of eight was eight new
+    // connections a second, forever. A closure variable cannot be revived by a
+    // later run, so a dead run stays dead.
+    let cancelled = false
+    let socket: WebSocket | null = null
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+    let attempt = 0
 
     const connect = () => {
-      if (unmountedRef.current) return
-
-      clearReconnectTimer()
-      socketRef.current?.close()
+      if (cancelled) return
       setConnectionStatus('connecting')
 
-      const socket = new WebSocket(qrScanWebSocketUrl(slug))
-      socketRef.current = socket
+      const ws = new WebSocket(qrScanWebSocketUrl(slug))
+      socket = ws
 
-      socket.onopen = () => {
-        if (unmountedRef.current) return
-        reconnectAttemptRef.current = 0
+      ws.onopen = () => {
+        if (cancelled) return
+        attempt = 0
         setConnectionStatus('connected')
       }
 
-      socket.onmessage = (event) => {
-        if (unmountedRef.current) return
+      ws.onmessage = (event) => {
+        if (cancelled) return
         try {
           const data: unknown = JSON.parse(event.data)
           if (!isScanCountMessage(data) || data.slug !== slug) return
-
           setScanCount(data.scan_count)
-          patchScanCountInCache(queryClient, slug, data.scan_count)
+          patchScanCountInCache(queryClientRef.current, slug, data.scan_count)
         } catch {
           // Ignore malformed messages.
         }
       }
 
-      socket.onerror = () => {
-        if (unmountedRef.current) return
+      ws.onerror = () => {
+        if (cancelled) return
         setConnectionStatus('error')
       }
 
-      socket.onclose = () => {
-        if (unmountedRef.current) return
+      ws.onclose = () => {
+        if (cancelled) return
         setConnectionStatus('disconnected')
-
-        const delay = Math.min(1000 * 2 ** reconnectAttemptRef.current, 30000)
-        reconnectAttemptRef.current += 1
-        reconnectTimerRef.current = setTimeout(connect, delay)
+        const delay = Math.min(1000 * 2 ** attempt, 30000)
+        attempt += 1
+        reconnectTimer = setTimeout(connect, delay)
       }
     }
 
     connect()
 
     return () => {
-      unmountedRef.current = true
-      clearReconnectTimer()
-      socketRef.current?.close()
-      socketRef.current = null
+      cancelled = true
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      if (socket) {
+        // Detach first. Closing deliberately would otherwise run the reconnect
+        // path and put back the socket we are here to take away.
+        socket.onopen = null
+        socket.onmessage = null
+        socket.onerror = null
+        socket.onclose = null
+        socket.close()
+      }
+      socket = null
     }
-  }, [slug, queryClient])
+  }, [slug])
 
   return { scanCount, connectionStatus }
 }
