@@ -613,17 +613,33 @@ export default function Landing() {
                   Free — including the parts others charge for
                 </span>
 
-                {/* Three lines, three verbs, and they are the whole product:
-                    the studio, the dynamic short link, the scan counter. The
-                    old headline sold two of the three and never mentioned that
-                    anything is measured at all, so the feature people come
-                    back weekly to look at was invisible at the top of the page.
+                {/* Three lines, three pillars: the studio, the dynamic short
+                    link, the scan counter. An earlier version sold the first
+                    two and never mentioned that anything is measured, so the
+                    feature that brings someone back next week rather than once
+                    was missing from the top of the page.
 
-                    Each line is its own sentence and its own <br />, which is
-                    also what keeps it from breaking badly. The previous version
-                    wrapped a two-word gradient span across a line end and left
-                    "after" stranded on a line of its own — a headline must not
-                    depend on the box being wide enough to guess right. */}
+                    Noun first. "Design your QR code." opened on an imperative,
+                    which tells a stranger what to do before it tells them what
+                    this is; the category name earns that line, and "branded"
+                    does the studio's work at the same time.
+
+                    Every line is its own sentence and its own <br />, and each
+                    is measured against the narrowest box it has to survive —
+                    1024px, where this column is 537px against a 50px font, so
+                    the budget is 10.74em. These run 9.12 / 8.62 / 8.46. The
+                    version before this put a two-word gradient span across a
+                    line end and left "after" alone on a line; a headline must
+                    not depend on the box guessing right. No pronoun in line 2
+                    on purpose — "edit them" is 11.43em and overflows, and
+                    "edit it" disagrees with the plural above it.
+
+                    "Track", not "count": a scan writes a row with a timestamp,
+                    which is what the 30-day graph and the unique count are
+                    built from, so there is something here worth the word. The
+                    one thing it can be misread as is location, which is the
+                    thing we genuinely do not collect — the analytics answer in
+                    the FAQ says so outright, which is where that belongs. */}
                 {/* The lg step is 50px, not 56px, because lg starts at 1024
                     where this column is only 537px wide — "Design your QR
                     code." needs 566px at 56px and wrapped, which is how the
@@ -631,13 +647,13 @@ export default function Landing() {
                     of its own. Full size returns at xl, where the column is
                     ~640px and every line has room. Measured, not guessed. */}
                 <h1 className="mt-7 text-[clamp(27px,8vw,36px)] leading-[1.05] sm:text-[48px] lg:text-[50px] xl:text-[56px] lg:leading-[1.05] font-extrabold tracking-[-0.035em] text-white">
-                  Design your QR code.
+                  Branded QR codes.
                   <br />
                   <span className="bg-gradient-to-r from-[#7BA8FF] via-[#6EE7E0] to-[#7BA8FF] bg-clip-text text-transparent">
-                    Change it anytime.
+                    Edit after printing.
                   </span>
                   <br />
-                  Count every scan.
+                  Track every scan.
                 </h1>
 
                 {/* Counted, not written down. "Sixteen more types" was true
