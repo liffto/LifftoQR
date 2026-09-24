@@ -613,25 +613,44 @@ export default function Landing() {
                   Free — including the parts others charge for
                 </span>
 
-                <h1 className="mt-7 text-[36px] leading-[1.05] sm:text-[48px] lg:text-[56px] lg:leading-[1.03] font-extrabold tracking-[-0.035em] text-white">
-                  Branded QR codes
+                {/* Three lines, three verbs, and they are the whole product:
+                    the studio, the dynamic short link, the scan counter. The
+                    old headline sold two of the three and never mentioned that
+                    anything is measured at all, so the feature people come
+                    back weekly to look at was invisible at the top of the page.
+
+                    Each line is its own sentence and its own <br />, which is
+                    also what keeps it from breaking badly. The previous version
+                    wrapped a two-word gradient span across a line end and left
+                    "after" stranded on a line of its own — a headline must not
+                    depend on the box being wide enough to guess right. */}
+                {/* The lg step is 50px, not 56px, because lg starts at 1024
+                    where this column is only 537px wide — "Design your QR
+                    code." needs 566px at 56px and wrapped, which is how the
+                    previous headline ended up with a word stranded on a line
+                    of its own. Full size returns at xl, where the column is
+                    ~640px and every line has room. Measured, not guessed. */}
+                <h1 className="mt-7 text-[clamp(27px,8vw,36px)] leading-[1.05] sm:text-[48px] lg:text-[50px] xl:text-[56px] lg:leading-[1.05] font-extrabold tracking-[-0.035em] text-white">
+                  Design your QR code.
                   <br />
-                  you can{' '}
                   <span className="bg-gradient-to-r from-[#7BA8FF] via-[#6EE7E0] to-[#7BA8FF] bg-clip-text text-transparent">
-                    change after
+                    Change it anytime.
                   </span>
                   <br />
-                  you print
+                  Count every scan.
                 </h1>
 
                 {/* Counted, not written down. "Sixteen more types" was true
                     when it was typed and silently stopped being true the moment
                     the list changed. */}
+                {/* The headline has the three verbs, so this adds the two
+                    things it has no room for: how much the code can be, and
+                    that scanning one opens a page we host rather than dumping
+                    someone on a redirect. */}
                 <p className="mt-7 max-w-md text-[16px] sm:text-[17px] text-white/60 leading-relaxed">
-                  Put your logo in the middle, change where it points long after
-                  it is printed, and watch the scans arrive — for links, Wi-Fi,
-                  contact cards, events and {SELECTABLE_QR_TYPES.length - 4}{' '}
-                  more types.
+                  Your logo in the middle, {SELECTABLE_QR_TYPES.length} types to
+                  pick from — a link, your Wi-Fi, a contact card, a coupon. Scan
+                  one and a branded page opens, built and hosted for you.
                 </p>
 
                 {/* Four negatives rather than three and a feature: the whole
