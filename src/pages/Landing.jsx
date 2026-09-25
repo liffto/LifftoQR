@@ -40,6 +40,8 @@ import StepStyleDemo from '../components/StepStyleDemo'
 import QRView from '../components/QRView'
 import LazyMount from '../components/LazyMount'
 import Reveal from '../components/Reveal'
+import Recognitions from '../components/Recognitions'
+import { HOME_REGION } from '../lib/recognitions'
 import { DEMO_PORTRAIT, DEMO_COMPANY_MARK } from '../assets/demoImages'
 
 // The scan demos sit most of a page down, and the component brings react-icons
@@ -61,6 +63,10 @@ const NAV_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'How it works', href: '#how' },
   { label: 'Pricing', href: '#pricing' },
+  // Worth a nav slot, not just a section someone scrolls past: "who is behind
+  // this and where are they" is a question a visitor asks deliberately, and a
+  // government reader arrives looking for exactly this.
+  { label: 'About us', href: '#about' },
   { label: 'FAQ', href: '#faq' },
 ]
 
@@ -1179,6 +1185,14 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ══ WHERE WE'RE FROM ══════════════════════════════════════════ */}
+      {/* Deliberately the section before pricing. "Everything is free" raises
+          the question of who is behind it and what they want, and the honest
+          answer — a registered company in Tamil Nadu, with numbers anyone can
+          look up — is worth more read immediately before that claim than
+          anywhere else on the page. */}
+      <Recognitions />
+
       {/* ══ PRICING ═══════════════════════════════════════════════════ */}
       <section id="pricing" className="scroll-mt-[72px]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-16 sm:py-24">
@@ -1371,7 +1385,8 @@ export default function Landing() {
 
           <div className="mt-12 pt-6 border-t border-line flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[12px] text-ink-faint">
-              © {new Date().getFullYear()} Liffto. All rights reserved.
+              © {new Date().getFullYear()} Liffto. All rights reserved. · Made
+              in {HOME_REGION}
             </p>
             <div className="flex items-center gap-5 text-[12px] text-ink-faint">
               <a
